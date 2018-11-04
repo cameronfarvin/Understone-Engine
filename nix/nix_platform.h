@@ -1,3 +1,6 @@
+#ifndef __nix_platform__
+#define __nix_platform__ 1
+
 #include <X11/keysymdef.h>
 
 #ifndef XK_LATIN1
@@ -8,12 +11,15 @@
 #include <X11/Xutil.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
+#include <GL/glxext.h>
+#include <GL/glu.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
 #include <engine_tools.h>
+
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*,
                                                      GLXFBConfig,
@@ -52,3 +58,4 @@ x11_destroy();
 EVENT
 x11_handleEvents();
 
+#endif // __nix_platform__

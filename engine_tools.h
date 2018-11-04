@@ -1,8 +1,13 @@
-#include <stdint.h>
-#include <stddef.h>
-
+//
+// This file assumes platform layer has included OpenGL types, enums, & strcts
+// prior to it's inclusion. Typedefs for function pointers are defined here, but
+// should be populated in the platform layer on window/context construction.
+//
 #ifndef __engine_tools__
 #define __engine_tools__
+
+#include <stdint.h>
+#include <stddef.h>
 
 #define int8    int8_t
 #define int16   int16_t
@@ -15,12 +20,71 @@
 #define float32 float
 #define float64 double
 
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+#ifndef APIENTRYP
+#define APIENTRYP APIENTRY *
+#endif
+#ifndef GLAPI
+#define GLAPI extern
+#endif
+
+PFNGLGETSHADERIVPROC       glGetShaderiv;
+PFNGLGETSHADERINFOLOGPROC  glGetShaderInfoLog;
+PFNGLGETPROGRAMIVPROC      glGetProgramiv;
+PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
+
+#ifndef GLSL
+#define GLSL(version, shaderSrc) "#version " #version "\n" #shaderSrc
+#endif // GLSL
+
+#ifndef glError
+#define print_assert(msg) FLUSH_PRINT(msg); assert(0)
+#define glError()                                                       \
+    switch(glGetError())                                                \
+    {                                                                   \
+        case GL_NO_ERROR: { break; }                                    \
+        case GL_INVALID_ENUM:                                           \
+        {                                                               \
+            print_assert("[ GLERROR ] INVALID_ENUM\n");                 \
+        }                                                               \
+        case GL_INVALID_VALUE:                                          \
+        {                                                               \
+            print_assert("[ GLERROR ] INVALID_VALUE\n");                \
+        }                                                               \
+        case GL_INVALID_OPERATION:                                      \
+        {                                                               \
+            print_assert("[ GLERROR ] INVALID_OPERATION\n");            \
+        }                                                               \
+        case GL_INVALID_FRAMEBUFFER_OPERATION:                          \
+        {                                                               \
+            print_assert("[ GLERROR ] INVALID_FRAMEBUFFER_OPERATION\n"); \
+        }                                                               \
+        case GL_OUT_OF_MEMORY:                                          \
+        {                                                               \
+            print_assert("[ GLERROR ] OUT_OF_MEMORY\n");                \
+        }                                                               \
+        default: { assert(0); }                                         \
+    }
+#endif // glError
+
+typedef enum
+    {
+        pipeline_state_none,
+        pipeline_state_vertex_shader,
+        pipeline_state_geometry_shader,
+        pipeline_state_fragment_shader,
+        pipeline_state_shader_program,
+    } PipelineState;
+
 typedef enum
     {
         false = 0,
         true = 1
     } bool;
 
+// [ cfarvin::TODO ] Use for other platforms (don't forget)
 typedef struct
 {
     uint8 vmajor;
