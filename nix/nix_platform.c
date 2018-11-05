@@ -179,7 +179,9 @@ x11_createWindow()
             None
         };
 
-    const char* glExtensions = glXQueryExtensionsString(x11.display, x11.default_screen_number);
+    const char* glExtensions = glXQueryExtensionsString(x11.display,
+                                                        x11.default_screen_number);
+    
     if (isExtensionSupported(glExtensions, "GLX_ARB_create_context"))
     {
         x11.ogl_context = glXCreateContextAttribsARB(x11.display,
@@ -225,6 +227,68 @@ x11_createWindow()
     atomWmDeleteWindow = XInternAtom(x11.display, "WM_DELETE_WINDOW", false);
     XSetWMProtocols(x11.display, x11.engine_window, &atomWmDeleteWindow, 1);
 
+    //
+    //
+    // discover_opengl_function_pointers
+    //
+    //
+
+    // glGetShaderiv
+    glGetShaderiv = (PFNGLGETSHADERIVPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glGetShaderiv");
+    assert(glGetShaderiv);
+
+    // glGetShaderInfoLog
+    glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glGetShaderInfoLog");
+    assert(glGetShaderInfoLog);
+
+    // glGetProgramiv
+    glGetProgramiv = (PFNGLGETPROGRAMIVPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glGetProgramiv");
+    assert(glGetProgramiv);
+
+    // glGetProgramInfoLog
+    glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glGetProgramInfoLog");
+    assert(glGetProgramInfoLog);
+
+    // glCreateShader
+    glCreateShader = (PFNGLCREATESHADERPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glCreateShader");
+    assert(glCreateShader);
+
+    // glCreateProgram
+    glCreateProgram = (PFNGLCREATEPROGRAMPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glCreateProgram");
+    assert(glCreateProgram);
+    
+    // glShaderSource
+    glShaderSource = (PFNGLSHADERSOURCEPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glShaderSource");
+    assert(glShaderSource);
+
+    // glCompileShader
+    glCompileShader = (PFNGLCOMPILESHADERPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glCompileShader");
+    assert(glCompileShader);
+    
+    // glAttachShader
+    glAttachShader = (PFNGLATTACHSHADERPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glAttachShader");
+    assert(glAttachShader);
+
+    // glLinkProgram
+    glLinkProgram = (PFNGLLINKPROGRAMPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glLinkProgram");
+    assert(glLinkProgram);
+
+    // glDeleteShader
+    glDeleteShader = (PFNGLDELETESHADERPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glDeleteShader");
+    assert(glDeleteShader);
+
+    
     x11_handleEvents();
 }
 

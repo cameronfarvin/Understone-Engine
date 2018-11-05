@@ -34,6 +34,14 @@ PFNGLGETSHADERIVPROC       glGetShaderiv;
 PFNGLGETSHADERINFOLOGPROC  glGetShaderInfoLog;
 PFNGLGETPROGRAMIVPROC      glGetProgramiv;
 PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
+PFNGLCREATESHADERPROC      glCreateShader;
+PFNGLCREATEPROGRAMPROC     glCreateProgram;
+PFNGLSHADERSOURCEPROC      glShaderSource;
+PFNGLCOMPILESHADERPROC     glCompileShader;
+PFNGLATTACHSHADERPROC      glAttachShader;
+PFNGLLINKPROGRAMPROC       glLinkProgram;
+PFNGLDELETESHADERPROC      glDeleteShader;
+
 
 #ifndef GLSL
 #define GLSL(version, shaderSrc) "#version " #version "\n" #shaderSrc
