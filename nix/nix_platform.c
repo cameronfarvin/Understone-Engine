@@ -232,63 +232,108 @@ x11_createWindow()
     // discover_opengl_function_pointers
     //
     //
-
-    // glGetShaderiv
     glGetShaderiv = (PFNGLGETSHADERIVPROC)
         glXGetProcAddressARB( (const GLubyte*) "glGetShaderiv");
     assert(glGetShaderiv);
 
-    // glGetShaderInfoLog
     glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)
         glXGetProcAddressARB( (const GLubyte*) "glGetShaderInfoLog");
     assert(glGetShaderInfoLog);
 
-    // glGetProgramiv
     glGetProgramiv = (PFNGLGETPROGRAMIVPROC)
         glXGetProcAddressARB( (const GLubyte*) "glGetProgramiv");
     assert(glGetProgramiv);
 
-    // glGetProgramInfoLog
     glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)
         glXGetProcAddressARB( (const GLubyte*) "glGetProgramInfoLog");
     assert(glGetProgramInfoLog);
 
-    // glCreateShader
     glCreateShader = (PFNGLCREATESHADERPROC)
         glXGetProcAddressARB( (const GLubyte*) "glCreateShader");
     assert(glCreateShader);
 
-    // glCreateProgram
     glCreateProgram = (PFNGLCREATEPROGRAMPROC)
         glXGetProcAddressARB( (const GLubyte*) "glCreateProgram");
     assert(glCreateProgram);
     
-    // glShaderSource
     glShaderSource = (PFNGLSHADERSOURCEPROC)
         glXGetProcAddressARB( (const GLubyte*) "glShaderSource");
     assert(glShaderSource);
 
-    // glCompileShader
     glCompileShader = (PFNGLCOMPILESHADERPROC)
         glXGetProcAddressARB( (const GLubyte*) "glCompileShader");
     assert(glCompileShader);
     
-    // glAttachShader
     glAttachShader = (PFNGLATTACHSHADERPROC)
         glXGetProcAddressARB( (const GLubyte*) "glAttachShader");
     assert(glAttachShader);
 
-    // glLinkProgram
     glLinkProgram = (PFNGLLINKPROGRAMPROC)
         glXGetProcAddressARB( (const GLubyte*) "glLinkProgram");
     assert(glLinkProgram);
 
-    // glDeleteShader
     glDeleteShader = (PFNGLDELETESHADERPROC)
         glXGetProcAddressARB( (const GLubyte*) "glDeleteShader");
     assert(glDeleteShader);
 
+    glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glGetAttribLocation");
+    assert(glGetAttribLocation);
+
+    glUseProgram = (PFNGLUSEPROGRAMPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glUseProgram");
+    assert(glUseProgram);
+
+    glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glGetUniformLocation");
+    assert(glGetUniformLocation);
     
+    /* // glUniform1f */
+    /* glUniform1f = (PFNGLUNIFORM1FPROC) */
+    /*     glXGetProcAddressARB( (const GLubyte*) "glUniform1f"); */
+    /* assert(glUniform1f); */
+
+    /* // glUniform2f */
+    /* glUniform2f = (PFNGLUNIFORM2FPROC) */
+    /*     glXGetProcAddressARB( (const GLubyte*) "glUniform2f"); */
+    /* assert(glUniform2f); */
+
+    glUniform3f = (PFNGLUNIFORM3FPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glUniform3f");
+    assert(glUniform3f);
+
+    glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glGenVertexArrays");
+    assert(glGenVertexArrays);
+
+    glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glBindVertexArray");
+    assert(glBindVertexArray);
+
+    glGenBuffers = (PFNGLGENBUFFERSPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glGenBuffers");
+    assert(glGenBuffers);
+
+    glBindBuffer = (PFNGLBINDBUFFERPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glBindBuffer");
+    assert(glBindBuffer);
+
+    glBufferData = (PFNGLBUFFERDATAPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glBufferData");
+    assert(glBufferData);
+
+    glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glVertexAttribPointer");
+    assert(glVertexAttribPointer);
+
+    glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glEnableVertexAttribArray");
+    assert(glEnableVertexAttribArray);
+
+    /* glDrawArrays = (PFNGLDRAWARRAYSPROC) */
+    /*     glXGetProcAddressARB( (const GLubyte*) "glDrawArrays"); */
+    /* assert(glDrawArrays); */
+
     x11_handleEvents();
 }
 

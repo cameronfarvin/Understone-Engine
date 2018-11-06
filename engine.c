@@ -1,6 +1,5 @@
 #include <nix_platform.h>
 #include <win_platform.h>
-
 #include <engine_tools.h>
 
 #include <stdint.h>
@@ -200,10 +199,6 @@ createShaderProgram_vgf(const GLchar** vertex_shader_source,
 
 static uint8 RUNNING = 1;
 
-void cleanEngineAllocations()
-{
-}
-
 void refreshInputState()
 {
 #if __linux__
@@ -275,12 +270,6 @@ void refreshInputState()
     }
 }
 
-void render()
-{
-    glClear(GL_COLOR_BUFFER_BIT);
-}
-
-
 int main(int argc, char** argv)
 {
     for (size_t cl_arg = 0; cl_arg < (size_t) argc; cl_arg++)
@@ -292,31 +281,120 @@ int main(int argc, char** argv)
     x11_createWindow();
 #endif // __linux__
 
-    glClearColor(0.5f, 0.05f, 0.73f, 1.0f);
-
-    const  char* vshdr = GLSL(441 core,
-
-                              in  vec2 vshdr_pos;
-                              out vec3 vshdr_color_out;
-         
-                              main()
-                              {
-                                  gl_Position(fhdr_pos.x, vshdr_pos.y, 0.0f, 1.0f);
-                                  vshdr_color_out = vec4(vshdr_color_out.x,
-                                                         vshdr_color_out.y,
-                                                         vshdr_color_out.z,
-                                                         1.0f);
-                              });
-
-    const fshdr = GLSL(441 core,
-                       
-        );
     
+
+//
+// vshdr
+//
+    const  char* vshdr = GLSL
+        (450 core,
+
+         in vec2 vshdr_pos;
+
+         void main()
+         {
+             gl_Position = vec4(vshdr_pos, 0.0f, 1.0f);
+         });
+
+//
+// fshdr
+//
+    const char* fshdr = GLSL
+        (450 core,
+
+         uniform vec3 fshdr_color;
+
+         out vec4 fshdr_final;
+
+         void main()
+         {
+             fshdr_final = vec4(fshdr_color, 1.0f);
+         });
+
+//
+// create_program
+//
+    glError();
+    GLuint shader_program = 0;
+    shader_program = createShaderProgram_vf(&vshdr, &fshdr);
+    glUseProgram(shader_program);
+    assert(shader_program);
+    glError();
+
+//
+// discover_attribute_locations
+//
+    GLint vshdr_position_location = -1;
+    GLint fshdr_color_location = -1;
+
+    glError();
+    vshdr_position_location = glGetAttribLocation(shader_program, "vshdr_pos");
+    fshdr_color_location    = glGetUniformLocation(shader_program, "fshdr_color");
+    glError();
+
+    assert(vshdr_position_location != -1);
+    assert(fshdr_color_location != -1);
+
+//
+// set_default_attribute_values
+//
+    glError();
+    glUniform3f(fshdr_color_location, 1.0f, 0.0f, 0.0f);
+    glError();
+
+//
+// vao_vbo
+//
+    GLuint vertex_array_buffer_location;
+    GLuint vertex_buffer_location;
+
+//
+// test_data
+//
+    GLfloat test_data[] =
+        {
+            // top
+            0.0f, 0.5f,
+
+            // bottom left
+            -0.5f, -0.5f,
+
+            // bottom right
+            0.5f, -0.5f
+        };
+    
+    glError();
+    glGenVertexArrays(1, &vertex_array_buffer_location);
+    glBindVertexArray(vertex_array_buffer_location);
+    glError();
+
+    glGenBuffers(1, &vertex_buffer_location);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_location);
+    glBufferData(GL_ARRAY_BUFFER,
+                 sizeof(test_data),
+                 test_data,
+                 GL_STATIC_DRAW);
+
+    glVertexAttribPointer(vshdr_position_location,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          0,
+                          (void*) 0);
+    glError();
+
 
     while(RUNNING)
     {
+        glError();
         refreshInputState();
-        render();
+        glClear(GL_COLOR_BUFFER_BIT);
+        glUseProgram(shader_program);
+        glBindVertexArray(vertex_array_buffer_location);
+        glEnableVertexAttribArray(vshdr_position_location);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glError();
 
 
 #if __linux__
@@ -328,7 +406,5 @@ int main(int argc, char** argv)
     x11_destroy();
 #endif // __linux__
 
-    cleanEngineAllocations();
-    
     return 0;
 }

@@ -4,8 +4,9 @@
 // should be populated in the platform layer on window/context construction.
 //
 #ifndef __engine_tools__
-#define __engine_tools__
+#define __engine_tools__ 1
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
 
@@ -30,25 +31,12 @@
 #define GLAPI extern
 #endif
 
-PFNGLGETSHADERIVPROC       glGetShaderiv;
-PFNGLGETSHADERINFOLOGPROC  glGetShaderInfoLog;
-PFNGLGETPROGRAMIVPROC      glGetProgramiv;
-PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
-PFNGLCREATESHADERPROC      glCreateShader;
-PFNGLCREATEPROGRAMPROC     glCreateProgram;
-PFNGLSHADERSOURCEPROC      glShaderSource;
-PFNGLCOMPILESHADERPROC     glCompileShader;
-PFNGLATTACHSHADERPROC      glAttachShader;
-PFNGLLINKPROGRAMPROC       glLinkProgram;
-PFNGLDELETESHADERPROC      glDeleteShader;
-
-
 #ifndef GLSL
 #define GLSL(version, shaderSrc) "#version " #version "\n" #shaderSrc
 #endif // GLSL
 
 #ifndef glError
-#define print_assert(msg) FLUSH_PRINT(msg); assert(0)
+#define print_assert(msg) printf(msg); assert(0);
 #define glError()                                                       \
     switch(glGetError())                                                \
     {                                                                   \
@@ -76,6 +64,35 @@ PFNGLDELETESHADERPROC      glDeleteShader;
         default: { assert(0); }                                         \
     }
 #endif // glError
+
+//
+// glShader
+//
+PFNGLGETSHADERIVPROC             glGetShaderiv;
+PFNGLGETSHADERINFOLOGPROC        glGetShaderInfoLog;
+PFNGLGETPROGRAMIVPROC            glGetProgramiv;
+PFNGLGETPROGRAMINFOLOGPROC       glGetProgramInfoLog;
+PFNGLCREATESHADERPROC            glCreateShader;
+PFNGLCREATEPROGRAMPROC           glCreateProgram;
+PFNGLSHADERSOURCEPROC            glShaderSource;
+PFNGLCOMPILESHADERPROC           glCompileShader;
+PFNGLATTACHSHADERPROC            glAttachShader;
+PFNGLLINKPROGRAMPROC             glLinkProgram;
+PFNGLDELETESHADERPROC            glDeleteShader;
+PFNGLUSEPROGRAMPROC              glUseProgram;
+PFNGLGETATTRIBLOCATIONPROC       glGetAttribLocation;
+PFNGLGETUNIFORMLOCATIONPROC      glGetUniformLocation;
+/* PFNGLUNIFORM1FPROC               glUniform1f; */
+/* PFNGLUNIFORM2FPROC               glUniform2f; */
+PFNGLUNIFORM3FPROC               glUniform3f;
+PFNGLGENVERTEXARRAYSPROC         glGenVertexArrays;
+PFNGLBINDVERTEXARRAYPROC         glBindVertexArray;
+PFNGLGENBUFFERSPROC              glGenBuffers;
+PFNGLBINDBUFFERPROC              glBindBuffer;
+PFNGLBUFFERDATAPROC              glBufferData;
+PFNGLVERTEXATTRIBPOINTERPROC     glVertexAttribPointer;
+PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
+/* PFNGLDRAWARRAYSPROC              glDrawArrays; */
 
 typedef enum
     {
