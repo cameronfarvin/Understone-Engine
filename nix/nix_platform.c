@@ -421,13 +421,9 @@ x11_handleEvents()
                 if ( (prev_window_attrib_width != x11.window_attributes.width)
                      || (prev_window_attrib_height != x11.window_attributes.height) )
                 {
-                    printf("[ NOTIFY ] Window dimensions have changed\n");
-                }
-                else
-                {
-                    printf("Window width: %d\nWindow height: %d\n",
-                           x11.window_attributes.width,
-                           x11.window_attributes.height);
+                    viewport.width = x11.window_attributes.width;
+                    viewport.height = x11.window_attributes.height;
+                    return EVENT_RESIZE;
                 }
             }
             case ClientMessage:

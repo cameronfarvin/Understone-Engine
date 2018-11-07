@@ -7,19 +7,19 @@
 #define XK_LATIN1
 #endif
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <GL/glxext.h>
-#include <GL/glu.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#include <engine_tools.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <GL/glx.h>
+#include <GL/glxext.h>
 
+#include <engine_tools/type_tools.h>
+#include <engine_tools/event_tools.h>
+#include <engine_tools/ogl_tools.h>
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*,
                                                      GLXFBConfig,
