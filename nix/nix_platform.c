@@ -288,15 +288,13 @@ x11_createWindow()
         glXGetProcAddressARB( (const GLubyte*) "glGetUniformLocation");
     assert(glGetUniformLocation);
     
-    /* // glUniform1f */
-    /* glUniform1f = (PFNGLUNIFORM1FPROC) */
-    /*     glXGetProcAddressARB( (const GLubyte*) "glUniform1f"); */
-    /* assert(glUniform1f); */
+    glUniform1f = (PFNGLUNIFORM1FPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glUniform1f");
+    assert(glUniform1f);
 
-    /* // glUniform2f */
-    /* glUniform2f = (PFNGLUNIFORM2FPROC) */
-    /*     glXGetProcAddressARB( (const GLubyte*) "glUniform2f"); */
-    /* assert(glUniform2f); */
+    glUniform2f = (PFNGLUNIFORM2FPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glUniform2f");
+    assert(glUniform2f);
 
     glUniform3f = (PFNGLUNIFORM3FPROC)
         glXGetProcAddressARB( (const GLubyte*) "glUniform3f");
@@ -332,7 +330,40 @@ x11_createWindow()
 
     /* glDrawArrays = (PFNGLDRAWARRAYSPROC) */
     /*     glXGetProcAddressARB( (const GLubyte*) "glDrawArrays"); */
-    /* assert(glDrawArrays); */
+    assert(glDrawArrays);
+
+    glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glGenFramebuffers");
+    assert(glGenFramebuffers);
+
+    glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glBindFramebuffer");
+    assert(glBindFramebuffer);
+
+    /* glGenTextures = (PFNGLGENTEXTURESPROC) */
+    /*     glXGetProcAddressARB( (const GLubyte*) "glGenTextures"); */
+    assert(glGenTextures);
+
+    /* glBindTexture = (PFNGLBINDTEXTURESPROC) */
+    /*     glXGetProcAddressARB( (const GLubyte*) "glBindTexture"); */
+    assert(glBindTexture);
+
+    /* glTexParameteri = (PFNGLBINDTEXTUREPROC) */
+    /*     glXGetProcAddressARB( (const GLubyte*) "glTexParameteri"); */
+    assert(glTexParameteri);
+
+    /* glTexImage2D = (PFNGLBINDTEXTUREPROC) */
+    /*     glXGetProcAddressARB( (const GLubyte*) "glTexImage2D"); */
+    assert(glTexImage2D);
+
+    glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glFramebufferTexture2D");
+    assert(glFramebufferTexture2D);
+
+    glCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glCheckFramebufferStatus");
+    assert(glCheckFramebufferStatus);
+
 
     x11_handleEvents();
 }

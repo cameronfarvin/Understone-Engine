@@ -1,40 +1,5 @@
 #include <engine_tools/ogl_tools.h>
 
-void
-glError()
-{                                                              
-    switch(glGetError())                                                
-    {                                                                   
-        case GL_NO_ERROR: { break; }                                    
-        case GL_INVALID_ENUM:                                           
-        {                                                               
-            printf("[ GLERROR ] INVALID_ENUMn");
-            assert(0);            
-        }                                                               
-        case GL_INVALID_VALUE:                                          
-        {                                                               
-            printf("[ GLERROR ] INVALID_VALUEn");
-            assert(0);            
-        }                                                               
-        case GL_INVALID_OPERATION:                                      
-        {                                                               
-            printf("[ GLERROR ] INVALID_OPERATIONn");
-            assert(0);            
-        }                                                               
-        case GL_INVALID_FRAMEBUFFER_OPERATION:                          
-        {                                                               
-            printf("[ GLERROR ] INVALID_FRAMEBUFFER_OPERATIONn");
-            assert(0);            
-        }                                                               
-        case GL_OUT_OF_MEMORY:                                          
-        {                                                               
-            printf("[ GLERROR ] OUT_OF_MEMORYn");
-            assert(0);
-        }                                                               
-        default: { assert(0); }                                         
-    }
-}
-
 char stringified_pipeline_state[STRINGIFIED_PIPELINE_STATE_LENGTH];
 char*
 StringifyPipelineState(PipelineState pipeline_state)

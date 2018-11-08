@@ -25,6 +25,36 @@
 #define STRINGIFIED_PIPELINE_STATE_LENGTH 18
 #endif // STRINGIFIED_PIPELINE_STATE_LENGTH
 
+#ifndef glError
+#define print_assert(msg) printf(msg); assert(0);
+#define glError                                                         \
+    switch(glGetError())                                                \
+    {                                                                   \
+        case GL_NO_ERROR: { break; }                                    \
+        case GL_INVALID_ENUM:                                           \
+        {                                                               \
+            print_assert("[ GLERROR ] INVALID_ENUM\n");                 \
+        }                                                               \
+        case GL_INVALID_VALUE:                                          \
+        {                                                               \
+            print_assert("[ GLERROR ] INVALID_VALUE\n");                \
+        }                                                               \
+        case GL_INVALID_OPERATION:                                      \
+        {                                                               \
+            print_assert("[ GLERROR ] INVALID_OPERATION\n");            \
+        }                                                               \
+        case GL_INVALID_FRAMEBUFFER_OPERATION:                          \
+        {                                                               \
+            print_assert("[ GLERROR ] INVALID_FRAMEBUFFER_OPERATION\n"); \
+        }                                                               \
+        case GL_OUT_OF_MEMORY:                                          \
+        {                                                               \
+            print_assert("[ GLERROR ] OUT_OF_MEMORY\n");                \
+        }                                                               \
+        default: { assert(0); }                                         \
+    }
+#endif // glError
+
 typedef enum
     {
         pipeline_state_none,
@@ -50,7 +80,6 @@ typedef struct
 } VIEWPORT;
 VIEWPORT viewport;
 
-
 PFNGLGETSHADERIVPROC             glGetShaderiv;
 PFNGLGETSHADERINFOLOGPROC        glGetShaderInfoLog;
 PFNGLGETPROGRAMIVPROC            glGetProgramiv;
@@ -65,8 +94,8 @@ PFNGLDELETESHADERPROC            glDeleteShader;
 PFNGLUSEPROGRAMPROC              glUseProgram;
 PFNGLGETATTRIBLOCATIONPROC       glGetAttribLocation;
 PFNGLGETUNIFORMLOCATIONPROC      glGetUniformLocation;
-/* PFNGLUNIFORM1FPROC               glUniform1f; */
-/* PFNGLUNIFORM2FPROC               glUniform2f; */
+PFNGLUNIFORM1FPROC               glUniform1f;
+PFNGLUNIFORM2FPROC               glUniform2f;
 PFNGLUNIFORM3FPROC               glUniform3f;
 PFNGLGENVERTEXARRAYSPROC         glGenVertexArrays;
 PFNGLBINDVERTEXARRAYPROC         glBindVertexArray;
@@ -76,6 +105,14 @@ PFNGLBUFFERDATAPROC              glBufferData;
 PFNGLVERTEXATTRIBPOINTERPROC     glVertexAttribPointer;
 PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
 /* PFNGLDRAWARRAYSPROC              glDrawArrays; */
+PFNGLBINDFRAMEBUFFERPROC         glBindFramebuffer;
+PFNGLGENFRAMEBUFFERSPROC         glGenFramebuffers;
+/* PFNGLGENTEXTURESPROC             glGenTextures; */
+/* PFNGLBINDTEXTURESPROC             glBindTexture; // NOTE: glBindTexture(s), not glBindTexture in PFNPROC */
+/* PFNGLTEXPARAMETERIPROC           glTexParameteri; */
+/* PFNGLTEXIMAGE2DPROC              glTexImage2D; */
+PFNGLFRAMEBUFFERTEXTURE2DPROC    glFramebufferTexture2D;
+PFNGLCHECKFRAMEBUFFERSTATUSPROC  glCheckFramebufferStatus;
 
 //
 // signatures
@@ -95,8 +132,5 @@ GLuint
 createShaderProgram_vgf(const GLchar** vertex_shader_source,
                         const GLchar** geometry_shader_source,
                         const GLchar** fragment_shader_source);
-
-void
-glError();
 
 #endif // __ogl_tools__

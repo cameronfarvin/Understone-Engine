@@ -133,17 +133,17 @@ main(int argc, char** argv)
 
     while(RUNNING)
     {
-        glError();
+        glError;
         
         refreshInputState();
 
-        glError();
+        glError;
         render_triangle();
-        glError();
+        glError;
 
-        glError();
+        glError;
         swapBuffers();
-        glError();
+        glError;
     }
 
     destroyEngine();
