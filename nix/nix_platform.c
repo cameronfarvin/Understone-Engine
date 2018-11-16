@@ -45,7 +45,7 @@ x11_createWindow()
 
     x11.default_screen = XDefaultScreenOfDisplay(x11.display);
     assert(x11.default_screen);
-    
+
     x11.default_screen_number = XDefaultScreen(x11.display);
     /* x11.connection_number     = XConnectionNumber(x11.display); */
     /* x11.default_color_map     = XDefaultColormap(x11.display, 0); */
@@ -65,7 +65,7 @@ x11_createWindow()
     // Describe desired frame buffer
     // [ cfarvin::NOTE ] may need to render to pixel buffers for { GLX_DRAWABLE_TYPE }
     // rather than window buffers { GLX_WINDOW_BIT }. If so, will need to substitue
-    // XCreateWindow() for XCreatePixmap() 
+    // XCreateWindow() for XCreatePixmap()
     GLint glxAttributes[] =
         {
             GLX_X_RENDERABLE    , True,
@@ -150,7 +150,7 @@ x11_createWindow()
                         x11.visual_info->visual,
                         AllocNone);
     x11.set_window_attributes.event_mask = ExposureMask;
-    
+
     x11.engine_window =
         XCreateWindow(x11.display,                                      // display
                       XRootWindow(x11.display,
@@ -181,7 +181,7 @@ x11_createWindow()
 
     const char* glExtensions = glXQueryExtensionsString(x11.display,
                                                         x11.default_screen_number);
-    
+
     if (isExtensionSupported(glExtensions, "GLX_ARB_create_context"))
     {
         x11.ogl_context = glXCreateContextAttribsARB(x11.display,
@@ -209,7 +209,7 @@ x11_createWindow()
            glGetString(GL_RENDERER),
            glGetString(GL_VERSION),
            glGetString(GL_SHADING_LANGUAGE_VERSION));
-    
+
     XClearWindow(x11.display, x11.engine_window);
     XSelectInput(x11.display, x11.engine_window,
                  ExposureMask|
@@ -255,7 +255,7 @@ x11_createWindow()
     glCreateProgram = (PFNGLCREATEPROGRAMPROC)
         glXGetProcAddressARB( (const GLubyte*) "glCreateProgram");
     assert(glCreateProgram);
-    
+
     glShaderSource = (PFNGLSHADERSOURCEPROC)
         glXGetProcAddressARB( (const GLubyte*) "glShaderSource");
     assert(glShaderSource);
@@ -263,7 +263,7 @@ x11_createWindow()
     glCompileShader = (PFNGLCOMPILESHADERPROC)
         glXGetProcAddressARB( (const GLubyte*) "glCompileShader");
     assert(glCompileShader);
-    
+
     glAttachShader = (PFNGLATTACHSHADERPROC)
         glXGetProcAddressARB( (const GLubyte*) "glAttachShader");
     assert(glAttachShader);
@@ -287,7 +287,7 @@ x11_createWindow()
     glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)
         glXGetProcAddressARB( (const GLubyte*) "glGetUniformLocation");
     assert(glGetUniformLocation);
-    
+
     glUniform1f = (PFNGLUNIFORM1FPROC)
         glXGetProcAddressARB( (const GLubyte*) "glUniform1f");
     assert(glUniform1f);
@@ -368,9 +368,9 @@ x11_createWindow()
     x11_handleEvents();
 }
 
-EVENT
+uEVENT
 x11_handleEvents()
-{   
+{
     while(1)
     {
         XNextEvent(x11.display, &x11.event);
@@ -385,33 +385,33 @@ x11_handleEvents()
                         mouse.x = x11.event.xmotion.x;
                         mouse.y = x11.event.xmotion.y;
                         mouse.mouse_left = IS_DOWN;
-                        return EVENT_MOUSE_PRESS_LEFT;
+                        return uEVENT_MOUSE_PRESS_LEFT;
                     }
                     case 2:
                     {
                         mouse.x = x11.event.xmotion.x;
                         mouse.y = x11.event.xmotion.y;
                         mouse.mouse_middle = IS_DOWN;
-                        return EVENT_MOUSE_PRESS_MIDDLE;
+                        return uEVENT_MOUSE_PRESS_MIDDLE;
                     }
                     case 3:
                     {
                         mouse.x = x11.event.xmotion.x;
                         mouse.y = x11.event.xmotion.y;
                         mouse.mouse_right = IS_DOWN;
-                        return EVENT_MOUSE_PRESS_RIGHT;
+                        return uEVENT_MOUSE_PRESS_RIGHT;
                     }
                     case 4:
                     {
                         mouse.x = x11.event.xmotion.x;
                         mouse.y = x11.event.xmotion.y;
-                        return EVENT_MOUSE_SCROLL_DOWN;
+                        return uEVENT_MOUSE_SCROLL_DOWN;
                     }
                     case 5:
                     {
                         mouse.x = x11.event.xmotion.x;
                         mouse.y = x11.event.xmotion.y;
-                        return EVENT_MOUSE_SCROLL_UP;
+                        return uEVENT_MOUSE_SCROLL_UP;
                     }
                 }
             }
@@ -424,21 +424,21 @@ x11_handleEvents()
                         mouse.x = x11.event.xmotion.x;
                         mouse.y = x11.event.xmotion.y;
                         mouse.mouse_left = IS_UP;
-                        return EVENT_MOUSE_RELEASE_LEFT;
+                        return uEVENT_MOUSE_RELEASE_LEFT;
                     }
                     case 2:
                     {
                         mouse.x = x11.event.xmotion.x;
                         mouse.y = x11.event.xmotion.y;
                         mouse.mouse_middle = IS_UP;
-                        return EVENT_MOUSE_RELEASE_MIDDLE;
+                        return uEVENT_MOUSE_RELEASE_MIDDLE;
                     }
                     case 3:
                     {
                         mouse.x = x11.event.xmotion.x;
                         mouse.y = x11.event.xmotion.y;
                         mouse.mouse_right = IS_UP;
-                        return EVENT_MOUSE_RELEASE_RIGHT;
+                        return uEVENT_MOUSE_RELEASE_RIGHT;
                     }
                 }
             }
@@ -454,7 +454,7 @@ x11_handleEvents()
                 {
                     viewport.width = x11.window_attributes.width;
                     viewport.height = x11.window_attributes.height;
-                    return EVENT_RESIZE;
+                    return uEVENT_RESIZE;
                 }
             }
             case ClientMessage:
@@ -462,12 +462,12 @@ x11_handleEvents()
                 if (x11.event.xclient.data.l[0] == atomWmDeleteWindow)
                 {
                     printf("[ NOTIFY ] Recieved destroy signal\n");
-                    return EVENT_CLOSE;
+                    return uEVENT_CLOSE;
                 }
             }
             default:
             {
-                return EVENT_NONE;
+                return uEVENT_NONE;
             }
         }
     }

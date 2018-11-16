@@ -3,8 +3,11 @@
 #include <engine_tools/ogl_tools.h>
 #include <engine_tools/stats_tools.h>
 
+#if __linux__
 #include <nix/nix_platform.h>
+#elif _WIN32
 #include <win/win_platform.h>
+#endif // _WIN32
 
 //
 // renderers
@@ -16,73 +19,76 @@ uint8 RUNNING = 1;
 void
 refreshInputState()
 {
+    uEVENT event = uEVENT_NONE;
 #if __linux__
-    EVENT event = x11_handleEvents();
-#endif // __linux__
-        
+    event = x11_handleEvents();
+#elif _WIN32
+    event = win32_handleEvents();
+#endif // __linux__ _WIN32
+
     stats.events_handled_this_loop = 0;
-                    
+
     switch(event)
     {
-        case EVENT_NONE:
+        case uEVENT_NONE:
         {
             break;
         }
-        case EVENT_CLOSE:
+        case uEVENT_CLOSE:
         {
             RUNNING = 0;
             stats.events_handled_this_loop++;
             break;
         }
-        case EVENT_MOUSE_PRESS_LEFT:
+        case uEVENT_MOUSE_PRESS_LEFT:
         {
             printf("ButtonPress | Mouse Left\n");
             stats.events_handled_this_loop++;
             break;
         }
-        case EVENT_MOUSE_PRESS_RIGHT:
+        case uEVENT_MOUSE_PRESS_RIGHT:
         {
             printf("ButtonPress | Mouse Right\n");
             stats.events_handled_this_loop++;
             break;
         }
-        case EVENT_MOUSE_PRESS_MIDDLE:
+        case uEVENT_MOUSE_PRESS_MIDDLE:
         {
             printf("ButtonPress | Mouse Middle\n");
             stats.events_handled_this_loop++;
             break;
         }
-        case EVENT_MOUSE_RELEASE_LEFT:
+        case uEVENT_MOUSE_RELEASE_LEFT:
         {
             printf("ButtonRelease | Mouse Left\n");
             stats.events_handled_this_loop++;
             break;
         }
-        case EVENT_MOUSE_RELEASE_RIGHT:
+        case uEVENT_MOUSE_RELEASE_RIGHT:
         {
             printf("ButtonRelease | Mouse Right\n");
             stats.events_handled_this_loop++;
             break;
         }
-        case EVENT_MOUSE_RELEASE_MIDDLE:
+        case uEVENT_MOUSE_RELEASE_MIDDLE:
         {
             printf("ButtonRelease | Mouse Middle\n");
             stats.events_handled_this_loop++;
             break;
         }
-        case EVENT_MOUSE_SCROLL_UP:
+        case uEVENT_MOUSE_SCROLL_UP:
         {
             printf("ButtonPress | Mouse Scroll Up\n");
-            stats.events_handled_this_loop++;                    
+            stats.events_handled_this_loop++;
             break;
         }
-        case EVENT_MOUSE_SCROLL_DOWN:
+        case uEVENT_MOUSE_SCROLL_DOWN:
         {
             printf("ButtonPress | Mouse Scroll Down\n");
             stats.events_handled_this_loop++;
             break;
         }
-        case EVENT_RESIZE:
+        case uEVENT_RESIZE:
         {
             glViewport(0,
                        0,
@@ -98,21 +104,29 @@ initializeGameWindowsAndContext()
 #if __linux__
     x11_createWindow();
 #endif // __linux__
+
+#if _WIN32
+    win32_createWindow();
+#endif // _WIN32
 }
 
 void
 initializeRenderers()
 {
+    // [ cfarvin::REMOVE ] linux #if
+#if __linux__
     initRenderer_triangle();
+#endif // __linux__
 }
 
-void
+inline void
 swapBuffers()
 {
 #if __linux__
     glXSwapBuffers(x11.display, x11.engine_window);
-#endif // __linux__
-    
+#eleif _WIN32
+    SwapBuffers(WIN32_INFO.device_context);
+#endif
 }
 
 void
@@ -125,27 +139,83 @@ destroyEngine()
 
 }
 
-int
-main(int argc, char** argv)
+#if _WIN32
+int CALLBACK
+WinMain(HINSTANCE hInstance,
+        HINSTANCE hPrevInstance,
+        LPSTR lpCmdLine,
+        int nCmdShow)
+#else
+    int
+    main(int argc, char** argv)
+#endif // _WIN32
 {
-    initializeGameWindowsAndContext();
-    initializeRenderers();
+#if _WIN32
+    win32.instance = hInstance;
+    win32.command_show = nCmdShow;
+
+    win32.class_name  = "UE Window Class";
+
+    WNDCLASSEX window_class = { 0 };
+    window_class.style = CS_HREDRAW|CS_VREDRAW|CS_OWNDC;
+    window_class.lpfnWndProc = UninstallEngineWindowProc;
+    window_class.hInstance = win32.instance;
+    window_class.lpszClassName = win32.class_name;
+    window_class.cbSize = sizeof(WNDCLASSEX);
+    /* window_class.hIcon = NULL; */
+    /* window_class.hCursor = NULL; */
+    /* window_class.hbrBackground = NULL; */
+    /* window_class.lpszMenuName = NULL; */
+    /* window_class.hIconSm = NULL; */
+
+    if(!RegisterClassEx(&window_class))
+    {
+        printf("[ UE::WIN::ERROR ] Could not register window class\n");
+    }
+
+    win32.window = CreateWindowEx(0,
+                                  window_class.lpszClassName,
+                                  "UE",
+                                  WS_OVERLAPPEDWINDOW|WS_VISIBLE,
+                                  CW_USEDEFAULT,
+                                  CW_USEDEFAULT,
+                                  CW_USEDEFAULT,
+                                  CW_USEDEFAULT,
+                                  0,
+                                  0,
+                                  win32.instance,
+                                  0);
+
+    if (win32.window == NULL)
+    {
+        printf("[ UE::WIN::ERROR ] Windows returned null handle to client window.\n");
+    }
+
+    ShowWindow(win32.window, win32.command_show);
+    win32_handleEvents();
+
+#endif // _WIN32
+
+    /* initializeGameWindowsAndContext(); */
+    /* initializeRenderers(); */
 
     while(RUNNING)
     {
-        glError;
-        
+        /* glError; */
+
         refreshInputState();
 
-        glError;
-        render_triangle();
-        glError;
+        /* glError; */
+        /* /\* render_triangle(); *\/ */
+        /* glError; */
 
-        glError;
-        swapBuffers();
-        glError;
+        /* glError; */
+        /* swapBuffers(); */
+        /* glError; */
     }
 
-    destroyEngine();
+    /* destroyEngine(); */
+
+    printf("[ SUCCESS ]\n");
     return 0;
 }

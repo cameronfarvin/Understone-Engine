@@ -1,11 +1,16 @@
 #ifndef __ogl_tools__
 #define __ogl_tools__ 1
 
-#include <GL/gl.h>
-#include <GL/glu.h>
+/* #include <GL/gl.h> */
+/* #include <GL/glu.h> */
 
+#if __linux__
 #include <nix/nix_platform.h>
+#elif _WIN32
 #include <win/win_platform.h>
+#endif // __linux__ _WIN32
+
+#include <assert.h>
 
 #ifndef APIENTRY
 #define APIENTRY

@@ -14,7 +14,16 @@ StringifyPipelineState(PipelineState pipeline_state)
     switch(pipeline_state)
     {
         case pipeline_state_none:
-        {            strcpy(stringified_pipeline_state, "NONE");
+        {
+#if _WIN32
+#pragma warning(push)
+#pragma warning( disable: 4996 ) 
+#endif // _WIN32
+			strcpy(stringified_pipeline_state, "NONE");
+#if _WIN32
+#pragma warning(push)
+#pragma warning( disable: 4996 )    
+#endif // _WIN32
             break;
         }
         case pipeline_state_vertex_shader:
