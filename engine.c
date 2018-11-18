@@ -17,13 +17,18 @@
 uint8 RUNNING = 1;
 
 void
-refreshInputState()
+uHandleWindowResize()
 {
-    uEVENT event = uEVENT_NONE;
+    printf("uHandleWindowResize()\n");
+}
+
+void
+uRefreshInputState()
+{
 #if __linux__
-    event = x11_handleEvents();
+    uEVENT event = x11_handleEvents();
 #elif _WIN32
-    event = win32_handleEvents();
+    uEVENT event = uWin32HandleEvents();
 #endif // __linux__ _WIN32
 
     stats.events_handled_this_loop = 0;
@@ -32,6 +37,14 @@ refreshInputState()
     {
         case uEVENT_NONE:
         {
+            break;
+        }
+        case uEVENT_RESIZE:
+        {
+            glViewport(0,
+                       0,
+                       viewport.width,
+                       viewport.height);
             break;
         }
         case uEVENT_CLOSE:
@@ -88,39 +101,39 @@ refreshInputState()
             stats.events_handled_this_loop++;
             break;
         }
-        case uEVENT_RESIZE:
+
+        default:
         {
-            glViewport(0,
-                       0,
-                       viewport.width,
-                       viewport.height);
+            return;
         }
     }
 }
 
 void
-initializeGameWindowsAndContext()
+uInitializeGameWindowsAndContext()
 {
 #if __linux__
-    x11_createWindow();
+    uX11CreateWindow();
 #endif // __linux__
 
 #if _WIN32
-    win32_createWindow();
+    uWin32CreateWindow();
 #endif // _WIN32
+
+    uRefreshInputState();
 }
 
 void
-initializeRenderers()
+uInitializeRenderers()
 {
     // [ cfarvin::REMOVE ] linux #if
 #if __linux__
-    initRenderer_triangle();
+    uInitRenderer(triangle); // should work like this;
 #endif // __linux__
 }
 
 inline void
-swapBuffers()
+uSwapBuffers()
 {
 #if __linux__
     glXSwapBuffers(x11.display, x11.engine_window);
@@ -130,12 +143,13 @@ swapBuffers()
 }
 
 void
-destroyEngine()
+uDestroyEngine()
 {
     printf("[ DESTROY ENGINE ]\n");
 #if __linux__
-    x11_destroy();
+    uX11Destroy();
 #endif // __linux__
+    // [ cfarvin::TODO ] destroy eingine functionality for win32
 
 }
 
@@ -153,68 +167,28 @@ WinMain(HINSTANCE hInstance,
 #if _WIN32
     win32.instance = hInstance;
     win32.command_show = nCmdShow;
-
     win32.class_name  = "UE Window Class";
-
-    WNDCLASSEX window_class = { 0 };
-    window_class.style = CS_HREDRAW|CS_VREDRAW|CS_OWNDC;
-    window_class.lpfnWndProc = UninstallEngineWindowProc;
-    window_class.hInstance = win32.instance;
-    window_class.lpszClassName = win32.class_name;
-    window_class.cbSize = sizeof(WNDCLASSEX);
-    /* window_class.hIcon = NULL; */
-    /* window_class.hCursor = NULL; */
-    /* window_class.hbrBackground = NULL; */
-    /* window_class.lpszMenuName = NULL; */
-    /* window_class.hIconSm = NULL; */
-
-    if(!RegisterClassEx(&window_class))
-    {
-        printf("[ UE::WIN::ERROR ] Could not register window class\n");
-    }
-
-    win32.window = CreateWindowEx(0,
-                                  window_class.lpszClassName,
-                                  "UE",
-                                  WS_OVERLAPPEDWINDOW|WS_VISIBLE,
-                                  CW_USEDEFAULT,
-                                  CW_USEDEFAULT,
-                                  CW_USEDEFAULT,
-                                  CW_USEDEFAULT,
-                                  0,
-                                  0,
-                                  win32.instance,
-                                  0);
-
-    if (win32.window == NULL)
-    {
-        printf("[ UE::WIN::ERROR ] Windows returned null handle to client window.\n");
-    }
-
-    ShowWindow(win32.window, win32.command_show);
-    win32_handleEvents();
-
 #endif // _WIN32
 
-    /* initializeGameWindowsAndContext(); */
+    uInitializeGameWindowsAndContext();
     /* initializeRenderers(); */
 
     while(RUNNING)
     {
         /* glError; */
 
-        refreshInputState();
+        uRefreshInputState();
 
         /* glError; */
         /* /\* render_triangle(); *\/ */
         /* glError; */
 
         /* glError; */
-        /* swapBuffers(); */
+        uSwapBuffers();
         /* glError; */
     }
 
-    /* destroyEngine(); */
+    uDestroyEngine();
 
     printf("[ SUCCESS ]\n");
     return 0;

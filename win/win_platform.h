@@ -24,14 +24,14 @@ uWIN32_INFO win32;
 
 uEVENT win32_proxy_event;
 
-void win32_createWindow();
+void uWin32CreateWindow();
 
 /* void win32_destroy(); */
 
-inline void* GetPFNGL(const char *name);
+inline void* uGetPFNGL(const char *name);
 
-uEVENT win32_handleEvents();
+uEVENT uWin32HandleEvents();
 
-LRESULT CALLBACK UninstallEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 #endif // __win_platform__
