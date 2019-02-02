@@ -2,7 +2,7 @@
 
 char stringified_pipeline_state[STRINGIFIED_PIPELINE_STATE_LENGTH];
 char*
-StringifyPipelineState(PipelineState pipeline_state)
+uGLStringifyPipelineState(PipelineState pipeline_state)
 {
     for (size_t string_index = 0;
          string_index < STRINGIFIED_PIPELINE_STATE_LENGTH;
@@ -56,7 +56,7 @@ StringifyPipelineState(PipelineState pipeline_state)
 }
 
 void
-checkErrorState(GLuint object, GLenum parameter_to_check, PipelineState pipeline_state)
+uGLCheckErrorState(GLuint object, GLenum parameter_to_check, PipelineState pipeline_state)
 {
     GLint   err = GL_TRUE;
     GLsizei log_length = 0;
@@ -72,7 +72,7 @@ checkErrorState(GLuint object, GLenum parameter_to_check, PipelineState pipeline
             if (err != GL_TRUE)
             {
                 printf("[ ERROR | GL_COMPILE_STATUS | %s ] %s",
-                       StringifyPipelineState(pipeline_state),
+                       uGLStringifyPipelineState(pipeline_state),
                        message);
 
                 fflush(stdout);
@@ -91,7 +91,7 @@ checkErrorState(GLuint object, GLenum parameter_to_check, PipelineState pipeline
             if (err != GL_TRUE)
             {
                 printf("[ ERROR | GL_LINK_STATUS | %s ] %s",
-                       StringifyPipelineState(pipeline_state),
+                       uGLStringifyPipelineState(pipeline_state),
                        message);
 
                 fflush(stdout);
@@ -107,7 +107,7 @@ checkErrorState(GLuint object, GLenum parameter_to_check, PipelineState pipeline
 }
 
 GLuint
-createShaderProgram_vf(const GLchar** vertex_shader_source,
+uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
                        const GLchar** fragment_shader_source)
 {
     // create, compile & error check vertex shader
@@ -115,7 +115,7 @@ createShaderProgram_vf(const GLchar** vertex_shader_source,
     assert(vertex_shader);
     glShaderSource(vertex_shader, 1, vertex_shader_source, NULL);
     glCompileShader(vertex_shader);
-    checkErrorState(vertex_shader,
+    uGLCheckErrorState(vertex_shader,
                     GL_COMPILE_STATUS,
                     pipeline_state_vertex_shader);
 
@@ -124,7 +124,7 @@ createShaderProgram_vf(const GLchar** vertex_shader_source,
     assert(fragment_shader);
     glShaderSource(fragment_shader, 1, fragment_shader_source, NULL);
     glCompileShader(fragment_shader);
-    checkErrorState(fragment_shader,
+    uGLCheckErrorState(fragment_shader,
                     GL_COMPILE_STATUS,
                     pipeline_state_fragment_shader);
 
@@ -134,7 +134,7 @@ createShaderProgram_vf(const GLchar** vertex_shader_source,
     glAttachShader(shader_program, vertex_shader);
     glAttachShader(shader_program, fragment_shader);
     glLinkProgram(shader_program);
-    checkErrorState(shader_program,
+    uGLCheckErrorState(shader_program,
                     GL_LINK_STATUS,
                     pipeline_state_shader_program);
 
@@ -146,7 +146,7 @@ createShaderProgram_vf(const GLchar** vertex_shader_source,
 }
 
 GLuint
-createShaderProgram_vgf(const GLchar** vertex_shader_source,
+uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
                         const GLchar** geometry_shader_source,
                         const GLchar** fragment_shader_source)
 {
@@ -155,7 +155,7 @@ createShaderProgram_vgf(const GLchar** vertex_shader_source,
     assert(vertex_shader);
     glShaderSource(vertex_shader, 1, vertex_shader_source, NULL);
     glCompileShader(vertex_shader);
-    checkErrorState(vertex_shader,
+    uGLCheckErrorState(vertex_shader,
                     GL_COMPILE_STATUS,
                     pipeline_state_vertex_shader);
 
@@ -164,7 +164,7 @@ createShaderProgram_vgf(const GLchar** vertex_shader_source,
     assert(geometry_shader);
     glShaderSource(geometry_shader, 1, geometry_shader_source, NULL);
     glCompileShader(geometry_shader);
-    checkErrorState(geometry_shader,
+    uGLCheckErrorState(geometry_shader,
                     GL_COMPILE_STATUS,
                     pipeline_state_geometry_shader);
 
@@ -173,7 +173,7 @@ createShaderProgram_vgf(const GLchar** vertex_shader_source,
     assert(fragment_shader);
     glShaderSource(fragment_shader, 1, fragment_shader_source, NULL);
     glCompileShader(fragment_shader);
-    checkErrorState(fragment_shader,
+    uGLCheckErrorState(fragment_shader,
                     GL_COMPILE_STATUS,
                     pipeline_state_fragment_shader);
 
@@ -184,7 +184,7 @@ createShaderProgram_vgf(const GLchar** vertex_shader_source,
     glAttachShader(shader_program, geometry_shader);
     glAttachShader(shader_program, fragment_shader);
     glLinkProgram(shader_program);
-    checkErrorState(shader_program,
+    uGLCheckErrorState(shader_program,
                     GL_LINK_STATUS,
                     pipeline_state_shader_program);
 

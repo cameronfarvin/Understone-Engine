@@ -34,7 +34,7 @@ isExtensionSupported(const char *extList, const char *extension)
 }
 
 void
-x11_createWindow()
+uX11CreateWindow()
 {
     //
     // Build x11 struct
@@ -365,11 +365,11 @@ x11_createWindow()
     assert(glCheckFramebufferStatus);
 
 
-    x11_handleEvents();
+    uX11HandleEvents();
 }
 
 uEVENT
-x11_handleEvents()
+uX11HandleEvents()
 {
     while(1)
     {
@@ -474,7 +474,7 @@ x11_handleEvents()
 }
 
 void
-x11_destroy()
+uX11Destroy()
 {
     glXDestroyContext(x11.display, x11.ogl_context);
     XFree(x11.visual_info);

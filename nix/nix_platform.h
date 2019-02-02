@@ -50,12 +50,12 @@ X11_INFO x11;
 Atom atomWmDeleteWindow;
 
 void
-x11_createWindow();
+uX11CreateWindow();
 
 void
-x11_destroy();
+uX11Destroy();
 
-EVENT
-x11_handleEvents();
+uEVENT
+uX11HandleEvents();
 
 #endif // __nix_platform__
