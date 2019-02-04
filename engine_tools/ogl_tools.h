@@ -69,6 +69,44 @@ typedef enum
         pipeline_state_shader_program,
     } PipelineState;
 
+typedef struct
+{
+    // [ cfarvin::NOTE ] Not sure if it is necessary to keep pointers to shaders.
+    // Shaders for now will be static, and it is not necessary to store the char*
+    // so long as we have the gpuid of the shader program.
+    /* char* const* vshdr; */
+    /* char* const* fshdr; */
+    GLuint shader_program;
+
+    //
+    // attribute_locations
+    //
+    GLint vshdr_position_location;
+    GLint fshdr_color_location;
+
+    //
+    // vao_vbo
+    //
+    GLuint vertex_array_bufer_location;
+    GLuint vertex_buffer_location;
+
+    // [ cfarvin::NOTE ] We will absolutely want to have access to the vertex data.
+    // For now, commenting out just to get things working.
+    //
+    // triangle_vertex_data
+    //
+    /* GLfloat** triangle_vertex_data; */
+    
+    //
+    // texture map
+    //
+    GLuint texture_map;
+    /* GLubyte** test_fbo_data; */
+    GLuint depth_texture;
+    GLuint framebuffer;
+
+} uGLRenderer;
+
 // [ cfarvin::TODO ] Use for other platforms (don't forget)
 typedef struct
 {
@@ -123,18 +161,18 @@ PFNGLCHECKFRAMEBUFFERSTATUSPROC  glCheckFramebufferStatus;
 // signatures
 //
 char*
-StringifyPipelineState(PipelineState pipeline_state);
+uGLStringifyPipelineState(PipelineState pipeline_state);
 
 void
-checkErrorState(GLuint object, GLenum parameter_to_check,
+uGLCheckErrorState(GLuint object, GLenum parameter_to_check,
                 PipelineState pipeline_state);
 
 GLuint
-createShaderProgram_vf(const GLchar** vertex_shader_source,
+uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
                        const GLchar** fragment_shader_source);
 
 GLuint
-createShaderProgram_vgf(const GLchar** vertex_shader_source,
+uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
                         const GLchar** geometry_shader_source,
                         const GLchar** fragment_shader_source);
 

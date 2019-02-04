@@ -9,12 +9,9 @@
 #include <win/win_platform.h>
 #endif // _WIN32
 
-//
-// renderers
-//
-#include <renderers/triangle_renderer.h>
+#include <renderers/master_renderer.h>
 
-uint8 RUNNING = 1;
+bool RUNNING = true;
 
 void
 uHandleWindowResize()
@@ -26,7 +23,7 @@ void
 uRefreshInputState()
 {
 #if __linux__
-    uEVENT event = x11_handleEvents();
+    uEVENT event = uX11HandleEvents();
 #elif _WIN32
     uEVENT event = uWin32HandleEvents();
 #endif // __linux__ _WIN32
@@ -126,18 +123,15 @@ uInitializeGameWindowsAndContext()
 void
 uInitializeRenderers()
 {
-    // [ cfarvin::REMOVE ] linux #if
-#if __linux__
-    uInitRenderer(triangle); // should work like this;
-#endif // __linux__
+    initRenderer_triangle(&triangle_renderer);
 }
 
-inline void
+static inline void
 uSwapBuffers()
 {
 #if __linux__
     glXSwapBuffers(x11.display, x11.engine_window);
-#eleif _WIN32
+#elif _WIN32
     SwapBuffers(WIN32_INFO.device_context);
 #endif
 }
@@ -177,21 +171,20 @@ main(int argc, char** argv)
 #endif // _WIN32
 
     uInitializeGameWindowsAndContext();
-    /* initializeRenderers(); */
+    uInitializeRenderers();
 
     while(RUNNING)
     {
-        /* glError; */
+        glError;
 
         uRefreshInputState();
 
-        /* glError; */
-        /* /\* render_triangle(); *\/ */
-        /* glError; */
+        glError;
+        render_triangle(&triangle_renderer);
+        glError;
 
-        /* glError; */
         uSwapBuffers();
-        /* glError; */
+        glError;
     }
 
     uDestroyEngine();
