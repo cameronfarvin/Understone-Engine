@@ -153,20 +153,26 @@ uDestroyEngine()
 
 }
 
-#if _WIN32
-int CALLBACK
-WinMain(HINSTANCE hInstance,
-        HINSTANCE hPrevInstance,
-        LPSTR lpCmdLine,
-        int nCmdShow)
-#else
-    int
-    main(int argc, char** argv)
-#endif // _WIN32
+/* #if _WIN32 */
+/* int CALLBACK */
+/* WinMain(HINSTANCE hInstance, */
+/*         HINSTANCE hPrevInstance, */
+/*         LPSTR lpCmdLine, */
+/*         int nCmdShow) */
+/* #else */
+/*     int */
+/*     main(int argc, char** argv) */
+/* #endif // _WIN32 */
+main(int argc, char** argv)
 {
 #if _WIN32
-    win32.instance = hInstance;
-    win32.command_show = nCmdShow;
+    // win32.instance = hInstance;
+    win32.instance = GetModuleHandle(NULL);
+    // [ cfarvin::NOTE ] nCmdShow usually passed from WinMain,
+    // Bypassing for now to use SUBSYSTEM:CONSOLE, hard passing
+    // value of <10> "SW_SHOWDEFAULT"
+    /* win32.command_show = nCmdShow; */
+    win32.command_show = 10;
     win32.class_name  = "UE Window Class";
 #endif // _WIN32
 
