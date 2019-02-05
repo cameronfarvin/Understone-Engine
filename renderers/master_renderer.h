@@ -6,5 +6,4 @@
 
 uGLRenderer triangle_renderer;
 
-
 #endif // __master_renderer

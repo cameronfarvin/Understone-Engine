@@ -132,7 +132,7 @@ uSwapBuffers()
 #if __linux__
     glXSwapBuffers(x11.display, x11.engine_window);
 #elif _WIN32
-    SwapBuffers(WIN32_INFO.device_context);
+    SwapBuffers(win32.device_context);
 #endif
 }
 
@@ -179,9 +179,9 @@ main(int argc, char** argv)
 
         uRefreshInputState();
 
-        glError;
-        render_triangle(&triangle_renderer);
-        glError;
+        /* glError; */
+        /* render_triangle(&triangle_renderer); */
+        /* glError; */
 
         uSwapBuffers();
         glError;
