@@ -157,7 +157,7 @@ uDestroyEngine()
 /*     int */
 /*     main(int argc, char** argv) */
 /* #endif // _WIN32 */
-main(int argc, char** argv)
+int main(int argc, char** argv)
 {
 #if _WIN32
     // win32.instance = hInstance;
