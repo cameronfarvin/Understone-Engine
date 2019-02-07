@@ -233,16 +233,13 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             /*     printf("[ UE::WIN::ERROR ] Failed to obtain gl context on paint cal.\n"); */
             /* } */
 
-            win32.device_context = wglGetCurrentDC();
-            if (!win32.device_context)
-            {
-                printf("[ UE::WIN::ERROR ] Failed to obtain device context on paint call\n");
-            }
+            /* win32.device_context = wglGetCurrentDC(); */
+            /* if (!win32.device_context) */
+            /* { */
+            /*     printf("[ UE::WIN::ERROR ] Failed to obtain device context on paint call\n"); */
+            /* } */
 
-            /* glClearColor(1.0f, 0.0f, 0.0f, 1.0f); */
-            /* glClear(GL_COLOR_BUFFER_BIT); */
-            /* SwapBuffers(win32.device_context); */
-            ReleaseDC(win32.window, win32.device_context);
+            /* ReleaseDC(win32.window, win32.device_context); */
             win32_proxy_event = uEVENT_NONE;
             break;
 	}
