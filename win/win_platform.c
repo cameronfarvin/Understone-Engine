@@ -160,8 +160,41 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
 
             // Load all OpenGL functions
-            uWinLoadPFNGL();
-            glUseProgram = uGetPFNGL("glUseProgram");
+            const HMODULE gl_module = LoadLibraryA("opengl32.dll");
+            if (!gl_module)
+            {
+                printf("[ UE::WIN::ERROR ] Could not load opengl32.dll\n");
+                assert(false);
+            }
+
+            glUseProgram = uWin32LoadPFNGL("glUseProgram", &gl_module);
+            glGetShaderiv = uWin32LoadPFNGL("glGetShaderiv", &gl_module);
+            glGetShaderInfoLog = uWin32LoadPFNGL("glGetShaderInfoLog", &gl_module);
+            glGetProgramiv = uWin32LoadPFNGL("glGetProgramiv", &gl_module);
+            glGetProgramInfoLog = uWin32LoadPFNGL("glGetProgramInfoLog", &gl_module);
+            glCreateShader = uWin32LoadPFNGL("glCreateShader", &gl_module);
+            glCreateProgram = uWin32LoadPFNGL("glCreateProgram", &gl_module);
+            glShaderSource = uWin32LoadPFNGL("glShaderSource", &gl_module);
+            glCompileShader = uWin32LoadPFNGL("glCompileShader", &gl_module);
+            glAttachShader = uWin32LoadPFNGL("glAttachShader", &gl_module);
+            glLinkProgram = uWin32LoadPFNGL("glLinkProgram", &gl_module);
+            glDeleteShader = uWin32LoadPFNGL("glDeleteShader", &gl_module);
+            glGetAttribLocation = uWin32LoadPFNGL("glGetAttribLocation", &gl_module);
+            glGetUniformLocation = uWin32LoadPFNGL("glGetUniformLocation", &gl_module);
+            glUniform1f = uWin32LoadPFNGL("glUniform1f", &gl_module);
+            glUniform2f = uWin32LoadPFNGL("glUniform2f", &gl_module);
+            glUniform3f = uWin32LoadPFNGL("glUniform3f", &gl_module);
+            glGenVertexArrays = uWin32LoadPFNGL("glGenVertexArrays", &gl_module);
+            glBindVertexArray = uWin32LoadPFNGL("glBindVertexArray", &gl_module);
+            glGenBuffers = uWin32LoadPFNGL("glGenBuffers", &gl_module);
+            glBindBuffer = uWin32LoadPFNGL("glBindBuffer", &gl_module);
+            glBufferData = uWin32LoadPFNGL("glBufferData", &gl_module);
+            glVertexAttribPointer = uWin32LoadPFNGL("glVertexAttribPointer", &gl_module);
+            glEnableVertexAttribArray = uWin32LoadPFNGL("glEnableVertexAttribArray", &gl_module);
+            glGenFramebuffers = uWin32LoadPFNGL("glGenFramebuffers", &gl_module);
+            glBindFramebuffer = uWin32LoadPFNGL("glBindFramebuffer", &gl_module);
+            glFramebufferTexture2D = uWin32LoadPFNGL("glFramebufferTexture2D", &gl_module);
+            glCheckFramebufferStatus = uWin32LoadPFNGL("glCheckFramebufferStatus", &gl_module);
 
             /* glClearColor(1.0f, 0.0f, 0.0f, 1.0f); */
             /* glClear(GL_COLOR_BUFFER_BIT); */
@@ -206,9 +239,9 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 printf("[ UE::WIN::ERROR ] Failed to obtain device context on paint call\n");
             }
 
-            glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-            SwapBuffers(win32.device_context);
+            /* glClearColor(1.0f, 0.0f, 0.0f, 1.0f); */
+            /* glClear(GL_COLOR_BUFFER_BIT); */
+            /* SwapBuffers(win32.device_context); */
             ReleaseDC(win32.window, win32.device_context);
             win32_proxy_event = uEVENT_NONE;
             break;
@@ -220,38 +253,25 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 // [ cfarvin::NOTE ] [ cfarvin::RETURN ] We just weren't loading the function pointers for
 // the opengl functions. Working on making a cache of the function names and populating them
 // in this function from WM_CREATE msg.
-void
-uWin32LoadPFNGL(const char* fn_name)
+inline void *
+uWin32LoadPFNGL(const char* fn_name, const HMODULE* gl_module)
 {
+    void* pfngl = (void *)wglGetProcAddress(fn_name);
 
-    // [ cfarvin::NOTE ] UNFINISHED. MAKE ARRAY OF PFN STRINGS, LOAD ALL AT ONCE
-    HMODULE gl_module = LoadLibraryA("opengl32.dll");
-    if (!gl_module)
+    if (pfngl == 0 ||
+        (pfngl == (void*)0x1) ||
+        (pfngl == (void*)0x2) ||
+        (pfngl == (void*)0x3) ||
+        (pfngl == (void*)-1))
     {
-        printf("[ UE::WIN::ERROR ] Could not load opengl32.dll\n");
+        pfngl = (void *)GetProcAddress(*gl_module, fn_name);
+    }
+
+    if (!pfngl)
+    {
+        printf("[ UE::WIN::ERROR ] Could not find PFNGL %s", fn_name);
         assert(false);
     }
-
-    for (int ii = 0; ii < NUM_PFNGL; ii++)
-    {
-        void* pfngl = (void *)wglGetProcAddress(fn_name);
-
-        if (pfngl == 0 ||
-            (pfngl == (void*)0x1) ||
-            (pfngl == (void*)0x2) ||
-            (pfngl == (void*)0x3) ||
-            (pfngl == (void*)-1))
-        {
-            pfngl = (void *)GetProcAddress(gl_module, fn_name);
-            if (pfngl == NULL)
-            {
-                printf("[ UE::WIN::ERROR ] Could not find PFNGL %s", fn_name);
-            }
-
-        }
-
-    }
-
 
     return pfngl;
 }

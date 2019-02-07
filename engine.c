@@ -179,9 +179,9 @@ int main(int argc, char** argv)
 
         uRefreshInputState();
 
-        /* glError; */
-        /* render_triangle(&triangle_renderer); */
-        /* glError; */
+        glError;
+        render_triangle(&triangle_renderer);
+        glError;
 
         uSwapBuffers();
         glError;

@@ -28,7 +28,7 @@ void uWin32CreateWindow();
 
 /* void win32_destroy(); */
 
-void uWin32LoadPFNGL(const char *name);
+inline void* uWin32LoadPFNGL(const char *name, const HMODULE* gl_module);
 
 uEVENT uWin32HandleEvents();
 
