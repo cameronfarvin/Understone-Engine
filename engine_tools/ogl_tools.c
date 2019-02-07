@@ -111,7 +111,7 @@ uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
                        const GLchar** fragment_shader_source)
 {
     // create, compile & error check vertex shader
-    GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER); // [ cfarvin::NOTE ] win32 crashes here. Check GLContext creation.
     assert(vertex_shader);
     glShaderSource(vertex_shader, 1, vertex_shader_source, NULL);
     glCompileShader(vertex_shader);

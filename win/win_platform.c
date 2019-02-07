@@ -1,5 +1,9 @@
 #include <win_platform.h>
+#include <assert.h>
 
+#include <engine_tools/type_tools.h>
+#include <engine_tools/event_tools.h>
+#include <engine_tools/ogl_tools.h>
 
 uEVENT
 uWin32HandleEvents()
@@ -29,10 +33,10 @@ uWin32HandleEvents()
 void
 uWin32CreateWindow()
 {
-    win32.class_name  = "UE Window Class";
+    win32.class_name = "UE Window Class";
 
     WNDCLASSEX window_class = { 0 };
-    window_class.style = CS_HREDRAW|CS_VREDRAW|CS_OWNDC;
+    window_class.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     window_class.lpfnWndProc = uEngineWindowProc;
     window_class.hInstance = win32.instance;
     window_class.lpszClassName = win32.class_name;
@@ -43,17 +47,17 @@ uWin32CreateWindow()
     /* window_class.lpszMenuName = NULL; */
     /* window_class.hIconSm = NULL; */
 
-    if(!RegisterClassEx(&window_class))
+    if (!RegisterClassEx(&window_class))
     {
         printf("[ UE::WIN::ERROR ] Could not register window class\n");
     }
 
-    RegisterClassEx(&window_class);
+    //RegisterClassEx(&window_class); // [ cfarvin::NOTE ] Apparently we thought it was a good idea to register the class twice...
 
     win32.window = CreateWindowEx(0,
                                   window_class.lpszClassName,
                                   "UE",
-                                  WS_OVERLAPPEDWINDOW|WS_VISIBLE,
+                                  WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                                   CW_USEDEFAULT,
                                   CW_USEDEFAULT,
                                   CW_USEDEFAULT,
@@ -69,7 +73,7 @@ uWin32CreateWindow()
     }
 
     ShowWindow(win32.window, win32.command_show);
-    uWin32HandleEvents();
+    uWin32HandleEvents(); // [ cfarvin::NOTE ] OpenGL Context Created here on WM_CREATE msg
 }
 
 LRESULT CALLBACK
@@ -80,26 +84,29 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         LRESULT result = { 0 };
 	case WM_CLOSE:
 	{
-            OutputDebugStringA("WM_CLOSE\n");
+            //OutputDebugStringA("WM_CLOSE\n");
+            printf("WM_CLOSE\n");
             win32_proxy_event = uEVENT_CLOSE;
             break;
 	}
 
 	case WM_DESTROY:
 	{
-            OutputDebugStringA("WM_DESTROY\n");
+            //OutputDebugStringA("WM_DESTROY\n");
+            printf("WM_DESTROY\n");
             win32_proxy_event = uEVENT_CLOSE;
             PostQuitMessage(0);
             break;
 	}
 
-        case WM_CREATE:
-        {
-            OutputDebugStringA("WM_CREATE\n");
+	case WM_CREATE:
+	{
+            //OutputDebugStringA("WM_CREATE\n");
+            printf("WM_CREATE\n");
             PIXELFORMATDESCRIPTOR pixel_format_desc = { 0 };
             pixel_format_desc.nSize = sizeof(PIXELFORMATDESCRIPTOR);
             pixel_format_desc.nVersion = 1;
-            pixel_format_desc.dwFlags = PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER;
+            pixel_format_desc.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
             pixel_format_desc.iPixelType = PFD_TYPE_RGBA;
             pixel_format_desc.cColorBits = 32;
             pixel_format_desc.cRedBits = 0;
@@ -125,21 +132,36 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             pixel_format_desc.dwDamageMask = 0;
 
             win32.device_context = GetDC(hwnd);
+            if (!win32.device_context)
+            {
+                printf("[ UE::WIN::ERROR ] Could not obtain a valid device context\n");
+                assert(false);
+            }
+
             int pixel_format = ChoosePixelFormat(win32.device_context, &pixel_format_desc);
+            if (!pixel_format)
+            {
+                printf("[ UE::WIN::ERROR ] Could not obtain a valid pixel format\n");
+                assert(false);
+            }
             SetPixelFormat(win32.device_context, pixel_format, &pixel_format_desc);
 
             win32.gl_context = wglCreateContext(win32.device_context);
             if (!win32.gl_context)
             {
                 printf("[ UE::WIN::ERROR ] Could not obtain a GL rendering context\n");
+                assert(false);
             }
 
             if (!wglMakeCurrent(win32.device_context, win32.gl_context))
             {
                 printf("[ UE::WIN::ERROR ] Could not make the GL rendering context current\n");
+                assert(false);
             }
 
-            PFNGLUSEPROGRAMPROC glUseProgram = uGetPFNGL("glUseProgram");
+            // Load all OpenGL functions
+            uWinLoadPFNGL();
+            glUseProgram = uGetPFNGL("glUseProgram");
 
             /* glClearColor(1.0f, 0.0f, 0.0f, 1.0f); */
             /* glClear(GL_COLOR_BUFFER_BIT); */
@@ -148,28 +170,30 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
             win32_proxy_event = uEVENT_NONE;
             break;
-        }
+	}
 
-		case WM_LBUTTONDOWN:
-		{
-			win32_proxy_event = uEVENT_MOUSE_PRESS_LEFT;
-			break;
-		}
+	case WM_LBUTTONDOWN:
+	{
+            win32_proxy_event = uEVENT_MOUSE_PRESS_LEFT;
+            break;
+	}
 
-        case WM_SIZE:
-        {
-            OutputDebugStringA("WM_SIZE\n");
+	case WM_SIZE:
+	{
+            //OutputDebugStringA("WM_SIZE\n");
+            printf("WM_SIZE\n");
             // [ cfarvin::TODO ] pass resize info to main engine
             /* int width = LOWORD(lParam); */
             /* int height = HIWORD(lParam); */
             /*printf("width: %d\nheight: %d\n", width, height);*/
             win32_proxy_event = uEVENT_RESIZE;
             return DefWindowProc(hwnd, uMsg, wParam, lParam);
-        }
+	}
 
-        case WM_PAINT:
-        {
-            OutputDebugStringA("WM_PAINT\n");
+	case WM_PAINT:
+	{
+            //OutputDebugStringA("WM_PAINT\n");
+            printf("WM_PAINT\n");
             /* HGLRC gl_rendering_context = wglGetCurrentContext(); */
             /* if (!gl_rendering_context) */
             /* { */
@@ -188,29 +212,46 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             ReleaseDC(win32.window, win32.device_context);
             win32_proxy_event = uEVENT_NONE;
             break;
-        }
+	}
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-inline void*
-uGetPFNGL(const char* fn_name)
+// [ cfarvin::NOTE ] [ cfarvin::RETURN ] We just weren't loading the function pointers for
+// the opengl functions. Working on making a cache of the function names and populating them
+// in this function from WM_CREATE msg.
+void
+uWin32LoadPFNGL(const char* fn_name)
 {
-    void* pfngl = (void *)wglGetProcAddress(fn_name);
-    if(pfngl == 0 ||
-       (pfngl == (void*)0x1) ||
-       (pfngl == (void*)0x2) ||
-       (pfngl == (void*)0x3) ||
-       (pfngl == (void*)-1) )
+
+    // [ cfarvin::NOTE ] UNFINISHED. MAKE ARRAY OF PFN STRINGS, LOAD ALL AT ONCE
+    HMODULE gl_module = LoadLibraryA("opengl32.dll");
+    if (!gl_module)
     {
-        HMODULE module = LoadLibraryA("opengl32.dll");
-        pfngl = (void *)GetProcAddress(module, fn_name);
+        printf("[ UE::WIN::ERROR ] Could not load opengl32.dll\n");
+        assert(false);
     }
 
-    if (pfngl == NULL)
+    for (int ii = 0; ii < NUM_PFNGL; ii++)
     {
-        printf("[ UE::WIN::ERROR ] Could not find PFNGL %s", fn_name);
+        void* pfngl = (void *)wglGetProcAddress(fn_name);
+
+        if (pfngl == 0 ||
+            (pfngl == (void*)0x1) ||
+            (pfngl == (void*)0x2) ||
+            (pfngl == (void*)0x3) ||
+            (pfngl == (void*)-1))
+        {
+            pfngl = (void *)GetProcAddress(gl_module, fn_name);
+            if (pfngl == NULL)
+            {
+                printf("[ UE::WIN::ERROR ] Could not find PFNGL %s", fn_name);
+            }
+
+        }
+
     }
+
 
     return pfngl;
 }

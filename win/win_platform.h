@@ -28,7 +28,7 @@ void uWin32CreateWindow();
 
 /* void win32_destroy(); */
 
-inline void* uGetPFNGL(const char *name);
+void uWin32LoadPFNGL(const char *name);
 
 uEVENT uWin32HandleEvents();
 
