@@ -71,22 +71,13 @@ typedef enum
 
 typedef struct
 {
-    // [ cfarvin::NOTE ] Not sure if it is necessary to keep pointers to shaders.
-    // Shaders for now will be static, and it is not necessary to store the char*
-    // so long as we have the gpuid of the shader program.
-    /* char* const* vshdr; */
-    /* char* const* fshdr; */
     GLuint shader_program;
 
-    //
     // attribute_locations
-    //
     GLint vshdr_position_location;
     GLint fshdr_color_location;
 
-    //
     // vao_vbo
-    //
     GLuint vertex_array_bufer_location;
     GLuint vertex_buffer_location;
 
@@ -96,10 +87,8 @@ typedef struct
     // triangle_vertex_data
     //
     /* GLfloat** triangle_vertex_data; */
-    
-    //
+
     // texture map
-    //
     GLuint texture_map;
     /* GLubyte** test_fbo_data; */
     GLuint depth_texture;

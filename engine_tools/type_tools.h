@@ -21,7 +21,6 @@ typedef enum
         true = 1
     } bool;
 
-
 typedef struct
 {
     size_t width;

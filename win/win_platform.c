@@ -247,9 +247,6 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-// [ cfarvin::NOTE ] [ cfarvin::RETURN ] We just weren't loading the function pointers for
-// the opengl functions. Working on making a cache of the function names and populating them
-// in this function from WM_CREATE msg.
 inline void *
 uWin32LoadPFNGL(const char* fn_name, const HMODULE* gl_module)
 {
