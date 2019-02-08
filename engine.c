@@ -2,6 +2,7 @@
 #include <engine_tools/event_tools.h>
 #include <engine_tools/ogl_tools.h>
 #include <engine_tools/stats_tools.h>
+#include <data_structures/data_structures.h>
 
 #if __linux__
 #include <nix/nix_platform.h>
@@ -188,6 +189,13 @@ int main(int argc, char** argv)
     }
 
     uDestroyEngine();
+
+    printf("Testing uDynamicArray...\n");
+    uDynamicArray* daTest_int8 = uInitializeDynamicArray(sizeof(int8));
+    /* daTest_int8->push(0); */
+    daTest_int8->pop();
+    daTest_int8->at(0);
+    uDestroyDynamicArray(daTest_int8);
 
     printf("[ SUCCESS ]\n");
     return 0;

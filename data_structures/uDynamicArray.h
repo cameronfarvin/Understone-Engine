@@ -11,8 +11,22 @@ typedef struct
     void (*at)(size_t index);
     size_t num_elements;
     size_t scaling_factor;
+    size_t scale_count;
+    size_t num_first_level_indices;
+    size_t datatype_size;
+
+    void** data;
+    /*
+      On initialization: data = (void**) malloc(scaling_factor);
+      1st allocation: scaling_factor * 1 @ data[0].
+      2nd allocation: scaling_factor * 2 @ data[1].
+      3rd allocation: scaling_factor * 3 @ data[2].
+
+      On Nth allocation: if N >= scaling_factor
+     */
 } uDynamicArray;
 
-void uInitializeDynamicArray();
+extern uDynamicArray* uInitializeDynamicArray(size_t size_in);
+extern void uDestroyDynamicArray(uDynamicArray* da);
 
 #endif // __uDynamicArray

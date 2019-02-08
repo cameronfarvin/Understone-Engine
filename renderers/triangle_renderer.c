@@ -201,3 +201,9 @@ render_triangle(uGLRenderer* const triangle_renderer)
     glBindVertexArray(0);
     glEnableVertexAttribArray(0);
 }
+
+void
+destroyRenderer_triangle(uGLRenderer* const triangle_renderer)
+{
+    // [ cfarvin::TODO ]
+}

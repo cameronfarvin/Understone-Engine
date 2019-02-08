@@ -11,4 +11,8 @@ initRenderer_triangle(uGLRenderer* const triangle_renderer);
 void
 render_triangle(uGLRenderer* const tirangle_renderer);
 
+// [ cfarvin::TODO ]
+void
+destroyRenderer_triangle(uGLRenderer* const triangle_renderer);
+
 #endif // __triangle_renderer__
