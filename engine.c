@@ -191,11 +191,11 @@ int main(int argc, char** argv)
     uDestroyEngine();
 
     printf("Testing uDynamicArray...\n");
-    uDynamicArray* daTest_int8 = uInitializeDynamicArray(sizeof(int8), 10);
-    daTest_int8->push(0);
-    daTest_int8->pop();
-    daTest_int8->at(0);
-    uDestroyDynamicArray(daTest_int8);
+    uDynamicArray* daTest = uInitializeDynamicArray(u8);
+    daTest->push(0);
+    daTest->pop();
+    daTest->at(0);
+    uDestroyDynamicArray(daTest);
 
     printf("[ SUCCESS ]\n");
     return 0;

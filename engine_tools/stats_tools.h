@@ -3,7 +3,7 @@
 
 typedef struct
 {
-    uint8 events_handled_this_loop;
+    u8 events_handled_this_loop;
 } STATISTICS;
 STATISTICS stats;
 

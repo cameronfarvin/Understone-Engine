@@ -27,8 +27,8 @@ typedef enum
 
 typedef struct
 {
-    uint16 x;
-    uint16 y;
+    u16 x;
+    u16 y;
     uINPUT_STATE mouse_left;
     uINPUT_STATE mouse_right;
     uINPUT_STATE mouse_middle;

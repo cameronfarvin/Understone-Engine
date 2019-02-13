@@ -99,16 +99,16 @@ typedef struct
 // [ cfarvin::TODO ] Use for other platforms (don't forget)
 typedef struct
 {
-    uint8 vmajor;
-    uint8 vminor;
+    u8 vmajor;
+    u8 vminor;
 } OPENGL_STATS;
 OPENGL_STATS ogl_stats;
 
 
 typedef struct
 {
-    uint16_t width;
-    uint16_t height;
+    u16 width;
+    u16 height;
 } VIEWPORT;
 VIEWPORT viewport;
 
