@@ -7,99 +7,91 @@
 #include <stdio.h>
 #include <assert.h>
 
+#ifndef uPUSH_DATA
+#define uPUSH_DATA memcpy((non_const_data + (da->num_elements * da->datatype_size)), \
+                          data, da->datatype_size)
+#endif // uPUSH_DATA
 
-static inline void uAPI_uDynamicArrayPush(void* data)
+
+void uDAPush(uDynamicArray* const da, void* const data)
 {
-    static uDynamicArray* this = NULL;
-
     printf("[ uDynamicArray ] push\n");
-    // there is space for this item
-    if (da->num_elements < da->)
-    {
+    // size_t* non_const_num_elements = (size_t*) &(da->num_elements);
+    *(((char*)da->data) + (1 * da->datatype_size)) = 20;
+    *(((char*)da->data) + (1 * da->datatype_size)) = 21;
+    *(((char*)da->data) + (2 * da->datatype_size)) = 22;
 
+    printf("[ DEBUG ] da->data[0]: %d\n", *(((char*)da->data) + (0 * da->datatype_size)));
+    printf("[ DEBUG ] da->data[1]: %d\n", *(((char*)da->data) + (1 * da->datatype_size)));
+    printf("[ DEBUG ] da->data[2]: %d\n", *(((char*)da->data) + (2 * da->datatype_size)));
+
+
+    if (da->num_elements < da->max_elements)
+    {
+        printf("\t\tThere is room :)\n");
+        char* index_ptr = ( ((char*)da->data) + ((da->num_elements + 1) * da->datatype_size) );
+        printf("[ debug ] *index_ptr: %d\n", *index_ptr);
+        memcpy(index_ptr,
+               data,
+               da->datatype_size);
     }
-    // there is not space for this item
     else
     {
-
+        printf("\t\tThere is no room :(\n");
     }
 }
 
-static inline void uDynamicArrayPop()
+void uDAPop(uDynamicArray* const da)
 {
     printf("[ uDynamicArray ] pop\n");
 }
 
-static inline void uDynamicArrayAt(size_t index)
+void* uDAIndex(uDynamicArray* const da, const size_t index)
 {
     printf("[ uDynamicArray ] index\n");
+    assert(index <= da->num_elements);
+    return (da + index);
 }
 
 // [ cfarvin::NOTE ] The following is defined in the header:
-// #define uInitializeDynamicArray(type) uAPI_uInitializeDynamicArray(sizeof(type))
-extern uDynamicArray* uAPI_uInitializeDynamicArray(size_t datatype_size_in)
+// #define uDAInit(type) uAPI_uDAInit(sizeof(type))
+uDynamicArray* uAPI_uDAInit(const size_t datatype_size_in)
 {
     /*
       [ cfarvin::NOTE ] [ cfarvin::TODO ]
       Test use of differentiable divergent function to map into sub-array
-     */
+    */
     printf("[ uDynamicArray ] init\n");
     uDynamicArray* da = (uDynamicArray*) calloc(1, sizeof(uDynamicArray));
 
     //
     // Initialize Statics
     //
-
-    void (**non_const_push_fn)(void*) = (void (**)(void*)) &(da->push);
-    void (**non_const_pop_fn)() = (void (**)()) &(da->pop);
-    void (**non_const_at_fn)(size_t) = (void (**)(size_t)) &(da->at);
     size_t* non_const_num_elements = (size_t*) &(da->num_elements);
     size_t* non_const_scaling_factor = (size_t*) &(da->scaling_factor);
-    /* size_t* non_const_scale_count = (size_t*) &(da->scale_count); */
-    /* size_t* non_const_num_first_level_indices = (size_t*) &(da->num_first_level_indices); */
     size_t* non_const_max_elements = (size_t*) &(da->max_elements);
     size_t* non_const_datatype_size = (size_t*) &(da->datatype_size);
-    // size_t* non_const_estimated_maximum_elements = (size_t*) &(da->estimated_maximum_elements);
 
-    *non_const_push_fn = uDynamicArrayPush;
-    *non_const_pop_fn = uDynamicArrayPop;
-    *non_const_at_fn = uDynamicArrayAt;
     *non_const_num_elements = 0;
     *non_const_scaling_factor = 2;
-    /* *non_const_scale_count = 1; */
-    /* *non_const_num_first_level_indices = 2; */
     *non_const_max_elements = 2;
     *non_const_datatype_size = datatype_size_in;
-    // *non_const_estimated_maximum_elements = estimated_maximum_elements_in;
 
     // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ]
-    assert(da->push == uDynamicArrayPush);
-    assert(da->pop == uDynamicArrayPop);
-    assert(da->at == uDynamicArrayAt);
     assert(da->num_elements == 0);
     assert(da->scaling_factor == 2);
-    /* assert(da->scale_count == 1); */
-    /* assert(da->num_first_level_indices == 2); */
-    assert(da->max_elements = 2);
+    assert(da->max_elements == 2);
     assert(da->datatype_size == datatype_size_in);
-    // assert(da->estimated_maximum_elements == estimated_maximum_elements_in);
 
     //
     // Initialize Dynamics
     //
-    /* void** non_const_const_data = (void**) &(da->data); */
-    void* non_const_const_data = (void*) &(da->data);
-    non_const_const_data = (void*) malloc(sizeof(void*) * da->num_first_level_indices);
-    /* for (size_t ii = 0; ii < da->num_first_level_indices; ii++) */
-    /* { */
-    /*     (non_const_const_data)[ii] = (void*) malloc(da->scale_count * da->scaling_factor); */
-    /*     (non_const_const_data)[ii] = NULL; */
-    /* } */
+    da->data = (void*) malloc(sizeof(datatype_size_in) * da->max_elements);
 
     return da;
 }
 
-extern void uDestroyDynamicArray(uDynamicArray* da)
+void uDADestroy(uDynamicArray* const da)
 {
     printf("[ uDynamicArray ] destroy\n");
 }

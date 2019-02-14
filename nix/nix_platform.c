@@ -444,8 +444,8 @@ uX11HandleEvents()
             }
             case Expose:
             {
-                uint16 prev_window_attrib_width = x11.window_attributes.width;
-                uint16 prev_window_attrib_height = x11.window_attributes.height;
+                u16 prev_window_attrib_width = x11.window_attributes.width;
+                u16 prev_window_attrib_height = x11.window_attributes.height;
                 XGetWindowAttributes(x11.display,
                                      x11.engine_window,
                                      &x11.window_attributes);
