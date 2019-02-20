@@ -26,12 +26,28 @@ uEVENT win32_proxy_event;
 
 void uWin32CreateWindow();
 
-/* void win32_destroy(); */
+inline void*
+uWin32LoadPFNGL(const char* fn_name, const HMODULE* gl_module)
+{
+    void* pfngl = (void *)wglGetProcAddress(fn_name);
 
-inline void* uWin32LoadPFNGL(const char *name, const HMODULE* gl_module);
+    if (pfngl == 0 ||
+        (pfngl == (void*)0x1) ||
+        (pfngl == (void*)0x2) ||
+        (pfngl == (void*)0x3) ||
+        (pfngl == (void*)-1))
+    {
+        pfngl = (void *)GetProcAddress(*gl_module, fn_name);
+    }
+
+    return pfngl;
+}
 
 uEVENT uWin32HandleEvents();
 
 LRESULT CALLBACK uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+// [ cfarvin::TODO ] Clean up win32 allocations on destroy
+/* void win32_destroy(); */
 
 #endif // __win_platform__

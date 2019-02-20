@@ -33,7 +33,7 @@ initRenderer_triangle(uGLRenderer* const triangle_renderer)
     triangle_renderer->shader_program = 0;
     triangle_renderer->vshdr_position_location = -1;
     triangle_renderer->fshdr_color_location = -1;
-    
+
     GLfloat triangle_vertex_data[] =
         {
             // top
@@ -45,16 +45,16 @@ initRenderer_triangle(uGLRenderer* const triangle_renderer)
             // bottom right
             0.5f, -0.5f
         };
-    
+
     GLfloat test_fbo_data[100] = { 255 };
-    
+
     //
     // create_program
     //
     glError;
     triangle_renderer->shader_program = uGLCreateShaderProgram_vf(&vshdr,
                                                                   &fshdr);
-    assert(triangle_renderer->shader_program);    
+    assert(triangle_renderer->shader_program);
     glUseProgram(triangle_renderer->shader_program);
     glError;
 
@@ -97,7 +97,7 @@ initRenderer_triangle(uGLRenderer* const triangle_renderer)
                           0,
                           (void*) 0);
     glError;
-    
+
 
     //
     //
@@ -129,7 +129,7 @@ initRenderer_triangle(uGLRenderer* const triangle_renderer)
                  GL_RGBA,               // GLenum  format
                  GL_UNSIGNED_BYTE,      // GLenum  type
                  test_fbo_data);        // const GLvoid* data
-    
+
     glBindTexture(GL_TEXTURE_2D, 0);
     glError;
 
@@ -159,7 +159,7 @@ initRenderer_triangle(uGLRenderer* const triangle_renderer)
                  GL_UNSIGNED_BYTE,      // GLenum  type
                  test_fbo_data);        // const GLvoid* data
     glError;
-    
+
     glBindTexture(GL_TEXTURE_2D, 0);
     glError;
 
@@ -202,8 +202,8 @@ render_triangle(uGLRenderer* const triangle_renderer)
     glEnableVertexAttribArray(0);
 }
 
-void
-destroyRenderer_triangle(uGLRenderer* const triangle_renderer)
-{
-    // [ cfarvin::TODO ]
-}
+/* void */
+/* destroyRenderer_triangle(uGLRenderer* const triangle_renderer) */
+/* { */
+/*     // [ cfarvin::TODO ] */
+/* } */

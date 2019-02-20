@@ -5,6 +5,8 @@
 #include <engine_tools/event_tools.h>
 #include <engine_tools/ogl_tools.h>
 
+extern void* uWin32LoadPFNGL(const char* fn_name, const HMODULE* gl_module);
+
 uEVENT
 uWin32HandleEvents()
 {
@@ -81,7 +83,7 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
-        LRESULT result = { 0 };
+        /* LRESULT result = { 0 }; */
 	case WM_CLOSE:
 	{
             //OutputDebugStringA("WM_CLOSE\n");
@@ -168,33 +170,61 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
 
             glUseProgram = uWin32LoadPFNGL("glUseProgram", &gl_module);
+            assert(glUseProgram);
             glGetShaderiv = uWin32LoadPFNGL("glGetShaderiv", &gl_module);
+            assert(glGetShaderiv);
             glGetShaderInfoLog = uWin32LoadPFNGL("glGetShaderInfoLog", &gl_module);
+            assert(glGetShaderInfoLog);
             glGetProgramiv = uWin32LoadPFNGL("glGetProgramiv", &gl_module);
+            assert(glGetProgramiv);
             glGetProgramInfoLog = uWin32LoadPFNGL("glGetProgramInfoLog", &gl_module);
+            assert(glGetProgramInfoLog);
             glCreateShader = uWin32LoadPFNGL("glCreateShader", &gl_module);
+            assert(glCreateShader);
             glCreateProgram = uWin32LoadPFNGL("glCreateProgram", &gl_module);
+            assert(glCreateProgram);
             glShaderSource = uWin32LoadPFNGL("glShaderSource", &gl_module);
+            assert(glShaderSource);
             glCompileShader = uWin32LoadPFNGL("glCompileShader", &gl_module);
+            assert(glCompileShader);
             glAttachShader = uWin32LoadPFNGL("glAttachShader", &gl_module);
+            assert(glAttachShader);
             glLinkProgram = uWin32LoadPFNGL("glLinkProgram", &gl_module);
+            assert(glLinkProgram);
             glDeleteShader = uWin32LoadPFNGL("glDeleteShader", &gl_module);
+            assert(glDeleteShader);
             glGetAttribLocation = uWin32LoadPFNGL("glGetAttribLocation", &gl_module);
+            assert(glGetAttribLocation);
             glGetUniformLocation = uWin32LoadPFNGL("glGetUniformLocation", &gl_module);
+            assert(glGetUniformLocation);
             glUniform1f = uWin32LoadPFNGL("glUniform1f", &gl_module);
+            assert(glUniform1f);
             glUniform2f = uWin32LoadPFNGL("glUniform2f", &gl_module);
+            assert(glUniform2f);
             glUniform3f = uWin32LoadPFNGL("glUniform3f", &gl_module);
+            assert(glUniform3f);
             glGenVertexArrays = uWin32LoadPFNGL("glGenVertexArrays", &gl_module);
+            assert(glGenVertexArrays);
             glBindVertexArray = uWin32LoadPFNGL("glBindVertexArray", &gl_module);
+            assert(glBindVertexArray);
             glGenBuffers = uWin32LoadPFNGL("glGenBuffers", &gl_module);
+            assert(glGenBuffers);
             glBindBuffer = uWin32LoadPFNGL("glBindBuffer", &gl_module);
+            assert(glBindBuffer);
             glBufferData = uWin32LoadPFNGL("glBufferData", &gl_module);
+            assert(glBufferData);
             glVertexAttribPointer = uWin32LoadPFNGL("glVertexAttribPointer", &gl_module);
+            assert(glVertexAttribPointer);
             glEnableVertexAttribArray = uWin32LoadPFNGL("glEnableVertexAttribArray", &gl_module);
+            assert(glEnableVertexAttribArray);
             glGenFramebuffers = uWin32LoadPFNGL("glGenFramebuffers", &gl_module);
+            assert(glGenFramebuffers);
             glBindFramebuffer = uWin32LoadPFNGL("glBindFramebuffer", &gl_module);
+            assert(glBindFramebuffer);
             glFramebufferTexture2D = uWin32LoadPFNGL("glFramebufferTexture2D", &gl_module);
+            assert(glFramebufferTexture2D);
             glCheckFramebufferStatus = uWin32LoadPFNGL("glCheckFramebufferStatus", &gl_module);
+            assert(glCheckFramebufferStatus);
 
             /* glClearColor(1.0f, 0.0f, 0.0f, 1.0f); */
             /* glClear(GL_COLOR_BUFFER_BIT); */
@@ -245,27 +275,4 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
-}
-
-inline void *
-uWin32LoadPFNGL(const char* fn_name, const HMODULE* gl_module)
-{
-    void* pfngl = (void *)wglGetProcAddress(fn_name);
-
-    if (pfngl == 0 ||
-        (pfngl == (void*)0x1) ||
-        (pfngl == (void*)0x2) ||
-        (pfngl == (void*)0x3) ||
-        (pfngl == (void*)-1))
-    {
-        pfngl = (void *)GetProcAddress(*gl_module, fn_name);
-    }
-
-    if (!pfngl)
-    {
-        printf("[ UE::WIN::ERROR ] Could not find PFNGL %s", fn_name);
-        assert(false);
-    }
-
-    return pfngl;
 }

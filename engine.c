@@ -171,6 +171,15 @@ int main(int argc, char** argv)
     win32.class_name  = "UE Window Class";
 #endif // _WIN32
 
+    printf("[ UNINSTALL ENGINE ]\n");
+    if (argc)
+    {
+        for (size_t ii = 0; ii < (size_t) argc; ii++)
+        {
+            printf("arg%zd: %s\n", ii, argv[ii]);
+        }
+    }
+
     uInitializeGameWindowsAndContext();
     uInitializeRenderers();
 
@@ -196,7 +205,7 @@ int main(int argc, char** argv)
     for (size_t ii = 0; ii < 10; ii++)
     {
         uDAPush(daTest, (void*) ii);
-        uDAIndex(daTest, ii);
+        printf("da[%zd]: %d\n", ii, *( ((u8*)daTest->data) + ii) );
     }
 
     /* uDAPush(daTest, (void*) 0); */

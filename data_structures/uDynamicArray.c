@@ -13,40 +13,41 @@
 #endif // uPUSH_DATA
 
 
-void uDAPush(uDynamicArray* const da, void* const data)
+void
+uDAPush(uDynamicArray* const da, void* const data)
 {
     printf("[ uDynamicArray ] push\n");
     // size_t* non_const_num_elements = (size_t*) &(da->num_elements);
-    *(((char*)da->data) + (1 * da->datatype_size)) = 20;
-    *(((char*)da->data) + (1 * da->datatype_size)) = 21;
-    *(((char*)da->data) + (2 * da->datatype_size)) = 22;
+    /* *(((char*)da->data) + (0 * da->datatype_size)) = 11; */
+    /* *(((char*)da->data) + (1 * da->datatype_size)) = 21; */
+    /* *(((char*)da->data) + (2 * da->datatype_size)) = 33; */
 
-    printf("[ DEBUG ] da->data[0]: %d\n", *(((char*)da->data) + (0 * da->datatype_size)));
-    printf("[ DEBUG ] da->data[1]: %d\n", *(((char*)da->data) + (1 * da->datatype_size)));
-    printf("[ DEBUG ] da->data[2]: %d\n", *(((char*)da->data) + (2 * da->datatype_size)));
+    /* printf("[ DEBUG ] da->data[0]: %d\n", *(((char*)da->data) + (0 * da->datatype_size))); */
+    /* printf("[ DEBUG ] da->data[1]: %d\n", *(((char*)da->data) + (1 * da->datatype_size))); */
+    /* printf("[ DEBUG ] da->data[2]: %d\n", *(((char*)da->data) + (2 * da->datatype_size))); */
 
-
-    if (da->num_elements < da->max_elements)
+    if (da->num_elements >= da->max_elements)
     {
-        printf("\t\tThere is room :)\n");
-        char* index_ptr = ( ((char*)da->data) + ((da->num_elements + 1) * da->datatype_size) );
-        printf("[ debug ] *index_ptr: %d\n", *index_ptr);
-        memcpy(index_ptr,
-               data,
-               da->datatype_size);
+        printf("RESIZING\n");
+        realloc(da->data, (da->max_elements * 2));
+        size_t* non_const_max_elements = (size_t*) &(da->data);
+        *non_const_max_elements = da->max_elements * 2;
     }
-    else
-    {
-        printf("\t\tThere is no room :(\n");
-    }
+
+    printf("PUSH\n");
+    size_t* non_const_num_elements = (size_t*) &(da->num_elements);
+    char* index_ptr = ( ((char*)da->data) + (++(*non_const_num_elements) * da->datatype_size) );
+    memcpy(index_ptr, data, da->datatype_size);
 }
 
-void uDAPop(uDynamicArray* const da)
-{
-    printf("[ uDynamicArray ] pop\n");
-}
+/* void */
+/* uDAPop(uDynamicArray* const da) */
+/* { */
+/*     printf("[ uDynamicArray ] pop\n"); */
+/* } */
 
-void* uDAIndex(uDynamicArray* const da, const size_t index)
+void*
+uDAIndex(uDynamicArray* const da, const size_t index)
 {
     printf("[ uDynamicArray ] index\n");
     assert(index <= da->num_elements);
@@ -55,7 +56,8 @@ void* uDAIndex(uDynamicArray* const da, const size_t index)
 
 // [ cfarvin::NOTE ] The following is defined in the header:
 // #define uDAInit(type) uAPI_uDAInit(sizeof(type))
-uDynamicArray* uAPI_uDAInit(const size_t datatype_size_in)
+uDynamicArray*
+uAPI_DAInit(const size_t datatype_size_in)
 {
     /*
       [ cfarvin::NOTE ] [ cfarvin::TODO ]
@@ -91,7 +93,8 @@ uDynamicArray* uAPI_uDAInit(const size_t datatype_size_in)
     return da;
 }
 
-void uDADestroy(uDynamicArray* const da)
-{
-    printf("[ uDynamicArray ] destroy\n");
-}
+/* void */
+/* uDADestroy(uDynamicArray* const da) */
+/* { */
+/*     printf("[ uDynamicArray ] destroy\n"); */
+/* } */
