@@ -171,6 +171,26 @@ int main(int argc, char** argv)
     win32.class_name  = "UE Window Class";
 #endif // _WIN32
 
+    //
+    // [ cfarvin::DEBUG ] [ cfarvin::TESTS ]
+    printf("Testing u8...\n");
+    uDynamicArray* daTest = uDAInit(u8);
+    for (size_t ii = 0; ii < 10; ii++)
+    {
+        uDAPush(daTest, (void* const ) &ii);
+        //uDAIndex(daTest, ii);
+    }
+
+    /* for (size_t ii = 0; ii < 11; ii++) */
+    /* { */
+    /*     uDAIndex(daTest, ii); */
+    /* } */
+
+    printf("[ SUCCESS ]\n");
+    return 0;
+    // [ cfarvin::DEBUG ] [ cfarvin::TESTS ]
+    //
+
     printf("[ UNINSTALL ENGINE ]\n");
     if (argc)
     {
@@ -198,26 +218,6 @@ int main(int argc, char** argv)
     }
 
     uDestroyEngine();
-
-    printf("Testing uDynamicArray...\n");
-    uDynamicArray* daTest = uDAInit(u8);
-
-    for (size_t ii = 0; ii < 10; ii++)
-    {
-        uDAPush(daTest, (void*) ii);
-        printf("da[%zd]: %d\n", ii, *( ((u8*)daTest->data) + ii) );
-    }
-
-    /* uDAPush(daTest, (void*) 0); */
-    /* uDAPop(daTest); */
-    /* uDAIndex(daTest, 0); */
-    /* uDADestroy(daTest); */
-
-    /* uDynamicArray* daTest = uInitializeDynamicArray(u8); */
-    /* daTest->push(0); */
-    /* daTest->pop(); */
-    /* daTest->at(0); */
-    /* uDestroyDynamicArray(daTest); */
 
     printf("[ SUCCESS ]\n");
     return 0;

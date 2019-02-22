@@ -5,16 +5,15 @@ REM
 REM Begin Compilation
 REM
 :compile
-setlocal
 
 echo.
 echo.
 echo [ STARTING COMPILATION ]
 
-set PATH=%PATH%;C:\MinGw;C:\MinGW\bin;C:\MinGW\lib;
+set PATH=%PATH%C:\MinGw;C:\MinGW\bin;C:\MinGW\lib
 
 C:\MinGW\bin\gcc.exe ^
--g -Wall -Werror -Wextra -Wshadow -Wcast-align -std=c11 ^
+-g -O0 -Wall -Werror -Wextra -Wshadow -Wcast-align -std=c11 ^
 -fno-diagnostics-color -Wno-unknown-pragmas ^
 engine.c ^
 engine_tools\ogl_tools.c ^
@@ -26,9 +25,6 @@ data_structures\uDynamicArray.c ^
 -o engine
 
 echo [ COMPILATION COMPLETE ]
-echo.
-
-endlocal
 goto dieHonorableDeath
 
 REM
