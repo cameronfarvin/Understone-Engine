@@ -23,75 +23,75 @@ typedef enum
     {
         IS_DOWN,
         IS_UP
-    } uINPUT_STATE;
+    } uDEVICE_STATE;
 
 typedef struct
 {
     u16 x;
     u16 y;
-    uINPUT_STATE mouse_left;
-    uINPUT_STATE mouse_right;
-    uINPUT_STATE mouse_middle;
+    uDEVICE_STATE mouse_left;
+    uDEVICE_STATE mouse_right;
+    uDEVICE_STATE mouse_middle;
 } uMOUSE_STATS;
 uMOUSE_STATS  mouse;
 
 typedef struct
 {
     // alphabetical
-    uINPUT_STATE key_a;
-    uINPUT_STATE key_b;
-    uINPUT_STATE key_c;
-    uINPUT_STATE key_d;
-    uINPUT_STATE key_e;
-    uINPUT_STATE key_f;
-    uINPUT_STATE key_g;
-    uINPUT_STATE key_h;
-    uINPUT_STATE key_i;
-    uINPUT_STATE key_j;
-    uINPUT_STATE key_k;
-    uINPUT_STATE key_l;
-    uINPUT_STATE key_m;
-    uINPUT_STATE key_n;
-    uINPUT_STATE key_o;
-    uINPUT_STATE key_p;
-    uINPUT_STATE key_q;
-    uINPUT_STATE key_r;
-    uINPUT_STATE key_s;
-    uINPUT_STATE key_t;
-    uINPUT_STATE key_u;
-    uINPUT_STATE key_v;
-    uINPUT_STATE key_w;
-    uINPUT_STATE key_x;
-    uINPUT_STATE key_y;
-    uINPUT_STATE key_z;
+    uDEVICE_STATE key_a;
+    uDEVICE_STATE key_b;
+    uDEVICE_STATE key_c;
+    uDEVICE_STATE key_d;
+    uDEVICE_STATE key_e;
+    uDEVICE_STATE key_f;
+    uDEVICE_STATE key_g;
+    uDEVICE_STATE key_h;
+    uDEVICE_STATE key_i;
+    uDEVICE_STATE key_j;
+    uDEVICE_STATE key_k;
+    uDEVICE_STATE key_l;
+    uDEVICE_STATE key_m;
+    uDEVICE_STATE key_n;
+    uDEVICE_STATE key_o;
+    uDEVICE_STATE key_p;
+    uDEVICE_STATE key_q;
+    uDEVICE_STATE key_r;
+    uDEVICE_STATE key_s;
+    uDEVICE_STATE key_t;
+    uDEVICE_STATE key_u;
+    uDEVICE_STATE key_v;
+    uDEVICE_STATE key_w;
+    uDEVICE_STATE key_x;
+    uDEVICE_STATE key_y;
+    uDEVICE_STATE key_z;
 
     // numeric
-    uINPUT_STATE key_0;
-    uINPUT_STATE key_1;
-    uINPUT_STATE key_2;
-    uINPUT_STATE key_3;
-    uINPUT_STATE key_4;
-    uINPUT_STATE key_5;
-    uINPUT_STATE key_6;
-    uINPUT_STATE key_7;
-    uINPUT_STATE key_8;
-    uINPUT_STATE key_9;
+    uDEVICE_STATE key_0;
+    uDEVICE_STATE key_1;
+    uDEVICE_STATE key_2;
+    uDEVICE_STATE key_3;
+    uDEVICE_STATE key_4;
+    uDEVICE_STATE key_5;
+    uDEVICE_STATE key_6;
+    uDEVICE_STATE key_7;
+    uDEVICE_STATE key_8;
+    uDEVICE_STATE key_9;
 
     // arrows
-    uINPUT_STATE key_arrow_up;
-    uINPUT_STATE key_arrow_down;
-    uINPUT_STATE key_arrow_left;
-    uINPUT_STATE key_arrow_right;
+    uDEVICE_STATE key_arrow_up;
+    uDEVICE_STATE key_arrow_down;
+    uDEVICE_STATE key_arrow_left;
+    uDEVICE_STATE key_arrow_right;
 
     // shift
-    uINPUT_STATE key_shift_GENERAL;
-    uINPUT_STATE key_shift_left;
-    uINPUT_STATE key_shift_right;
+    uDEVICE_STATE key_shift_GENERAL;
+    uDEVICE_STATE key_shift_left;
+    uDEVICE_STATE key_shift_right;
 
     // control
-    uINPUT_STATE key_control_GENERAL;
-    uINPUT_STATE key_control_left;
-    uINPUT_STATE key_control_right;
+    uDEVICE_STATE key_control_GENERAL;
+    uDEVICE_STATE key_control_left;
+    uDEVICE_STATE key_control_right;
 } uKEYBOARD_STATS;
 uKEYBOARD_STATS keyboard;
 

@@ -18,6 +18,7 @@ bool RUNNING = true;
 void
 uHandleWindowResize()
 {
+    // [ cfarvin::TODO ]
     printf("uHandleWindowResize()\n");
 }
 
@@ -149,16 +150,6 @@ uDestroyEngine()
 
 }
 
-/* #if _WIN32 */
-/* int CALLBACK */
-/* WinMain(HINSTANCE hInstance, */
-/*         HINSTANCE hPrevInstance, */
-/*         LPSTR lpCmdLine, */
-/*         int nCmdShow) */
-/* #else */
-/*     int */
-/*     main(int argc, char** argv) */
-/* #endif // _WIN32 */
 int main(int argc, char** argv)
 {
 #if _WIN32
@@ -181,13 +172,16 @@ int main(int argc, char** argv)
     {
         for (size_t ii = 0; ii < (size_t) argc; ii++)
         {
-            printf("arg%zd: %s\n", ii, argv[ii]);
+            printf("\targ%zd: %s\n", ii, argv[ii]);
         }
     }
 
     uInitializeGameWindowsAndContext();
     uInitializeRenderers();
 
+    // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ] [ cfarvin::EXPERIMENTAL ]
+    r32 piCycle = 0;
+    r32 cycleDelta = 0.025f;
     while(RUNNING)
     {
         glError;
@@ -195,6 +189,13 @@ int main(int argc, char** argv)
         uRefreshInputState();
 
         glError;
+
+        if (piCycle > uPI)
+        {
+            piCycle = 0;
+        }
+        piCycle += cycleDelta;
+        glUniform3f(triangle_renderer.fshdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
         render_triangle(&triangle_renderer);
         glError;
 

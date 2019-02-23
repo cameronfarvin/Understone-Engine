@@ -3,7 +3,7 @@
 
 
 void
-initRenderer_triangle(uGLRenderer* const triangle_renderer)
+initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
 {
     //
     // fill out struct
@@ -46,6 +46,7 @@ initRenderer_triangle(uGLRenderer* const triangle_renderer)
             0.5f, -0.5f
         };
 
+
     GLfloat test_fbo_data[100] = { 255 };
 
     //
@@ -79,8 +80,8 @@ initRenderer_triangle(uGLRenderer* const triangle_renderer)
     glError;
 
     glError;
-    glGenVertexArrays(1, &triangle_renderer->vertex_array_bufer_location);
-    glBindVertexArray(triangle_renderer->vertex_array_bufer_location);
+    glGenVertexArrays(1, &triangle_renderer->vertex_array_buffer_location);
+    glBindVertexArray(triangle_renderer->vertex_array_buffer_location);
     glError;
 
     glGenBuffers(1, &triangle_renderer->vertex_buffer_location);
@@ -191,11 +192,11 @@ initRenderer_triangle(uGLRenderer* const triangle_renderer)
 }
 
 void
-render_triangle(uGLRenderer* const triangle_renderer)
+render_triangle(uGLRenderTarget* const triangle_renderer)
 {
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(triangle_renderer->shader_program);
-    glBindVertexArray(triangle_renderer->vertex_array_bufer_location);
+    glBindVertexArray(triangle_renderer->vertex_array_buffer_location);
     glEnableVertexAttribArray(triangle_renderer->vshdr_position_location);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);

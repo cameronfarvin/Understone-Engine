@@ -4,6 +4,6 @@
 
 #include <triangle_renderer.h>
 
-uGLRenderer triangle_renderer;
+uGLRenderTarget triangle_renderer;
 
 #endif // __master_renderer

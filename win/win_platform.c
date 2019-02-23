@@ -13,6 +13,7 @@ uWin32HandleEvents()
     win32_proxy_event = uEVENT_NONE;
 
     MSG msg = { 0 };
+    // [ cfarvin::TODO ]
     /* while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) */
     /* { */
     /*     TranslateMessage(&msg); */
@@ -53,8 +54,6 @@ uWin32CreateWindow()
     {
         printf("[ UE::WIN::ERROR ] Could not register window class\n");
     }
-
-    //RegisterClassEx(&window_class); // [ cfarvin::NOTE ] Apparently we thought it was a good idea to register the class twice...
 
     win32.window = CreateWindowEx(0,
                                   window_class.lpszClassName,
@@ -273,6 +272,17 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             win32_proxy_event = uEVENT_NONE;
             break;
 	}
+
+        /* case WM_KEYDOWN */
+        /* { */
+        /*     switch(wParam) */
+        /*     { */
+        /*         case VK_LEFT: */
+        /*         { */
+        /*             win32_proxy_event =  */
+        /*         } */
+        /*     } */
+        /* } */
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }

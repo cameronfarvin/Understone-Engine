@@ -11,6 +11,7 @@
 #endif // __linux__ _WIN32
 
 #include <assert.h>
+#include <math.h>
 
 #ifndef APIENTRY
 #define APIENTRY
@@ -78,23 +79,14 @@ typedef struct
     GLint fshdr_color_location;
 
     // vao_vbo
-    GLuint vertex_array_bufer_location;
+    GLuint vertex_array_buffer_location;
     GLuint vertex_buffer_location;
-
-    // [ cfarvin::NOTE ] We will absolutely want to have access to the vertex data.
-    // For now, commenting out just to get things working.
-    //
-    // triangle_vertex_data
-    //
-    /* GLfloat** triangle_vertex_data; */
 
     // texture map
     GLuint texture_map;
-    /* GLubyte** test_fbo_data; */
     GLuint depth_texture;
     GLuint framebuffer;
-
-} uGLRenderer;
+} uGLRenderTarget;
 
 // [ cfarvin::TODO ] Use for other platforms (don't forget)
 typedef struct
