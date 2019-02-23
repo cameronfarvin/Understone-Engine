@@ -20,7 +20,8 @@ engine_tools\ogl_tools.c ^
 win\win_platform.c ^
 renderers\triangle_renderer.c ^
 data_structures\uDynamicArray.c ^
--Inix -Iwin -Iengine_tools -Irenderers -I. -Idata_structures ^
+tests\tests.c ^
+-Inix -Iwin -Iengine_tools -Irenderers -I. -Idata_structures -Itests ^
 -lopengl32 -luser32 -lgdi32 -lshell32 -lodbccp32 ^
 -o engine
 

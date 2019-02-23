@@ -3,7 +3,8 @@
 
 #include <engine_tools/type_tools.h>
 
-// Optimize for random access, "push back", "pop last"
+// Optimize for random access, "push back", "pop last",
+// capping out at 2^16 elements via IEEE size_t.
 typedef struct
 {
     void* data;
@@ -24,7 +25,9 @@ void* uDAIndex(uDynamicArray* const da, const size_t index);
 void uDASetScalingFactor(uDynamicArray* const da, const size_t scaling_factor_in);
 
 #define uDAInit(type) uAPI_DAInit(sizeof(type))
-extern uDynamicArray* uAPI_DAInit(const size_t datatype_size_in);
+uDynamicArray* uAPI_DAInit(const size_t datatype_size_in);
 
-/* extern void uDestroyDynamicArray(uDynamicArray* da); */
+void uDADestroy(uDynamicArray* const da);
+
+
 #endif // __uDynamicArray

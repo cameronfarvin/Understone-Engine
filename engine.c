@@ -3,6 +3,7 @@
 #include <engine_tools/ogl_tools.h>
 #include <engine_tools/stats_tools.h>
 #include <data_structures/data_structures.h>
+#include <tests/tests.h>
 
 #if __linux__
 #include <nix/nix_platform.h>
@@ -171,25 +172,9 @@ int main(int argc, char** argv)
     win32.class_name  = "UE Window Class";
 #endif // _WIN32
 
-    //
-    // [ cfarvin::DEBUG ] [ cfarvin::TESTS ]
-    printf("Testing u8...\n");
-    uDynamicArray* daTest = uDAInit(u8);
-    for (size_t ii = 0; ii < 10; ii++)
-    {
-        uDAPush(daTest, (void* const ) &ii);
-        //uDAIndex(daTest, ii);
-    }
-
-    /* for (size_t ii = 0; ii < 11; ii++) */
-    /* { */
-    /*     uDAIndex(daTest, ii); */
-    /* } */
-
-    printf("[ SUCCESS ]\n");
-    return 0;
-    // [ cfarvin::DEBUG ] [ cfarvin::TESTS ]
-    //
+#if RUN_TESTS_ON_STARTUP
+    runAllTests();
+#endif
 
     printf("[ UNINSTALL ENGINE ]\n");
     if (argc)

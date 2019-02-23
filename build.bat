@@ -31,7 +31,9 @@ dir
 cl engine.c engine_tools/ogl_tools.c win/win_platform.c ^
 renderers/triangle_renderer.c ^
 data_structures/uDynamicArray.c ^
-/I. /Iengine_tools /Iwin /Irenderers /Idata_structures -Z7 /GS /MD /EHsc /nologo ^
+tests/tests.c ^
+/I. /Iengine_tools /Iwin /Irenderers /Idata_structures /Itests ^
+-Z7 /GS /MD /EHsc /nologo ^
 /link /SUBSYSTEM:CONSOLE /NXCOMPAT /MACHINE:x86 /NODEFAULTLIB:MSVCRTD ^
 opengl32.lib ^
 user32.lib ^
