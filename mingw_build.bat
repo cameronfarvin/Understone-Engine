@@ -1,5 +1,5 @@
 @echo off
-IF EXIST C:\MinGW\bin\ (goto compile) else (goto dieTerribleDeath)
+IF EXIST C:\MinGW64\bin\ (goto compile) else (goto dieTerribleDeath)
 
 REM
 REM Begin Compilation
@@ -10,9 +10,9 @@ echo.
 echo.
 echo [ STARTING COMPILATION ]
 
-set PATH=%PATH%C:\MinGw;C:\MinGW\bin;C:\MinGW\lib
+set PATH=%PATH%C:\MinGw64;C:\MinGW64\bin;C:\MinGW64\lib
 
-C:\MinGW\bin\gcc.exe ^
+C:\MinGW64\bin\gcc.exe -D__USE_MINGW_ANSI_STDIO=1 ^
 -g -O0 -Wall -Werror -Wextra -Wshadow -Wcast-align -std=c11 ^
 -fno-diagnostics-color -Wno-unknown-pragmas ^
 engine.c ^

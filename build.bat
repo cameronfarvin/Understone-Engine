@@ -1,8 +1,12 @@
 @echo off
 
 @where cl >nul 2>nul
+:: If cl was not found in path, initialize for x64
+IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall" x64 >nul
+
 :: If cl was not found in path, initialize for x86
-IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall" x86 >nul
+REM IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall" x86 >nul
+
 
 ::
 :: [ COMPILER OPTIONS ]
@@ -26,17 +30,22 @@ IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\
 :: "%~1" prefix the first command line arg with the string "..\..\"
 :: and remove quotations before seinding it as an argument to cl.
 
-dir
+echo.
+echo [ STARTING COMPILATION ]
 
-cl engine.c engine_tools/ogl_tools.c win/win_platform.c ^
+cl engine.c  /W4 /WX ^
+engine_tools/ogl_tools.c win/win_platform.c ^
 renderers/triangle_renderer.c ^
 data_structures/uDynamicArray.c ^
 tests/tests.c ^
 /I. /Iengine_tools /Iwin /Irenderers /Idata_structures /Itests ^
 -Z7 /GS /MD /EHsc /nologo ^
-/link /SUBSYSTEM:CONSOLE /NXCOMPAT /MACHINE:x86 /NODEFAULTLIB:MSVCRTD ^
+/link /SUBSYSTEM:CONSOLE /NXCOMPAT /MACHINE:x64 /NODEFAULTLIB:MSVCRTD ^
 opengl32.lib ^
 user32.lib ^
 gdi32.lib ^
 shell32.lib ^
 odbccp32.lib
+
+echo [ COMPILATION COMPLETE ]
+echo.

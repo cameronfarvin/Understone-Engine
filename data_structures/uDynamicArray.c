@@ -1,21 +1,12 @@
 #include <uDynamicArray.h>
 
-#include <stdlib.h>
-#include <string.h>
-
-// [ cfarvin::DEBUG ] [ cfarvin::REMOVE ]
-#include <stdio.h>
-#include <assert.h>
-
-#ifndef uPUSH_DATA
-#define uPUSH_DATA memcpy((non_const_data + (da->num_elements * da->datatype_size)), \
-                          data, da->datatype_size)
-#endif // uPUSH_DATA
-
 void
-uDAPush(uDynamicArray* const da, void* const data_in)
+uDAPush(uDynamicArray* const da, void** const data_in)
 {
-    assert(da);
+    if (!da)
+    {
+        return;
+    }
 
     if (da->num_elements >= da->max_elements)
     {
@@ -25,32 +16,27 @@ uDAPush(uDynamicArray* const da, void* const data_in)
     }
 
     memcpy((char*)da->data + (da->num_elements * da->datatype_size),
-           &data_in,
+           data_in,
            da->datatype_size);
 
     size_t* non_const_num_elements = (size_t*) &(da->num_elements);
     *non_const_num_elements = *non_const_num_elements + 1;
 }
 
-/* void */
-/* uDAPop(uDynamicArray* const da) */
-/* { */
-/*     printf("[ uDynamicArray ] pop\n"); */
-/* } */
+// [ cfarvin::NOTE ] C99+ inlining.
+// Definition provided in uDynmaicArray.h
+extern void
+uDAPop(uDynamicArray* const da);
 
-void*
-uDAIndex(uDynamicArray* const da, const size_t index)
-{
-    assert(da);
+// [ cfarvin::NOTE ] C99+ inlining.
+// Definition provided in uDynmaicArray.h
+extern void*
+uDAIndex(uDynamicArray* const da, const size_t index);
 
-    if (index < da->num_elements)
-    {
-        return (void*)((char*)da->data + (index * da->datatype_size));
-    }
-
-    printf("\n[ WARNING ]\n[ WARNING ] uDAIndex: requested out of bounds index\n[ WARNING ]\n\n");
-    return NULL;
-}
+// [ cfarvin::NOTE ] C99+ inlining.
+// Definition provided in uDynmaicArray.h
+extern void
+uDAFitToSize(uDynamicArray* const da);
 
 // [ cfarvin::NOTE ] The following is defined in the header:
 // #define uDAInit(type) uAPI_uDAInit(sizeof(type))
@@ -85,14 +71,11 @@ uAPI_DAInit(const size_t datatype_size_in)
 void
 uDADestroy(uDynamicArray* const da)
 {
-    assert(da);
-
-    if (da->data)
+    if (da && da->data)
     {
         free(da->data);
+        free(da);
     }
-
-    free(da);
 }
 
 void uDASetScalingFactor(uDynamicArray* const da, const size_t scaling_factor_in)
