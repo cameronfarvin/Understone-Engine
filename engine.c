@@ -22,91 +22,15 @@ uHandleWindowResize()
     printf("uHandleWindowResize()\n");
 }
 
+// Query the mouse and keyboard state
 void
 uRefreshInputState()
 {
 #if __linux__
-    uEVENT event = uX11HandleEvents();
+    uX11HandleEvents();
 #elif _WIN32
-    uEVENT event = uWin32HandleEvents();
+    uWin32HandleEvents();
 #endif // __linux__ _WIN32
-
-    stats.events_handled_this_loop = 0;
-
-    switch(event)
-    {
-        case uEVENT_NONE:
-        {
-            break;
-        }
-        case uEVENT_RESIZE:
-        {
-            glViewport(0,
-                       0,
-                       viewport.width,
-                       viewport.height);
-            break;
-        }
-        case uEVENT_CLOSE:
-        {
-            RUNNING = 0;
-            stats.events_handled_this_loop++;
-            break;
-        }
-        case uEVENT_MOUSE_PRESS_LEFT:
-        {
-            printf("ButtonPress | Mouse Left\n");
-            stats.events_handled_this_loop++;
-            break;
-        }
-        case uEVENT_MOUSE_PRESS_RIGHT:
-        {
-            printf("ButtonPress | Mouse Right\n");
-            stats.events_handled_this_loop++;
-            break;
-        }
-        case uEVENT_MOUSE_PRESS_MIDDLE:
-        {
-            printf("ButtonPress | Mouse Middle\n");
-            stats.events_handled_this_loop++;
-            break;
-        }
-        case uEVENT_MOUSE_RELEASE_LEFT:
-        {
-            printf("ButtonRelease | Mouse Left\n");
-            stats.events_handled_this_loop++;
-            break;
-        }
-        case uEVENT_MOUSE_RELEASE_RIGHT:
-        {
-            printf("ButtonRelease | Mouse Right\n");
-            stats.events_handled_this_loop++;
-            break;
-        }
-        case uEVENT_MOUSE_RELEASE_MIDDLE:
-        {
-            printf("ButtonRelease | Mouse Middle\n");
-            stats.events_handled_this_loop++;
-            break;
-        }
-        case uEVENT_MOUSE_SCROLL_UP:
-        {
-            printf("ButtonPress | Mouse Scroll Up\n");
-            stats.events_handled_this_loop++;
-            break;
-        }
-        case uEVENT_MOUSE_SCROLL_DOWN:
-        {
-            printf("ButtonPress | Mouse Scroll Down\n");
-            stats.events_handled_this_loop++;
-            break;
-        }
-
-        default:
-        {
-            return;
-        }
-    }
 }
 
 void

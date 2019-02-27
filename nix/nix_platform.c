@@ -95,7 +95,7 @@ uX11CreateWindow()
     int    highest_samples = 0;
     size_t highest_sample_index = 0;
     for (size_t frame_buffer_index = 0;
-         frame_buffer_index < num_possible_frame_buffers;
+         frame_buffer_index < (size_t) num_possible_frame_buffers;
          frame_buffer_index++)
     {
         XVisualInfo* visual_info =
@@ -382,38 +382,42 @@ uX11HandleEvents()
                 {
                     case 1:
                     {
-                        mouse.x = x11.event.xmotion.x;
-                        mouse.y = x11.event.xmotion.y;
-                        mouse.mouse_left = IS_DOWN;
+                        mouse_pos.x = x11.event.xmotion.x;
+                        mouse_pos.y = x11.event.xmotion.y;
+                        uSetInputPressed(uMouse_left);
+                        /* mouse.mouse_left = IS_DOWN; */
                         return uEVENT_MOUSE_PRESS_LEFT;
                     }
                     case 2:
                     {
-                        mouse.x = x11.event.xmotion.x;
-                        mouse.y = x11.event.xmotion.y;
-                        mouse.mouse_middle = IS_DOWN;
+                        mouse_pos.x = x11.event.xmotion.x;
+                        mouse_pos.y = x11.event.xmotion.y;
+                        /* mouse.mouse_middle = IS_DOWN; */
+                        uSetInputPressed(uMouse_middle);
                         return uEVENT_MOUSE_PRESS_MIDDLE;
                     }
                     case 3:
                     {
-                        mouse.x = x11.event.xmotion.x;
-                        mouse.y = x11.event.xmotion.y;
-                        mouse.mouse_right = IS_DOWN;
+                        mouse_pos.x = x11.event.xmotion.x;
+                        mouse_pos.y = x11.event.xmotion.y;
+                        /* mouse.mouse_right = IS_DOWN; */
+                        uSetInputPressed(uMouse_right);
                         return uEVENT_MOUSE_PRESS_RIGHT;
                     }
                     case 4:
                     {
-                        mouse.x = x11.event.xmotion.x;
-                        mouse.y = x11.event.xmotion.y;
+                        mouse_pos.x = x11.event.xmotion.x;
+                        mouse_pos.y = x11.event.xmotion.y;
                         return uEVENT_MOUSE_SCROLL_DOWN;
                     }
                     case 5:
                     {
-                        mouse.x = x11.event.xmotion.x;
-                        mouse.y = x11.event.xmotion.y;
+                        mouse_pos.x = x11.event.xmotion.x;
+                        mouse_pos.y = x11.event.xmotion.y;
                         return uEVENT_MOUSE_SCROLL_UP;
                     }
                 }
+                return uEVENT_NONE;
             }
             case ButtonRelease:
             {
@@ -421,26 +425,30 @@ uX11HandleEvents()
                 {
                     case 1:
                     {
-                        mouse.x = x11.event.xmotion.x;
-                        mouse.y = x11.event.xmotion.y;
-                        mouse.mouse_left = IS_UP;
+                        mouse_pos.x = x11.event.xmotion.x;
+                        mouse_pos.y = x11.event.xmotion.y;
+                        /* mouse.mouse_left = IS_UP; */
+                        uSetInputReleased(uMouse_left);
                         return uEVENT_MOUSE_RELEASE_LEFT;
                     }
                     case 2:
                     {
-                        mouse.x = x11.event.xmotion.x;
-                        mouse.y = x11.event.xmotion.y;
-                        mouse.mouse_middle = IS_UP;
+                        mouse_pos.x = x11.event.xmotion.x;
+                        mouse_pos.y = x11.event.xmotion.y;
+                        /* mouse.mouse_middle = IS_UP; */
+                        uSetInputReleased(uMouse_middle);
                         return uEVENT_MOUSE_RELEASE_MIDDLE;
                     }
                     case 3:
                     {
-                        mouse.x = x11.event.xmotion.x;
-                        mouse.y = x11.event.xmotion.y;
-                        mouse.mouse_right = IS_UP;
+                        mouse_pos.x = x11.event.xmotion.x;
+                        mouse_pos.y = x11.event.xmotion.y;
+                        /* mouse.mouse_right = IS_UP; */
+                        uSetInputReleased(uMouse_right);
                         return uEVENT_MOUSE_RELEASE_RIGHT;
                     }
                 }
+                return uEVENT_NONE;
             }
             case Expose:
             {
@@ -449,21 +457,25 @@ uX11HandleEvents()
                 XGetWindowAttributes(x11.display,
                                      x11.engine_window,
                                      &x11.window_attributes);
-                if ( (prev_window_attrib_width != x11.window_attributes.width)
-                     || (prev_window_attrib_height != x11.window_attributes.height) )
+                if ( (prev_window_attrib_width !=  (size_t) x11.window_attributes.width)
+                     || (prev_window_attrib_height != (size_t) x11.window_attributes.height) )
                 {
                     viewport.width = x11.window_attributes.width;
                     viewport.height = x11.window_attributes.height;
                     return uEVENT_RESIZE;
                 }
+
+                return uEVENT_NONE;
             }
             case ClientMessage:
             {
-                if (x11.event.xclient.data.l[0] == atomWmDeleteWindow)
+                if ((size_t) x11.event.xclient.data.l[0] == atomWmDeleteWindow)
                 {
                     printf("[ NOTIFY ] Recieved destroy signal\n");
                     return uEVENT_CLOSE;
                 }
+
+                return uEVENT_NONE;
             }
             default:
             {
