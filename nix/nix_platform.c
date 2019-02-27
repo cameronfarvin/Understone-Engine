@@ -368,10 +368,10 @@ uX11CreateWindow()
     uX11HandleEvents();
 }
 
-uEVENT
+uSystemEvent
 uX11HandleEvents()
 {
-    while(1)
+    while(XPending(x11.display))
     {
         XNextEvent(x11.display, &x11.event);
         switch(x11.event.type)
@@ -386,7 +386,7 @@ uX11HandleEvents()
                         mouse_pos.y = x11.event.xmotion.y;
                         uSetInputPressed(uMouse_left);
                         /* mouse.mouse_left = IS_DOWN; */
-                        return uEVENT_MOUSE_PRESS_LEFT;
+                        return uEventNone;
                     }
                     case 2:
                     {
@@ -394,7 +394,7 @@ uX11HandleEvents()
                         mouse_pos.y = x11.event.xmotion.y;
                         /* mouse.mouse_middle = IS_DOWN; */
                         uSetInputPressed(uMouse_middle);
-                        return uEVENT_MOUSE_PRESS_MIDDLE;
+                        return uEventNone;
                     }
                     case 3:
                     {
@@ -402,22 +402,23 @@ uX11HandleEvents()
                         mouse_pos.y = x11.event.xmotion.y;
                         /* mouse.mouse_right = IS_DOWN; */
                         uSetInputPressed(uMouse_right);
-                        return uEVENT_MOUSE_PRESS_RIGHT;
+                        return uEventNone;
                     }
                     case 4:
                     {
                         mouse_pos.x = x11.event.xmotion.x;
                         mouse_pos.y = x11.event.xmotion.y;
-                        return uEVENT_MOUSE_SCROLL_DOWN;
+                        return uEventNone;
                     }
                     case 5:
                     {
                         mouse_pos.x = x11.event.xmotion.x;
                         mouse_pos.y = x11.event.xmotion.y;
-                        return uEVENT_MOUSE_SCROLL_UP;
+                        return uEventNone;
                     }
                 }
-                return uEVENT_NONE;
+
+                return uEventNone;
             }
             case ButtonRelease:
             {
@@ -429,7 +430,7 @@ uX11HandleEvents()
                         mouse_pos.y = x11.event.xmotion.y;
                         /* mouse.mouse_left = IS_UP; */
                         uSetInputReleased(uMouse_left);
-                        return uEVENT_MOUSE_RELEASE_LEFT;
+                        return uEventNone;
                     }
                     case 2:
                     {
@@ -437,7 +438,7 @@ uX11HandleEvents()
                         mouse_pos.y = x11.event.xmotion.y;
                         /* mouse.mouse_middle = IS_UP; */
                         uSetInputReleased(uMouse_middle);
-                        return uEVENT_MOUSE_RELEASE_MIDDLE;
+                        return uEventNone;
                     }
                     case 3:
                     {
@@ -445,10 +446,11 @@ uX11HandleEvents()
                         mouse_pos.y = x11.event.xmotion.y;
                         /* mouse.mouse_right = IS_UP; */
                         uSetInputReleased(uMouse_right);
-                        return uEVENT_MOUSE_RELEASE_RIGHT;
+                        return uEventNone;
                     }
                 }
-                return uEVENT_NONE;
+
+                return uEventNone;
             }
             case Expose:
             {
@@ -462,27 +464,25 @@ uX11HandleEvents()
                 {
                     viewport.width = x11.window_attributes.width;
                     viewport.height = x11.window_attributes.height;
-                    return uEVENT_RESIZE;
+                    return uEventResize;
                 }
 
-                return uEVENT_NONE;
+                return uEventNone;
             }
             case ClientMessage:
             {
                 if ((size_t) x11.event.xclient.data.l[0] == atomWmDeleteWindow)
                 {
                     printf("[ NOTIFY ] Recieved destroy signal\n");
-                    return uEVENT_CLOSE;
+                    return uEventClose;
                 }
 
-                return uEVENT_NONE;
-            }
-            default:
-            {
-                return uEVENT_NONE;
+                return uEventNone;
             }
         }
     }
+
+    return uEventNone;
 }
 
 void

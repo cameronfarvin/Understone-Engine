@@ -26,11 +26,31 @@ uHandleWindowResize()
 void
 uRefreshInputState()
 {
+    uSystemEvent sys_event = uEventNone;
 #if __linux__
-    uX11HandleEvents();
+    sys_event = uX11HandleEvents();
 #elif _WIN32
-    uWin32HandleEvents();
+    sys_event = uWin32HandleEvents();
+#else
+    assert(0);
 #endif // __linux__ _WIN32
+    switch(sys_event)
+    {
+        case uEventNone:
+        {
+            return;
+        }
+        case uEventResize:
+        {
+            uHandleWindowResize();
+            return;
+        }
+        case uEventClose:
+        {
+            RUNNING = false;
+            return;
+        }
+    }
 }
 
 void
@@ -43,8 +63,6 @@ uInitializeGameWindowsAndContext()
 #if _WIN32
     uWin32CreateWindow();
 #endif // _WIN32
-
-    uRefreshInputState();
 }
 
 void
@@ -118,6 +136,7 @@ int main(int argc, char** argv)
         {
             piCycle = 0;
         }
+
         piCycle += cycleDelta;
         glUniform3f(triangle_renderer.fshdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
         render_triangle(&triangle_renderer);

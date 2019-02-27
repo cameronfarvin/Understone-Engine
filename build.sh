@@ -1,4 +1,4 @@
-gcc -g -O0 -Wall -Werror -Wextra -Wshadow -Wcast-align \
+gcc -g3 -O0 -Wall -Werror -Wextra -Wshadow -Wcast-align -std=c11 -o engine\
     engine.c \
     nix/nix_platform.c \
     engine_tools/ogl_tools.c \
@@ -6,4 +6,4 @@ gcc -g -O0 -Wall -Werror -Wextra -Wshadow -Wcast-align \
     data_structures/uDynamicArray.c \
     tests/tests.c \
     -Inix -Iwin -Iengine_tools -Irenderers -I. -Idata_structures -Itests \
-    -lX11 -lGL -lGLU -lm -std=c11 -o engine
+    -lX11 -lGL -lGLU -lm

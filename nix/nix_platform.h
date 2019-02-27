@@ -55,7 +55,7 @@ uX11CreateWindow();
 void
 uX11Destroy();
 
-uEVENT
+uSystemEvent
 uX11HandleEvents();
 
 #endif // __nix_platform__
