@@ -30,11 +30,8 @@ typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*,
 typedef struct
 {
     Display*          display;
-    /* int               connection_number; */
     Screen*           default_screen;
     int               default_screen_number;
-    /* Colormap          default_color_map; */
-    /* GC                graphics_context; */
     Window            engine_window;
     int               display_height;
     int               display_width;

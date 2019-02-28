@@ -89,18 +89,12 @@ uDestroyEngine()
     uX11Destroy();
 #endif // __linux__
     // [ cfarvin::TODO ] destroy eingine functionality for win32
-
 }
 
 int main(int argc, char** argv)
 {
 #if _WIN32
-    // win32.instance = hInstance;
     win32.instance = GetModuleHandle(NULL);
-    // [ cfarvin::NOTE ] nCmdShow usually passed from WinMain,
-    // Bypassing for now to use SUBSYSTEM:CONSOLE, hard passing
-    // value of <10> "SW_SHOWDEFAULT"
-    /* win32.command_show = nCmdShow; */
     win32.command_show = 10;
     win32.class_name  = "UE Window Class";
 #endif // _WIN32
@@ -138,7 +132,22 @@ int main(int argc, char** argv)
         }
 
         piCycle += cycleDelta;
-        glUniform3f(triangle_renderer.fshdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
+        if (uGetInputPressed(uMouse_right))
+        {
+            // red triangle
+            glUniform3f(triangle_renderer.fshdr_color_location, (GLfloat) sin(piCycle), 0.0, 0.0f);
+        }
+        else if (uGetInputPressed(uMouse_left))
+        {
+            // blue triangle
+            glUniform3f(triangle_renderer.fshdr_color_location, 0.0f, 0.0f, (GLfloat) sin(piCycle));
+        }
+        else
+        {
+            // green triangle
+            glUniform3f(triangle_renderer.fshdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
+        }
+
         render_triangle(&triangle_renderer);
         glError;
 

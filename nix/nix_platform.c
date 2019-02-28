@@ -385,36 +385,36 @@ uX11HandleEvents()
                         mouse_pos.x = x11.event.xmotion.x;
                         mouse_pos.y = x11.event.xmotion.y;
                         uSetInputPressed(uMouse_left);
-                        /* mouse.mouse_left = IS_DOWN; */
-                        return uEventNone;
+                        assert(uGetInputPressed(uMouse_left));
+                        break;
                     }
                     case 2:
                     {
                         mouse_pos.x = x11.event.xmotion.x;
                         mouse_pos.y = x11.event.xmotion.y;
-                        /* mouse.mouse_middle = IS_DOWN; */
                         uSetInputPressed(uMouse_middle);
-                        return uEventNone;
+                        assert(uGetInputPressed(uMouse_middle));
+                        break;
                     }
                     case 3:
                     {
                         mouse_pos.x = x11.event.xmotion.x;
                         mouse_pos.y = x11.event.xmotion.y;
-                        /* mouse.mouse_right = IS_DOWN; */
                         uSetInputPressed(uMouse_right);
-                        return uEventNone;
+                        assert(uGetInputPressed(uMouse_right));
+                        break;
                     }
                     case 4:
                     {
                         mouse_pos.x = x11.event.xmotion.x;
                         mouse_pos.y = x11.event.xmotion.y;
-                        return uEventNone;
+                        break;
                     }
                     case 5:
                     {
                         mouse_pos.x = x11.event.xmotion.x;
                         mouse_pos.y = x11.event.xmotion.y;
-                        return uEventNone;
+                        break;
                     }
                 }
 
@@ -428,25 +428,25 @@ uX11HandleEvents()
                     {
                         mouse_pos.x = x11.event.xmotion.x;
                         mouse_pos.y = x11.event.xmotion.y;
-                        /* mouse.mouse_left = IS_UP; */
                         uSetInputReleased(uMouse_left);
-                        return uEventNone;
+                        assert(!uGetInputPressed(uMouse_left));
+                        break;
                     }
                     case 2:
                     {
                         mouse_pos.x = x11.event.xmotion.x;
                         mouse_pos.y = x11.event.xmotion.y;
-                        /* mouse.mouse_middle = IS_UP; */
                         uSetInputReleased(uMouse_middle);
-                        return uEventNone;
+                        assert(!uGetInputPressed(uMouse_middle));
+                        break;
                     }
                     case 3:
                     {
                         mouse_pos.x = x11.event.xmotion.x;
                         mouse_pos.y = x11.event.xmotion.y;
-                        /* mouse.mouse_right = IS_UP; */
                         uSetInputReleased(uMouse_right);
-                        return uEventNone;
+                        assert(!uGetInputPressed(uMouse_right));
+                        break;
                     }
                 }
 

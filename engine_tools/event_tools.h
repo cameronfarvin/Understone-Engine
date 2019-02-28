@@ -76,6 +76,16 @@ static inline void uSetInputReleased(uint64_t key)
     input_state &= ~key;
 }
 
+/* static inline bool uGetInputPressed(uint64_t key) */
+/* { */
+/*     if (input_state & key) */
+/*     { */
+/*         return true; */
+/*     } */
+
+/*     return false; */
+/* } */
+
 static inline uint64_t uGetInputPressed(uint64_t key)
 {
     return input_state & key;
