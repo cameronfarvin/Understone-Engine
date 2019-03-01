@@ -3,6 +3,9 @@
 
 #include <engine_tools/type_tools.h>
 
+// [ cfarvin::REMOVE ] [ cfarvin::DEBUG ]
+#include <stdio.h>
+
 typedef enum
     {
         uEventNone,
@@ -10,6 +13,7 @@ typedef enum
         uEventResize,
     } uSystemEvent;
 
+// Center of the screen is (0, 0, 0)
 typedef struct
 {
     u16 x;
@@ -17,54 +21,54 @@ typedef struct
 } uMousePos;
 uMousePos  mouse_pos;
 
-static uint64_t input_state;
-#define uKEY_A             (1UL << 0)
-#define uKEY_B             (1UL << 1)
-#define uKEY_C             (1UL << 2)
-#define uKEY_D             (1UL << 3)
-#define uKEY_E             (1UL << 4)
-#define uKEY_F             (1UL << 5)
-#define uKEY_G             (1UL << 6)
-#define uKEY_H             (1UL << 7)
-#define uKEY_I             (1UL << 8)
-#define uKEY_J             (1UL << 9)
-#define uKEY_K             (1UL << 10)
-#define uKEY_L             (1UL << 11)
-#define uKEY_M             (1UL << 12)
-#define uKEY_N             (1UL << 13)
-#define uKEY_O             (1UL << 14)
-#define uKEY_P             (1UL << 15)
-#define uKEY_Q             (1UL << 16)
-#define uKEY_R             (1UL << 17)
-#define uKEY_S             (1UL << 18)
-#define uKEY_T             (1UL << 19)
-#define uKEY_U             (1UL << 20)
-#define uKEY_V             (1UL << 21)
-#define uKEY_W             (1UL << 22)
-#define uKEY_X             (1UL << 23)
-#define uKEY_Y             (1UL << 24)
-#define uKEY_Z             (1UL << 25)
-#define uKEY_0             (1UL << 26)
-#define uKEY_1             (1UL << 27)
-#define uKEY_2             (1UL << 28)
-#define uKEY_3             (1UL << 29)
-#define uKEY_4             (1UL << 30)
-#define uKEY_5             (1UL << 31)
-#define uKEY_6             (1UL << 32)
-#define uKEY_7             (1UL << 33)
-#define uKEY_8             (1UL << 34)
-#define uKEY_9             (1UL << 35)
-#define uKey_arrow_up      (1UL << 36)
-#define uKey_arrow_down    (1UL << 37)
-#define uKey_arrow_left    (1UL << 38)
-#define uKey_arrow_right   (1UL << 39)
-#define uKey_shift_left    (1UL << 40)
-#define uKey_shift_right   (1UL << 41)
-#define uKey_control_left  (1UL << 42)
-#define uKey_control_right (1UL << 43)
-#define uMouse_right       (1UL << 44)
-#define uMouse_left        (1UL << 45)
-#define uMouse_middle      (1UL << 46)
+int64_t input_state;
+#define uKEY_A             (1ULL << 0)
+#define uKEY_B             (1ULL << 1)
+#define uKEY_C             (1ULL << 2)
+#define uKEY_D             (1ULL << 3)
+#define uKEY_E             (1ULL << 4)
+#define uKEY_F             (1ULL << 5)
+#define uKEY_G             (1ULL << 6)
+#define uKEY_H             (1ULL << 7)
+#define uKEY_I             (1ULL << 8)
+#define uKEY_J             (1ULL << 9)
+#define uKEY_K             (1ULL << 10)
+#define uKEY_L             (1ULL << 11)
+#define uKEY_M             (1ULL << 12)
+#define uKEY_N             (1ULL << 13)
+#define uKEY_O             (1ULL << 14)
+#define uKEY_P             (1ULL << 15)
+#define uKEY_Q             (1ULL << 16)
+#define uKEY_R             (1ULL << 17)
+#define uKEY_S             (1ULL << 18)
+#define uKEY_T             (1ULL << 19)
+#define uKEY_U             (1ULL << 20)
+#define uKEY_V             (1ULL << 21)
+#define uKEY_W             (1ULL << 22)
+#define uKEY_X             (1ULL << 23)
+#define uKEY_Y             (1ULL << 24)
+#define uKEY_Z             (1ULL << 25)
+#define uKEY_0             (1ULL << 26)
+#define uKEY_1             (1ULL << 27)
+#define uKEY_2             (1ULL << 28)
+#define uKEY_3             (1ULL << 29)
+#define uKEY_4             (1ULL << 30)
+#define uKEY_5             (1ULL << 31)
+#define uKEY_6             (1ULL << 32)
+#define uKEY_7             (1ULL << 33)
+#define uKEY_8             (1ULL << 34)
+#define uKEY_9             (1ULL << 35)
+#define uKey_arrow_up      (1ULL << 36)
+#define uKey_arrow_down    (1ULL << 37)
+#define uKey_arrow_left    (1ULL << 38)
+#define uKey_arrow_right   (1ULL << 39)
+#define uKey_shift_left    (1ULL << 40)
+#define uKey_shift_right   (1ULL << 41)
+#define uKey_control_left  (1ULL << 42)
+#define uKey_control_right (1ULL << 43)
+#define uMouse_right       (1ULL << 44)
+#define uMouse_left        (1ULL << 45)
+#define uMouse_middle      (1ULL << 46)
 
 static inline void uSetInputPressed(uint64_t key)
 {
@@ -75,16 +79,6 @@ static inline void uSetInputReleased(uint64_t key)
 {
     input_state &= ~key;
 }
-
-/* static inline bool uGetInputPressed(uint64_t key) */
-/* { */
-/*     if (input_state & key) */
-/*     { */
-/*         return true; */
-/*     } */
-
-/*     return false; */
-/* } */
 
 static inline uint64_t uGetInputPressed(uint64_t key)
 {

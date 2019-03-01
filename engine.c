@@ -18,8 +18,8 @@ bool RUNNING = true;
 void
 uHandleWindowResize()
 {
-    // [ cfarvin::TODO ]
-    printf("uHandleWindowResize()\n");
+    printf("viewport.width: %d\nviewport.height: %d\n", viewport.width, viewport.height);
+    glViewport(0, 0, viewport.width, viewport.height);
 }
 
 // Query the mouse and keyboard state
@@ -147,6 +147,10 @@ int main(int argc, char** argv)
             // green triangle
             glUniform3f(triangle_renderer.fshdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
         }
+
+        glUniform2f(triangle_renderer.vshdr_mut_position_location,
+                    (GLfloat) ((r32)mouse_pos.x / (r32)viewport.width - 0.5f),
+                    (GLfloat) ((r32)mouse_pos.y / (r32)viewport.height - 0.5f));
 
         render_triangle(&triangle_renderer);
         glError;

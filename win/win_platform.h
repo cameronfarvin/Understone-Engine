@@ -22,8 +22,6 @@ typedef struct
 } uWIN32_INFO;
 uWIN32_INFO win32;
 
-uEVENT win32_proxy_event;
-
 void uWin32CreateWindow();
 
 inline void*
@@ -43,11 +41,14 @@ uWin32LoadPFNGL(const char* fn_name, const HMODULE* gl_module)
     return pfngl;
 }
 
-uEVENT uWin32HandleEvents();
+uSystemEvent uWin32HandleEvents();
 
 LRESULT CALLBACK uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 // [ cfarvin::TODO ] Clean up win32 allocations on destroy
 /* void win32_destroy(); */
+
+uSystemEvent win32_sys_event;
+POINT win32_mouse_coords;
 
 #endif // __win_platform__

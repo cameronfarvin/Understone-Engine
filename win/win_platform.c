@@ -7,11 +7,10 @@
 
 extern void* uWin32LoadPFNGL(const char* fn_name, const HMODULE* gl_module);
 
-uEVENT
+uSystemEvent
 uWin32HandleEvents()
 {
-    win32_proxy_event = uEVENT_NONE;
-
+    win32_sys_event = uEventNone;
     MSG msg = { 0 };
     // [ cfarvin::TODO ]
     /* while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) */
@@ -19,7 +18,7 @@ uWin32HandleEvents()
     /*     TranslateMessage(&msg); */
     /*     DispatchMessage(&msg); */
 
-    /*     	if (win32_proxy_event == uEVENT_RESIZE) */
+    /*     	if (win32_sys_event == uEventResize) */
     /*     	{ */
     /*     		OutputDebugStringA("\n\nVICTORY\n\n"); */
     /*     	} */
@@ -27,7 +26,7 @@ uWin32HandleEvents()
     PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
     TranslateMessage(&msg);
     DispatchMessage(&msg);
-    return win32_proxy_event;
+    return win32_sys_event;
 }
 
 //
@@ -86,16 +85,14 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_CLOSE:
 	{
             //OutputDebugStringA("WM_CLOSE\n");
-            printf("WM_CLOSE\n");
-            win32_proxy_event = uEVENT_CLOSE;
+            win32_sys_event = uEventClose;
             break;
 	}
 
 	case WM_DESTROY:
 	{
             //OutputDebugStringA("WM_DESTROY\n");
-            printf("WM_DESTROY\n");
-            win32_proxy_event = uEVENT_CLOSE;
+            win32_sys_event = uEventClose;
             PostQuitMessage(0);
             break;
 	}
@@ -103,7 +100,6 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 	{
             //OutputDebugStringA("WM_CREATE\n");
-            printf("WM_CREATE\n");
             PIXELFORMATDESCRIPTOR pixel_format_desc = { 0 };
             pixel_format_desc.nSize = sizeof(PIXELFORMATDESCRIPTOR);
             pixel_format_desc.nVersion = 1;
@@ -230,48 +226,46 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             /* SwapBuffers(UEhdc); */
             /* ReleaseDC(hwnd, UEhdc); */
 
-            win32_proxy_event = uEVENT_NONE;
             break;
 	}
 
 	case WM_LBUTTONDOWN:
 	{
-            win32_proxy_event = uEVENT_MOUSE_PRESS_LEFT;
+            uSetInputPressed(uMouse_left);
+            break;
+	}
+
+	case WM_RBUTTONDOWN:
+	{
+            uSetInputPressed(uMouse_right);
+            break;
+	}
+
+	case WM_LBUTTONUP:
+	{
+            uSetInputReleased(uMouse_left);
+            break;
+	}
+
+	case WM_RBUTTONUP:
+	{
+            uSetInputReleased(uMouse_right);
             break;
 	}
 
 	case WM_SIZE:
 	{
-            //OutputDebugStringA("WM_SIZE\n");
-            printf("WM_SIZE\n");
-            // [ cfarvin::TODO ] pass resize info to main engine
-            /* int width = LOWORD(lParam); */
-            /* int height = HIWORD(lParam); */
-            /*printf("width: %d\nheight: %d\n", width, height);*/
-            win32_proxy_event = uEVENT_RESIZE;
-            return DefWindowProc(hwnd, uMsg, wParam, lParam);
-	}
-
-	case WM_PAINT:
-	{
-            //OutputDebugStringA("WM_PAINT\n");
-            printf("WM_PAINT\n");
-            /* HGLRC gl_rendering_context = wglGetCurrentContext(); */
-            /* if (!gl_rendering_context) */
-            /* { */
-            /*     printf("[ UE::WIN::ERROR ] Failed to obtain gl context on paint cal.\n"); */
-            /* } */
-
-            /* win32.device_context = wglGetCurrentDC(); */
-            /* if (!win32.device_context) */
-            /* { */
-            /*     printf("[ UE::WIN::ERROR ] Failed to obtain device context on paint call\n"); */
-            /* } */
-
-            /* ReleaseDC(win32.window, win32.device_context); */
-            win32_proxy_event = uEVENT_NONE;
+            // [ cfarvin::TODO ] scaling/glortho
+            viewport.width = (u16) LOWORD(lParam);
+            viewport.height = (u16) HIWORD(lParam);
+            win32_sys_event = uEventResize;
             break;
 	}
+
+	/* case WM_PAINT: */
+	/* { */
+        /*     break; */
+	/* } */
 
         /* case WM_KEYDOWN */
         /* { */
@@ -279,10 +273,20 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         /*     { */
         /*         case VK_LEFT: */
         /*         { */
-        /*             win32_proxy_event =  */
+        /*             win32_sys_event =  */
         /*         } */
         /*     } */
         /* } */
+
+        case WM_MOUSEMOVE:
+        {
+            GetCursorPos(&win32_mouse_coords);
+            ScreenToClient(win32.window, &win32_mouse_coords);
+            // [ cfarvin::NOTE ] uMousePos has origin @ lower left == (0, 0, 0)
+            mouse_pos.x = (u16) win32_mouse_coords.x;
+            mouse_pos.y = (u16) (viewport.height - win32_mouse_coords.y);
+        }
     }
+
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }

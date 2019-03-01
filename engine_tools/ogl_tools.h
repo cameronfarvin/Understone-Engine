@@ -76,6 +76,7 @@ typedef struct
 
     // attribute_locations
     GLint vshdr_position_location;
+    GLint vshdr_mut_position_location;
     GLint fshdr_color_location;
 
     // vao_vbo
