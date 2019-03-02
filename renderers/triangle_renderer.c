@@ -32,7 +32,7 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
 
     triangle_renderer->shader_program = 0;
     triangle_renderer->vshdr_position_location = -1;
-    triangle_renderer->vshdr_mut_position_location = -1;
+    triangle_renderer->modelview_matrix_location = -1;
     triangle_renderer->fshdr_color_location = -1;
 
     GLfloat triangle_vertex_data[] =
@@ -66,14 +66,14 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
     glError;
     triangle_renderer->vshdr_position_location =
         glGetAttribLocation(triangle_renderer->shader_program, "vshdr_pos");
-    triangle_renderer->vshdr_mut_position_location =
+    triangle_renderer->modelview_matrix_location =
         glGetUniformLocation(triangle_renderer->shader_program, "vshdr_mut_pos");
     triangle_renderer->fshdr_color_location =
         glGetUniformLocation(triangle_renderer->shader_program, "fshdr_color");
     glError;
 
     assert(triangle_renderer->vshdr_position_location != -1);
-    assert(triangle_renderer->vshdr_mut_position_location != -1);
+    assert(triangle_renderer->modelview_matrix_location != -1);
     assert(triangle_renderer->fshdr_color_location != -1);
 
     //
@@ -83,7 +83,7 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
     glUniform3f(triangle_renderer->fshdr_color_location, 1.0f, 0.0f, 0.0f);
 
     glError;
-    GLfloat transform[16] =
+    GLfloat tmp_modelview[16] =
         {
             +1.0f, +0.0f, +0.0f, +0.0f,
             +0.0f, +1.0f, +0.0f, +0.0f,
@@ -91,10 +91,15 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
             +0.0f, +0.0f, +0.0f, +1.0f,
         };
 
-    glUniformMatrix4fv(triangle_renderer->vshdr_mut_position_location,
+    for (size_t ii = 0; ii < 16; ii++)
+    {
+        triangle_renderer->modelview_matrix[ii] = tmp_modelview[ii];
+    }
+
+    glUniformMatrix4fv(triangle_renderer->modelview_matrix_location,
                       1,
                       GL_TRUE,
-                      transform);
+                      triangle_renderer->modelview_matrix);
 
     glError;
     glGenVertexArrays(1, &triangle_renderer->vertex_array_buffer_location);
@@ -211,10 +216,45 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
 void
 render_triangle(uGLRenderTarget* const triangle_renderer)
 {
+    // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ] [ cfarvin::EXPERIMENTAL ]
+    static r32 piCycle = 0.0f;
+    static r32 cycleDelta = 0.025f;
+
+    if (piCycle > uPI)
+    {
+        piCycle = 0;
+    }
+
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(triangle_renderer->shader_program);
     glBindVertexArray(triangle_renderer->vertex_array_buffer_location);
     glEnableVertexAttribArray(triangle_renderer->vshdr_position_location);
+
+    triangle_renderer->modelview_matrix[3] = -((viewport.width - mouse_pos.x) / (viewport.width / 2.0f) - 1);
+    triangle_renderer->modelview_matrix[7] = -((viewport.height - mouse_pos.y) / (viewport.height / 2.0f) - 1);
+
+    glUniformMatrix4fv(triangle_renderer->modelview_matrix_location,
+                       1,
+                       GL_TRUE,
+                       triangle_renderer->modelview_matrix);
+
+    piCycle += cycleDelta;
+    if (uGetInputPressed(uMouse_right))
+    {
+        // red triangle
+        glUniform3f(triangle_renderer->fshdr_color_location, (GLfloat) sin(piCycle), 0.0, 0.0f);
+    }
+    else if (uGetInputPressed(uMouse_left))
+    {
+        // blue triangle
+        glUniform3f(triangle_renderer->fshdr_color_location, 0.0f, 0.0f, (GLfloat) sin(piCycle));
+    }
+    else
+    {
+        // green triangle
+        glUniform3f(triangle_renderer->fshdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
+    }
+
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);
     glEnableVertexAttribArray(0);

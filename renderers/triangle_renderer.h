@@ -5,12 +5,6 @@
 #include <GL/glu.h>
 #include <engine_tools/ogl_tools.h>
 
-  /*
-  [ cfarvin::TODO ]
-  # uniform color sin transform
-  # make it move
-  */
-
 void
 initRenderer_triangle(uGLRenderTarget* const triangle_renderer);
 

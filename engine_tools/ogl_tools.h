@@ -76,8 +76,13 @@ typedef struct
 
     // attribute_locations
     GLint vshdr_position_location;
-    GLint vshdr_mut_position_location;
+    GLint modelview_matrix_location;
+    GLint projection_matrix_location;
     GLint fshdr_color_location;
+
+    // matrix data
+    GLfloat modelview_matrix[16];
+    GLfloat project_matrix[16];
 
     // vao_vbo
     GLuint vertex_array_buffer_location;
