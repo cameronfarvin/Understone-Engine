@@ -365,9 +365,9 @@ uX11CreateWindow()
         glXGetProcAddressARB( (const GLubyte*) "glCheckFramebufferStatus");
     assert(glCheckFramebufferStatus);
 
-    glUniformMatrix4f = (PFNGLUNIFORMMATRIX4FVPROC)
-        glXGetProcAddressARB( (const GLubyte*) "glUniformMatrix4f");
-    assert(glUniformMatrix4f);
+    glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glUniformMatrix4fv");
+    assert(glUniformMatrix4fv);
 
     uX11HandleEvents();
 }

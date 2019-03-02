@@ -18,7 +18,7 @@ bool RUNNING = true;
 void
 uHandleWindowResize()
 {
-    printf("viewport.width: %ld\nviewport.height: %ld\n", viewport.width, viewport.height);
+    /* printf("viewport.width: %ld\nviewport.height: %ld\n", viewport.width, viewport.height); */
     glViewport(0, 0, viewport.width, viewport.height);
     /* glMatrixMode(GL_PROJECTION); */
     /* glOrtho(0.0f, viewport.width, viewport.height, 0.0f, 0.0f, 1.0f); */
@@ -120,7 +120,15 @@ int main(int argc, char** argv)
     // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ] [ cfarvin::EXPERIMENTAL ]
     r32 piCycle = 0;
     r32 cycleDelta = 0.025f;
-    /* GLfloat transform[4] = {1.0f, 1.0f, 1.0f, 1.0f}; */
+
+    GLfloat transform[16] =
+        {
+            +1.0f, +0.0f, +0.0f, +0.0f,
+            +0.0f, +1.0f, +0.0f, +0.0f,
+            +0.0f, +0.0f, +1.0f, +0.0f,
+            +0.0f, +0.0f, +0.0f, +1.0f,
+        };
+
     while(RUNNING)
     {
         glError;
@@ -158,11 +166,16 @@ int main(int argc, char** argv)
             glUniform3f(triangle_renderer.fshdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
         }
 
-        /* glUniformMatrix4f(triangle_renderer.vshdr_mut_position_location, */
-        /*            1, */
-        /*            GL_FALSE, */
-        /*            transform); */
 
+        transform[3] = -((viewport.width - mouse_pos.x) / (viewport.width / 2.0f) - 1);
+        transform[7] = -((viewport.height - mouse_pos.y) / (viewport.height / 2.0f) - 1);
+        /* transform[3] = (mouse_pos.x / (r32)viewport.width); */
+        /* transform[7] = (mouse_pos.y / (r32)viewport.height); */
+
+        glUniformMatrix4fv(triangle_renderer.vshdr_mut_position_location,
+                           1,
+                           GL_TRUE,
+                           transform);
 
         render_triangle(&triangle_renderer);
         glError;
