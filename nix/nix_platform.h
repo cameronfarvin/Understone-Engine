@@ -29,17 +29,18 @@ typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*,
 
 typedef struct
 {
-    Display*          display;
-    Screen*           default_screen;
-    int               default_screen_number;
-    Window            engine_window;
-    int               display_height;
-    int               display_width;
-    XEvent            event;
-    XWindowAttributes window_attributes;
+    Display*             display;
+    Screen*              default_screen;
+    int                  default_screen_number;
+    Window               engine_window;
+    Window               root_window;
+    int                  display_height;
+    int                  display_width;
+    XEvent               event;
+    XWindowAttributes    window_attributes;
     XSetWindowAttributes set_window_attributes;
-    XVisualInfo*      visual_info;
-    GLXContext        ogl_context;
+    XVisualInfo*         visual_info;
+    GLXContext           ogl_context;
 } X11_INFO;
 X11_INFO x11;
 

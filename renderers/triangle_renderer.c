@@ -12,11 +12,17 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
         (450 core,
 
          in vec2 vshdr_pos;
-         uniform vec2 vshdr_mut_pos;
+         /* uniform mat4 vshdr_mut_pos; */
 
          void main()
          {
-             gl_Position = vec4((vshdr_pos + vshdr_mut_pos), 0.0f, 1.0f);
+             gl_Position = vec4(vshdr_pos,
+                                0.0f,
+                                1.0f);
+             /* gl_Position = vshdr_mut_pos * vec4(vshdr_pos, */
+             /*                    0.0f, */
+             /*                    1.0f); */
+
          });
 
     const char* fshdr = GLSL
@@ -33,7 +39,7 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
 
     triangle_renderer->shader_program = 0;
     triangle_renderer->vshdr_position_location = -1;
-    triangle_renderer->vshdr_mut_position_location = -1;
+    /* triangle_renderer->vshdr_mut_position_location = -1; */
     triangle_renderer->fshdr_color_location = -1;
 
     GLfloat triangle_vertex_data[] =
@@ -67,14 +73,14 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
     glError;
     triangle_renderer->vshdr_position_location =
         glGetAttribLocation(triangle_renderer->shader_program, "vshdr_pos");
-    triangle_renderer->vshdr_mut_position_location =
-        glGetUniformLocation(triangle_renderer->shader_program, "vshdr_mut_pos");
+    /* triangle_renderer->vshdr_mut_position_location = */
+    /*     glGetUniformLocation(triangle_renderer->shader_program, "vshdr_mut_pos"); */
     triangle_renderer->fshdr_color_location =
         glGetUniformLocation(triangle_renderer->shader_program, "fshdr_color");
     glError;
 
     assert(triangle_renderer->vshdr_position_location != -1);
-    assert(triangle_renderer->vshdr_mut_position_location != -1);
+    /* assert(triangle_renderer->vshdr_mut_position_location != -1); */
     assert(triangle_renderer->fshdr_color_location != -1);
 
     //

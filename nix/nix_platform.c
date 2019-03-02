@@ -216,7 +216,8 @@ uX11CreateWindow()
                  KeyPressMask|
                  ButtonPressMask|
                  ButtonReleaseMask|
-                 MotionNotify);
+                 PointerMotionMask|
+                 StructureNotifyMask);
 
     XMapWindow(x11.display, x11.engine_window);
     XGetWindowAttributes(x11.display,
@@ -364,6 +365,9 @@ uX11CreateWindow()
         glXGetProcAddressARB( (const GLubyte*) "glCheckFramebufferStatus");
     assert(glCheckFramebufferStatus);
 
+    glUniformMatrix4f = (PFNGLUNIFORMMATRIX4FVPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glUniformMatrix4f");
+    assert(glUniformMatrix4f);
 
     uX11HandleEvents();
 }
@@ -376,49 +380,49 @@ uX11HandleEvents()
         XNextEvent(x11.display, &x11.event);
         switch(x11.event.type)
         {
+            case MotionNotify:
+            {
+                mouse_pos.x = x11.event.xmotion.x;
+                mouse_pos.y = x11.display_height - x11.event.xmotion.y;
+                break;
+            }
             case ButtonPress:
             {
                 switch(x11.event.xbutton.button)
                 {
                     case 1:
                     {
-                        mouse_pos.x = x11.event.xmotion.x;
-                        mouse_pos.y = x11.event.xmotion.y;
                         uSetInputPressed(uMouse_left);
                         assert(uGetInputPressed(uMouse_left));
                         break;
                     }
                     case 2:
                     {
-                        mouse_pos.x = x11.event.xmotion.x;
-                        mouse_pos.y = x11.event.xmotion.y;
                         uSetInputPressed(uMouse_middle);
                         assert(uGetInputPressed(uMouse_middle));
                         break;
                     }
                     case 3:
                     {
-                        mouse_pos.x = x11.event.xmotion.x;
-                        mouse_pos.y = x11.event.xmotion.y;
                         uSetInputPressed(uMouse_right);
                         assert(uGetInputPressed(uMouse_right));
                         break;
                     }
-                    case 4:
-                    {
-                        mouse_pos.x = x11.event.xmotion.x;
-                        mouse_pos.y = x11.event.xmotion.y;
-                        break;
-                    }
-                    case 5:
-                    {
-                        mouse_pos.x = x11.event.xmotion.x;
-                        mouse_pos.y = x11.event.xmotion.y;
-                        break;
-                    }
+                    /* case 4: */
+                    /* { */
+                    /*     mouse_pos.x = x11.event.xmotion.x; */
+                    /*     mouse_pos.y = x11.event.xmotion.y; */
+                    /*     break; */
+                    /* } */
+                    /* case 5: */
+                    /* { */
+                    /*     mouse_pos.x = x11.event.xmotion.x; */
+                    /*     mouse_pos.y = x11.event.xmotion.y; */
+                    /*     break; */
+                    /* } */
                 }
 
-                return uEventNone;
+                break;
             }
             case ButtonRelease:
             {
@@ -426,31 +430,25 @@ uX11HandleEvents()
                 {
                     case 1:
                     {
-                        mouse_pos.x = x11.event.xmotion.x;
-                        mouse_pos.y = x11.event.xmotion.y;
                         uSetInputReleased(uMouse_left);
                         assert(!uGetInputPressed(uMouse_left));
                         break;
                     }
                     case 2:
                     {
-                        mouse_pos.x = x11.event.xmotion.x;
-                        mouse_pos.y = x11.event.xmotion.y;
                         uSetInputReleased(uMouse_middle);
                         assert(!uGetInputPressed(uMouse_middle));
                         break;
                     }
                     case 3:
                     {
-                        mouse_pos.x = x11.event.xmotion.x;
-                        mouse_pos.y = x11.event.xmotion.y;
                         uSetInputReleased(uMouse_right);
                         assert(!uGetInputPressed(uMouse_right));
                         break;
                     }
                 }
 
-                return uEventNone;
+                break;
             }
             case Expose:
             {
@@ -466,8 +464,7 @@ uX11HandleEvents()
                     viewport.height = x11.window_attributes.height;
                     return uEventResize;
                 }
-
-                return uEventNone;
+                break;
             }
             case ClientMessage:
             {
@@ -477,7 +474,13 @@ uX11HandleEvents()
                     return uEventClose;
                 }
 
-                return uEventNone;
+                break;
+            }
+            case ConfigureNotify:
+            {
+                x11.display_height = x11.event.xconfigure.height;
+                x11.display_width = x11.event.xconfigure.width;
+                return uEventResize;
             }
         }
     }

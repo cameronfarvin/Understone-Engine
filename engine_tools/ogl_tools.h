@@ -138,7 +138,7 @@ PFNGLGENFRAMEBUFFERSPROC         glGenFramebuffers;
 /* PFNGLTEXIMAGE2DPROC              glTexImage2D; */
 PFNGLFRAMEBUFFERTEXTURE2DPROC    glFramebufferTexture2D;
 PFNGLCHECKFRAMEBUFFERSTATUSPROC  glCheckFramebufferStatus;
-
+PFNGLUNIFORMMATRIX4FVPROC         glUniformMatrix4f;
 //
 // signatures
 //

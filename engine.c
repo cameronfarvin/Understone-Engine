@@ -18,8 +18,10 @@ bool RUNNING = true;
 void
 uHandleWindowResize()
 {
-    printf("viewport.width: %d\nviewport.height: %d\n", viewport.width, viewport.height);
+    printf("viewport.width: %ld\nviewport.height: %ld\n", viewport.width, viewport.height);
     glViewport(0, 0, viewport.width, viewport.height);
+    /* glMatrixMode(GL_PROJECTION); */
+    /* glOrtho(0.0f, viewport.width, viewport.height, 0.0f, 0.0f, 1.0f); */
 }
 
 // Query the mouse and keyboard state
@@ -118,6 +120,7 @@ int main(int argc, char** argv)
     // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ] [ cfarvin::EXPERIMENTAL ]
     r32 piCycle = 0;
     r32 cycleDelta = 0.025f;
+    /* GLfloat transform[4] = {1.0f, 1.0f, 1.0f, 1.0f}; */
     while(RUNNING)
     {
         glError;
@@ -141,6 +144,13 @@ int main(int argc, char** argv)
         {
             // blue triangle
             glUniform3f(triangle_renderer.fshdr_color_location, 0.0f, 0.0f, (GLfloat) sin(piCycle));
+            /* printf("mouse_pos.x: %ld\nmouse_pos.y: %ld\nviewport.width: %ld\nviewport.height: %ld\nmouse_x_corrected: %f\nmouse_y_corrected: %f\n", */
+            /*        mouse_pos.x, */
+            /*        mouse_pos.y, */
+            /*        viewport.width, */
+            /*        viewport.height, */
+            /*        ((r32)mouse_pos.x / (r32)viewport.width), */
+            /*        ((r32)mouse_pos.y / (r32)viewport.height)); */
         }
         else
         {
@@ -148,9 +158,11 @@ int main(int argc, char** argv)
             glUniform3f(triangle_renderer.fshdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
         }
 
-        glUniform2f(triangle_renderer.vshdr_mut_position_location,
-                    (GLfloat) ((r32)mouse_pos.x / (r32)viewport.width - 0.5f),
-                    (GLfloat) ((r32)mouse_pos.y / (r32)viewport.height - 0.5f));
+        /* glUniformMatrix4f(triangle_renderer.vshdr_mut_position_location, */
+        /*            1, */
+        /*            GL_FALSE, */
+        /*            transform); */
+
 
         render_triangle(&triangle_renderer);
         glError;
