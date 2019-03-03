@@ -4,30 +4,39 @@
 #include <engine_tools/type_tools.h>
 
 
+typedef struct
+{
+    size_t img_size;
+    /* size_t img_height; */
+    /* size_t img_width; */
+    u8* img_start;
+    u8* img_end;
+    u8* img_cursor;
+    uEndianness endian;
+    u8* img_pixels;
+} uImage;
+
+u8  uReadNextByte(uImage* const img);
+u16 uRead16AsLE(uImage* const img);
+u32 uRead32AsLE(uImage* const img);
+
 //
 // BitMaps
 //
-/*
-Bitmap files generally follow the form:
-   1. Bitmap File Header
-   2. Bitmap Info Header
-   3. RGBQUAD Array
-   4. Color-Index Array
 
-Bitmap File Header:
-typedef struct tagBITMAPFILEHEADER {
-  WORD  bfType;                                               // 16 bytes
-  DWORD bfSize;                                               // 32 bytes
-  WORD  bfReserved1;                                          // 16 bytes
-  WORD  bfReserved2;                                          // 16 bytes
-  DWORD bfOffBits;                                            // 32 bytes
-} BITMAPFILEHEADER, *LPBITMAPFILEHEADER, *PBITMAPFILEHEADER;
-*/
-typedef struct
-{
-    size_t bitmap_size;
-} uBitmap;
+typedef enum
+    {
+        BI_RGB = 0x0000,
+        BI_RLE8 = 0x0001,
+        BI_RLE4 = 0x0002,
+        BI_BITFIELDS = 0x0003,
+        BI_JPEG = 0x0004,
+        BI_PNG = 0x0005,
+        BI_CMYK = 0x000B,
+        BI_CMYKRLE8 = 0x000C,
+        BI_CMYKRLE4 = 0x000D
+    } BitmapCompression;
 
-bool uLoadBitmap(const char* file_path, uBitmap* const bitmap);
+bool uLoadBitmap(const char* file_path, uImage* const img);
 
 #endif // __image_tools

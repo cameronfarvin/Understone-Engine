@@ -114,12 +114,18 @@ int main(int argc, char** argv)
         }
     }
 
+    uDetermineSystemEndianness();
     uInitializeGameWindowsAndContext();
     uInitializeRenderers();
 
+    //
+    // [ cfarvin::DEBUG ]
     #include <engine_tools/image_tools.h>
-    uBitmap bitmap;
-    uLoadBitmap("./assets/FLAG_B24.BMP", &bitmap);
+    uImage img;
+    assert(uLoadBitmap("./assets/FLAG_B24.BMP", &img));
+    return 0;
+    // [ cfarvin::DEBUG ]
+    //
 
     while(RUNNING)
     {
