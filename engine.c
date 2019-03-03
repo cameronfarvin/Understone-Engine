@@ -117,6 +117,10 @@ int main(int argc, char** argv)
     uInitializeGameWindowsAndContext();
     uInitializeRenderers();
 
+    #include <engine_tools/image_tools.h>
+    uBitmap bitmap;
+    uLoadBitmap("./assets/FLAG_B24.BMP", &bitmap);
+
     while(RUNNING)
     {
         glError;
@@ -137,3 +141,16 @@ int main(int argc, char** argv)
     printf("[ SUCCESS ]\n");
     return 0;
 }
+
+/*
+Master TODO:
+   - Textures (d: 4)
+   - Fonts (d: 10)
+
+   - Particle System (d: 6)
+   - Data Structures (Hash, List) (d: 5)
+   - Statistics update (d: 2)
+
+   - Parse all files for preproc directive uBKPTERR,
+     load those lines into GDB as brekpoints
+*/

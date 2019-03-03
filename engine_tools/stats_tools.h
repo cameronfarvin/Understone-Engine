@@ -3,8 +3,8 @@
 
 typedef struct
 {
-    u8 events_handled_this_loop;
+    u16 events_handled_this_loop;
 } STATISTICS;
 STATISTICS stats;
 
-#endif // __stats_tools__
+#endif // __stats_tools

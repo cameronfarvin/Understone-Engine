@@ -15,4 +15,4 @@ render_triangle(uGLRenderTarget* const tirangle_renderer);
 /* void */
 /* destroyRenderer_triangle(uGLRenderer* const triangle_renderer); */
 
-#endif // __triangle_renderer__
+#endif // __triangle_renderer

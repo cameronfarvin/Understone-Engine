@@ -1,9 +1,6 @@
 #ifndef __ogl_tools__
 #define __ogl_tools__ 1
 
-/* #include <GL/gl.h> */
-/* #include <GL/glu.h> */
-
 #if __linux__
 #include <nix/nix_platform.h>
 #elif _WIN32
@@ -101,7 +98,6 @@ typedef struct
     u8 vminor;
 } OPENGL_STATS;
 OPENGL_STATS ogl_stats;
-
 
 typedef struct
 {
