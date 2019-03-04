@@ -121,6 +121,13 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
                           (void*) 0);
     glError;
 
+    //
+    // [ cfarvin::DEBUG ]
+    uImage img;
+    assert(uLoadBitmap("./assets/FLAG_B24.BMP", &img));
+    // [ cfarvin::DEBUG ]
+    //
+
 
     //
     //
@@ -211,6 +218,7 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
     /* assert(status == GL_FRAMEBUFFER_COMPLETE); */
 
     /* glBindFramebuffer(GL_FRAMEBUFFER, 0); */
+
 }
 
 void
