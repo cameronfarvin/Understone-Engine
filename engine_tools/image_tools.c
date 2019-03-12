@@ -110,7 +110,10 @@ uLoadBitmap(const char* file_path, uImage* const img)
         return false;
     }
 
-    uRead32AsLE(img); // progress cursor
+    // The offset, in bytes, from the beginning of the
+    // BITMAPFILEHEADER structure to the bitmap bits.
+    u32 bitmap_bits_offset = uRead32AsLE(img);
+    u8* bitmap_bits_begin  = img->img_start + bitmap_bits_offset;
 
     //
     // Parse one of the following:
@@ -142,6 +145,17 @@ uLoadBitmap(const char* file_path, uImage* const img)
         return false;
     }
 
+    //
+    //
+    // [ cfarvin::TODO ] Possibly remove this?
+    //
+    //
+    typedef enum
+    {
+        BOTTOM_UP, // origin is in the lower left corner
+        TOP_DOWN   // origin is in the upper left corner
+    } BitmapDirection;
+
     typedef struct tagCIEXYZ {
         s32 ciexyzX;
         s32 ciexyzY;
@@ -153,6 +167,8 @@ uLoadBitmap(const char* file_path, uImage* const img)
         CIEXYZ ciexyzGreen;
         CIEXYZ ciexyzBlue;
     } CIEXYZTRIPLE;
+
+    BitmapDirection bitmap_direction;
 
     // [ cfarvin:: TODO ]
     // BYTE ORDER UNIQUE TO: BITMAPCOREHEADER
@@ -196,8 +212,10 @@ uLoadBitmap(const char* file_path, uImage* const img)
     u32 bitmap_profileSize = 0;
     u32 bitmap_reserved    = 0;
 
+    printf("\t[ debug::NOTE ] Final (non-sequential) bitmap header type printed is type found\n");
     if (bitmap_info_header_size == 12) // BITMAPCOREHEADER ONLY
     {
+        printf("\t[ debug ] BITMAP HEADER TYPE: BITMAPCOREHEADER\n");
         bitmap_width = (s32) uRead16AsLE(img);
         bitmap_height = (s32) uRead16AsLE(img);
         bitmap_planes = uRead16AsLE(img);
@@ -206,6 +224,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
     }
     else // EVERYONE ELSE
     {
+        printf("\t[ debug ] BITMAP HEADER TYPE: BITMAPINFOHEADER\n");
         bitmap_width = (s32) uRead32AsLE(img);
         printf("\t[ debug ] bitmap_width: %d\n", bitmap_width);
         bitmap_height = (s32) uRead32AsLE(img);
@@ -242,6 +261,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
         // BITMAPV4HEADER && BITMAPV5HEADER
         if (bitmap_info_header_size >= 108)
         {
+            printf("\t[ debug ] BITMAP HEADER TYPE: BITMAPV4HEADER\n");
             bitmap_redMask = uRead32AsLE(img);
             printf("\t[ debug ] bitmap_redMask: %d\n", bitmap_redMask);
             bitmap_greenMask = uRead32AsLE(img);
@@ -293,6 +313,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
             // [ cfarvin::UNTESTED ]
             if (bitmap_info_header_size >= 124) // BITMAPV5HEADER ONLY
             {
+                printf("\t[ debug ] BITMAP HEADER TYPE: BITMAPV5HEADER\n");
                 bitmap_intent = uRead32AsLE(img);
                 printf("\t[ debug ] bitmap_intent: %d\n", bitmap_intent);
                 bitmap_profileData = uRead32AsLE(img);
@@ -304,6 +325,57 @@ uLoadBitmap(const char* file_path, uImage* const img)
             }
         }
     }
+
+    if (bitmap_height > 0)
+    {
+        bitmap_direction = BOTTOM_UP;
+    }
+    else
+    {
+        bitmap_direction = TOP_DOWN;
+
+        // Does not apply to the BITMAPCOREHEADER, applies to everyone else
+        if ( (bitmap_info_header_size > 12) &&
+             ((bitmap_compression != uBI_RGB) ||
+              (bitmap_compression != uBI_BITFIELDS)) )
+        {
+            printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Unsupported bitmap compression.\n");
+            return false;
+        }
+    }
+
+    //
+    // [ cfarvin::REMOVE ] [ cfarvin::DEBUG ]
+    //
+    (void)bitmap_direction;
+
+    // [ cfarvin::TODO ]
+    // If bV4Compression is BI_JPEG or BI_PNG, bV4Height specifies the height of the
+    // JPEG or PNG image in pixels.
+
+    //
+    // Parse RGBQuad
+    //
+    if (img->img_cursor <= bitmap_bits_begin)
+    {
+        printf("\t[ debug ] Distance to bits: %ld\n", img->img_cursor - bitmap_bits_begin);
+    }
+
+    u8 intensityRed   = uReadNextByte(img);
+    u8 intensityGreen = uReadNextByte(img);
+    u8 intensityBlue  = uReadNextByte(img);
+    u8 bitmap_reserved_quad = uReadNextByte(img);
+    if (bitmap_reserved_quad != 0)
+    {
+        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Unsupported bitmap color intensities.\n");
+        return false;
+    }
+
+    printf("\t[ debug ] r: %d, g: %d, b:%d\n",
+           intensityRed,
+           intensityGreen,
+           intensityBlue);
+
 
     printf("\t[ DEBUG::SUCCES ]\n");
     return true;
