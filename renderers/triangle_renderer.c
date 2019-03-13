@@ -22,7 +22,6 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
         (450 core,
 
          uniform vec3 fshdr_color;
-
          out vec4 fshdr_final;
 
          void main()
@@ -122,14 +121,6 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
     glError;
 
     //
-    // [ cfarvin::DEBUG ]
-    uImage img;
-    assert(uLoadBitmap("./assets/FLAG_B24.BMP", &img));
-    // [ cfarvin::DEBUG ]
-    //
-
-
-    //
     //
     // framebuffer_test
     //
@@ -218,7 +209,6 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
     /* assert(status == GL_FRAMEBUFFER_COMPLETE); */
 
     /* glBindFramebuffer(GL_FRAMEBUFFER, 0); */
-
 }
 
 void

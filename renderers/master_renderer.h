@@ -3,7 +3,9 @@
 
 
 #include <triangle_renderer.h>
+#include <test_bitmap_renderer.h>
 
 uGLRenderTarget triangle_renderer;
+uGLRenderTarget test_bitmap_renderer;
 
 #endif // __master_renderer

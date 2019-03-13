@@ -16,7 +16,6 @@
 
 typedef struct
 {
-    size_t img_size;
     size_t img_height;
     size_t img_width;
     u8* img_start;

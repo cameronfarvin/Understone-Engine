@@ -71,6 +71,7 @@ void
 uInitializeRenderers()
 {
     initRenderer_triangle(&triangle_renderer);
+    initRenderer_test_bitmap(&test_bitmap_renderer);
 }
 
 static inline void

@@ -76,14 +76,21 @@ typedef struct
     GLint modelview_matrix_location;
     GLint projection_matrix_location;
     GLint fshdr_color_location;
+    GLint fshdr_frag_coords;
+    GLint fshdr_frag_color;
+    GLint fshdr_texture_2d;
 
     // matrix data
     GLfloat modelview_matrix[16];
     GLfloat project_matrix[16];
 
-    // vao_vbo
+    // vao/vbo/ebo
     GLuint vertex_array_buffer_location;
     GLuint vertex_buffer_location;
+    GLuint element_buffer_location;
+
+    // texture [ cfarvin::DEBUG ]
+    GLuint texture2d;
 
     // texture map
     GLuint texture_map;

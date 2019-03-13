@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <assert.h>
 #include <engine_tools/image_tools.h>
 
@@ -49,9 +50,9 @@ uLoadBitmap(const char* file_path, uImage* const img)
     }
 
     fseek(file, 0, SEEK_END);
-    img->img_size = ftell(file);
+    size_t original_bitmap_size = ftell(file);
 
-    if (!img->img_size)
+    if (!original_bitmap_size)
     {
         printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Invalid bitmap file.\n");
         return false;
@@ -60,14 +61,14 @@ uLoadBitmap(const char* file_path, uImage* const img)
     // [ cfarvin::NOTE ] [ cfarvin::TODO ]
     // For now, let's assume that the user is passing reasonable file sizes, and that it
     // is safe to read the entire file into memory.
-    u8* mem_file = (u8*) malloc(img->img_size + 1);
-    mem_file[img->img_size] = '\0';
+    u8* mem_file = (u8*) malloc(original_bitmap_size + 1);
+    mem_file[original_bitmap_size] = '\0';
     fseek(file, 0, SEEK_SET);
 
     img->img_start = img->img_cursor = mem_file;
-    img->img_end = mem_file + img->img_size;
+    img->img_end = mem_file + original_bitmap_size;
 
-    size_t items_read = fread(mem_file, img->img_size, 1, file);
+    size_t items_read = fread(mem_file, original_bitmap_size, 1, file);
     if (items_read != 1)
     {
         printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): File read error.\n");
@@ -150,11 +151,11 @@ uLoadBitmap(const char* file_path, uImage* const img)
     // [ cfarvin::TODO ] Possibly remove this?
     //
     //
-    typedef enum
-    {
-        BOTTOM_UP, // origin is in the lower left corner
-        TOP_DOWN   // origin is in the upper left corner
-    } BitmapDirection;
+    /* typedef enum */
+    /* { */
+    /*     BOTTOM_UP, // origin is in the lower left corner */
+    /*     TOP_DOWN   // origin is in the upper left corner */
+    /* } BitmapDirection; */
 
     typedef struct tagCIEXYZ {
         s32 ciexyzX;
@@ -168,7 +169,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
         CIEXYZ ciexyzBlue;
     } CIEXYZTRIPLE;
 
-    BitmapDirection bitmap_direction;
+    /* BitmapDirection bitmap_direction; */
 
     // [ cfarvin:: TODO ]
     // BYTE ORDER UNIQUE TO: BITMAPCOREHEADER
@@ -328,11 +329,11 @@ uLoadBitmap(const char* file_path, uImage* const img)
 
     if (bitmap_height > 0)
     {
-        bitmap_direction = BOTTOM_UP;
+        /* bitmap_direction = BOTTOM_UP; // origin in bottom left corner */
     }
     else
     {
-        bitmap_direction = TOP_DOWN;
+        /* bitmap_direction = TOP_DOWN; // origin in top right corner */
 
         // Does not apply to the BITMAPCOREHEADER, applies to everyone else
         if ( (bitmap_info_header_size > 12) &&
@@ -344,39 +345,126 @@ uLoadBitmap(const char* file_path, uImage* const img)
         }
     }
 
-    //
-    // [ cfarvin::REMOVE ] [ cfarvin::DEBUG ]
-    //
-    (void)bitmap_direction;
+    if (!bitmap_width)
+    {
+        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Invliad bitmap height.\n");
+        return false;
+    }
+
+    img->img_height = bitmap_height;
+    img->img_width = bitmap_width;
 
     // [ cfarvin::TODO ]
     // If bV4Compression is BI_JPEG or BI_PNG, bV4Height specifies the height of the
     // JPEG or PNG image in pixels.
 
     //
-    // Parse RGBQuad
+    // [ cfarvin::TODO ] [ cfarvin::UNTESTED ] Parse RGBQuad
     //
-    if (img->img_cursor <= bitmap_bits_begin)
-    {
-        printf("\t[ debug ] Distance to bits: %ld\n", img->img_cursor - bitmap_bits_begin);
-    }
+    u8 intensityRed         = 0;
+    u8 intensityGreen       = 0;
+    u8 intensityBlue        = 0;
+    u8 bitmap_reserved_quad = 0;
 
-    u8 intensityRed   = uReadNextByte(img);
-    u8 intensityGreen = uReadNextByte(img);
-    u8 intensityBlue  = uReadNextByte(img);
-    u8 bitmap_reserved_quad = uReadNextByte(img);
-    if (bitmap_reserved_quad != 0)
+    // [ cfarvin::TODO ] What is a reasonable maximum for the padding needed between the RGBQuad
+    // (if an RGBQuad exists), and the bitmap bits? Going w/ s16, though s8 is probably fine.
+    s16 distance_to_bitmap_bits = bitmap_bits_begin - img->img_cursor; // negative == error
+    if (distance_to_bitmap_bits < 0)
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Unsupported bitmap color intensities.\n");
+        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): INTERNAL ERROR. Surpassed bitmap bits.\n");
         return false;
     }
 
-    printf("\t[ debug ] r: %d, g: %d, b:%d\n",
-           intensityRed,
-           intensityGreen,
-           intensityBlue);
+    //
+    // [ cfarvin::NOTE ] [ cfarvin::TODO ] [ cfarvin::UPDATE ]
+    // This was seen in Microsoft documentation. It may or may not invalidate the information
+    // given in the comments directly below:
+    //
+    // The bmiColors color table is used for optimizing colors used on palette-based devices,
+    // and must contain the number of entries specified by the biClrUsed member of the BITMAPINFOHEADER.
+    //
+
+    // Zero indicates we are "at the gates" of the bitmap bits.
+    // If greater than 0 but less than 4, either a mistake was made in parsing, or it is an
+    // improperly formatted bitmap.
+    if (distance_to_bitmap_bits)
+    {
+        if (distance_to_bitmap_bits < 4)
+        {
+            printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Invalid bitmap RGBQuad format.\n");
+            return false;
+        }
+
+        intensityRed   = uReadNextByte(img);
+        intensityGreen = uReadNextByte(img);
+        intensityBlue  = uReadNextByte(img);
+        bitmap_reserved_quad = uReadNextByte(img);
+
+        if (bitmap_reserved_quad != 0)
+        {
+            printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Unsupported bitmap color intensities.\n");
+            return false;
+        }
+
+        printf("\t[ debug ] r: %d, g: %d, b:%d\n",
+               intensityRed,
+               intensityGreen,
+               intensityBlue);
+
+        // [ cfarvin::TODO ] Continue parsing or use color intensities
+    }
 
 
+    /* size_t DEBUG_COUNT_PIXELS = 0; */
+    /* u8 bitcount_modifier = 0; */
+    /* if (bitmap_bitCount <= 8) */
+    /* { */
+    /*     bitcount_modifier = 8; */
+    /* } */
+    /* else if (bitmap_bitCount <= 16) */
+    /* { */
+    /*     bitcount_modifier = 16; */
+    /* } */
+    /* else */
+    /* { */
+    /*     bitcount_modifier = 32; */
+    /* } */
+
+    // [ cfarvin::TODO ] It would be less than great if img->img_pixels
+    // already had been allocated. We are assuming that the user is
+    // passing a new image object, not reusing one this is probably a
+    // bad assumption in the long term; fine in the short term.
+    // img->img_pixels = (u8*) malloc(bitmap_height * bitmap_width * bitcount_modifier);
+    img->img_pixels = (u8*) malloc(bitmap_height * bitmap_width);
+
+/* #define uBITMAP_FILL_PIXELS                                     \ */
+/*     for (ssize_t x = 0; x < bitmap_width; x++)                  \ */
+/*     {                                                           \ */
+/*         *(img->img_pixels + (y * x) + x) = uReadNextByte(img);  \ */
+/*         DEBUG_COUNT_PIXELS++;                                   \ */
+/*     }                                                           \ */
+
+
+/*     if (bitmap_direction == BOTTOM_UP) */
+/*     { */
+/*         printf("\t[ debug ] Populating color bits: BOTTOM_UP...\n."); */
+/*         for (ssize_t y = bitmap_height; y > 0; y--) */
+/*         { */
+/*             uBITMAP_FILL_PIXELS; */
+/*         } */
+/*     } */
+/*     else */
+/*     { */
+/*         printf("\t[ debug ] Populating color bits: TOP_DOWN...\n."); */
+/*         for (ssize_t y = 0; y > bitmap_height; y++) */
+/*         { */
+/*             uBITMAP_FILL_PIXELS; */
+/*         } */
+/*     } */
+
+/* #undef uBITMAP_FILL_PIXELS */
+
+    memcpy(img->img_pixels, bitmap_bits_begin, (bitmap_height * bitmap_width));
     printf("\t[ DEBUG::SUCCES ]\n");
     return true;
 }

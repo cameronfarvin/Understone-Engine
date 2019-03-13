@@ -19,6 +19,7 @@ engine.c ^
 engine_tools\ogl_tools.c ^
 win\win_platform.c ^
 renderers\triangle_renderer.c ^
+renderers\test_bitmap_renderer.c ^
 data_structures\uDynamicArray.c ^
 tests\tests.c ^
 -Inix -Iwin -Iengine_tools -Irenderers -I. -Idata_structures -Itests ^

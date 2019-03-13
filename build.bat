@@ -36,6 +36,7 @@ echo [ STARTING COMPILATION ]
 cl engine.c  /W4 /WX ^
 engine_tools/ogl_tools.c win/win_platform.c ^
 renderers/triangle_renderer.c ^
+renderers/test_bitmap_renderer.c ^
 data_structures/uDynamicArray.c ^
 tests/tests.c ^
 /I. /Iengine_tools /Iwin /Irenderers /Idata_structures /Itests ^
