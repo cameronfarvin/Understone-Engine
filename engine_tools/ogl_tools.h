@@ -76,9 +76,8 @@ typedef struct
     GLint modelview_matrix_location;
     GLint projection_matrix_location;
     GLint fshdr_color_location;
-    GLint fshdr_frag_coords;
-    GLint fshdr_frag_color;
-    GLint fshdr_texture_2d;
+    GLint fshdr_texture_coords_location;
+    GLint fshdr_texture_2d_location;
 
     // matrix data
     GLfloat modelview_matrix[16];

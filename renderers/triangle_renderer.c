@@ -209,6 +209,10 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
     /* assert(status == GL_FRAMEBUFFER_COMPLETE); */
 
     /* glBindFramebuffer(GL_FRAMEBUFFER, 0); */
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    glUseProgram(0);
 }
 
 void

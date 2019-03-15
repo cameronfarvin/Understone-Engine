@@ -126,7 +126,8 @@ int main(int argc, char** argv)
         uRefreshInputState();
         glError;
 
-        render_triangle(&triangle_renderer);
+        /* render_triangle(&triangle_renderer); */
+        render_test_bitmap(&test_bitmap_renderer);
         glError;
 
         uSwapBuffers();
@@ -149,6 +150,7 @@ Master TODO:
    - Data Structures (Hash, List) (d: 5)
    - Statistics update (d: 2)
 
+   - #define + method that takes __FILE__ and __LINE__ in shader comp error reporting
    - Parse all files for preproc directive uBKPTERR,
      load those lines into GDB as brekpoints
 */
