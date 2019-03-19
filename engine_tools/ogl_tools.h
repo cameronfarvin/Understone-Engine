@@ -78,6 +78,7 @@ typedef struct
     GLint fshdr_color_location;
     GLint fshdr_texture_coords_location;
     GLint fshdr_texture_2d_location;
+    GLint mem_texture_location;
 
     // matrix data
     GLfloat modelview_matrix[16];
@@ -145,7 +146,8 @@ PFNGLGENFRAMEBUFFERSPROC         glGenFramebuffers;
 /* PFNGLTEXIMAGE2DPROC              glTexImage2D; */
 PFNGLFRAMEBUFFERTEXTURE2DPROC    glFramebufferTexture2D;
 PFNGLCHECKFRAMEBUFFERSTATUSPROC  glCheckFramebufferStatus;
-PFNGLUNIFORMMATRIX4FVPROC         glUniformMatrix4fv;
+PFNGLUNIFORMMATRIX4FVPROC        glUniformMatrix4fv;
+PFNGLGENERATEMIPMAPPROC         glGenerateMipmap;
 //
 // signatures
 //

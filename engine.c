@@ -13,6 +13,7 @@
 
 #include <renderers/master_renderer.h>
 
+
 bool RUNNING = true;
 
 void
@@ -70,8 +71,9 @@ uInitializeGameWindowsAndContext()
 void
 uInitializeRenderers()
 {
-    initRenderer_triangle(&triangle_renderer);
-    initRenderer_test_bitmap(&test_bitmap_renderer);
+    /* initRenderer_triangle(&triangle_renderer); */
+    /* initRenderer_test_bitmap(&test_bitmap_renderer); */
+    initRenderer_texture_test(&texture_test_renderer);
 }
 
 static inline void
@@ -119,15 +121,20 @@ int main(int argc, char** argv)
     uInitializeGameWindowsAndContext();
     uInitializeRenderers();
 
+    /* glClearColor(0.8f, 0.16f, 0.32f, 1.0f); */ // pinkish
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
     while(RUNNING)
     {
+        glClear(GL_COLOR_BUFFER_BIT);
         glError;
 
         uRefreshInputState();
         glError;
 
+        render_texture_test(&texture_test_renderer);
         /* render_triangle(&triangle_renderer); */
-        render_test_bitmap(&test_bitmap_renderer);
+        /* render_test_bitmap(&test_bitmap_renderer); */
         glError;
 
         uSwapBuffers();
@@ -143,12 +150,14 @@ int main(int argc, char** argv)
 
 /*
 Master TODO:
-   - Textures (d: 4)
+   - Textures/Load Bitmap (d: 6)
+   - Fix "vshdr/fshdr" prefix on uRenderTargets (d:2)
    - Fonts (d: 10)
 
    - Particle System (d: 6)
    - Data Structures (Hash, List) (d: 5)
    - Statistics update (d: 2)
+   - Understand GL texture clamping options (d: 1)
 
    - #define + method that takes __FILE__ and __LINE__ in shader comp error reporting
    - Parse all files for preproc directive uBKPTERR,

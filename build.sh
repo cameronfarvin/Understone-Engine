@@ -7,6 +7,9 @@ gcc -g3 -O0 -Wall -Werror -Wextra -Wshadow -Wcast-align -std=c11 -o engine\
     engine_tools/type_tools.c \
     renderers/triangle_renderer.c \
     renderers/test_bitmap_renderer.c \
+    \
+    renderers/texture_test_renderer.c \
+    \
     data_structures/uDynamicArray.c \
     tests/tests.c \
     -Inix -Iwin -Iengine_tools -Irenderers -I. -Idata_structures -Itests \

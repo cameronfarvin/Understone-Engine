@@ -369,9 +369,9 @@ uX11CreateWindow()
         glXGetProcAddressARB( (const GLubyte*) "glUniformMatrix4fv");
     assert(glUniformMatrix4fv);
 
-    glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)
-        glXGetProcAddressARB( (const GLubyte*) "glUniformMatrix4fv");
-    assert(glUniformMatrix4fv);
+    glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC)
+        glXGetProcAddressARB( (const GLubyte*) "glGenerateMipmap");
+    assert(glGenerateMipmap);
 
     uX11HandleEvents();
 }

@@ -1,12 +1,15 @@
 #include <engine_tools/ogl_tools.h>
 #include <renderers/test_bitmap_renderer.h>
 
+/* // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ] */
+/* #define STB_IMAGE_IMPLEMENTATION */
+/* #include <engine_tools/../test_dep/stb_image.h> */
+
 void
 initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
 {
     const char* vshdr = GLSL(
         450 core,
-
 
         in      vec2 vshdr_pos;
         in      vec2 vshdr_intermediate_frag_coords;
@@ -34,53 +37,54 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
 
         void main()
         {
-            fshdr_final = texture(fshdr_texture_2d, fshdr_frag_coords) * vec4(fshdr_frag_color, 1.0f);
+            //fshdr_final = texture(fshdr_texture_2d, fshdr_frag_coords) * vec4(fshdr_frag_color, 1.0f);
+            // fshdr_final = vec4(fshdr_frag_color, 1.0f);
+            fshdr_final = texture(fshdr_texture_2d, fshdr_frag_coords);
         }
 
         );
 
     GLfloat position_vertex_data[] =
         {
-            /* // // Position data */
-            /* // top right */
-            /* 0.5f, 0.5f, */
+            // // Position data
+            // top right
+            0.5f, 0.5f,
 
-            /* // top left */
-            /* -0.5f, 0.5f, */
+            // top left
+            -0.5f, 0.5f,
 
-            /* // bottom left */
-            /* -0.5f, -0.5f, */
+            // bottom left
+            -0.5f, -0.5f,
 
-            /* // bottom right */
-            /* 0.5f, -0.5f, */
+            // bottom right
+            0.5f, -0.5f,
 
-            /* // // Texture coordinates */
-            /* // top right */
-            /* 1.0f, 1.0f, */
+            // // Texture coordinates
+            // top right
+            1.0f, 1.0f,
 
-            /* // top left */
-            /* -1.0f, 1.0f, */
+            // top left
+            -1.0f, 1.0f,
 
-            /* // bottom left */
-            /* -1.0f, -1.0f, */
+            // bottom left
+            -1.0f, -1.0f,
 
-            /* // bottom right */
-            /* 1.0f, -1.0f */
+            // bottom right
+            1.0f, -1.0f
 
-            // Position   //texture coords
-            +0.5f, +0.5f, 1.0f, 1.0f,
-            +0.5f, -0.5f, 1.0f, 0.0f,
-            -0.5f, -0.5f, 0.0f, 0.0f,
-            -0.5f, +0.5f, 0.0f, 1.0f
-
+            /* // Position   //texture coords */
+            /* +0.5f, +0.5f, 1.0f, 1.0f, */
+            /* +0.5f, -0.5f, 1.0f, 0.0f, */
+            /* -0.5f, -0.5f, 0.0f, 0.0f, */
+            /* -0.5f, +0.5f, 0.0f, 1.0f */
         };
 
     GLuint indices[] =
         {
-            /* 0, 1, 2, // top right, top left, bottom left (ccw) */
-            /* 0, 2, 3  // top right, bottom left, bottom right (ccw) */
-            0, 3, 2,
-            2, 1, 0
+            0, 1, 2, // top right, top left, bottom left (ccw)
+            0, 2, 3  // top right, bottom left, bottom right (ccw)
+            /* 0, 3, 2, */
+            /* 2, 1, 0 */
         };
 
     //
@@ -113,7 +117,7 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
 
 
     assert(test_bitmap_renderer->vshdr_position_location != -1);
-    assert(test_bitmap_renderer->fshdr_color_location != -1);
+    /* assert(test_bitmap_renderer->fshdr_color_location != -1); */
     assert(test_bitmap_renderer->fshdr_texture_coords_location != -1);
 
     //
@@ -161,52 +165,69 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
                                   GLsizei       stride,
                                   const GLvoid* pointer);
      */
+    /* glVertexAttribPointer(test_bitmap_renderer->vshdr_position_location, */
+    /*                       2, */
+    /*                       GL_FLOAT, */
+    /*                       GL_FALSE, */
+    /*                       2 * sizeof(GLfloat), */
+    /*                       (void*) 0); */
+
+    /* glVertexAttribPointer(test_bitmap_renderer->fshdr_texture_coords_location, */
+    /*                       2, */
+    /*                       GL_FLOAT, */
+    /*                       GL_FALSE, */
+    /*                       2* sizeof(GLfloat), */
+    /*                       (void*) (2 * sizeof(GL_FLOAT))); */
     glVertexAttribPointer(test_bitmap_renderer->vshdr_position_location,
                           2,
                           GL_FLOAT,
                           GL_FALSE,
-                          2 * sizeof(GLfloat),
+                          0,
                           (void*) 0);
 
     glVertexAttribPointer(test_bitmap_renderer->fshdr_texture_coords_location,
                           2,
                           GL_FLOAT,
                           GL_FALSE,
-                          2* sizeof(GLfloat),
-                          (void*) (2 * sizeof(GL_FLOAT)));
+                          0,
+                          (void*) (4 * sizeof(GL_FLOAT)));
     glError;
 
     //
     // Load bitmap
     //
-    /* uImage img; */
-    /* assert(uLoadBitmap("./assets/FLAG_B24.BMP", &img)); */
+    uImage img;
+    assert(uLoadBitmap("./assets/FLAG_B24.BMP", &img));
+    assert(img.img_pixels);
 
 
-    /* glBindTexture(GL_TEXTURE_2D, test_bitmap_renderer->texture2d); */
-    /* /\* */
-    /*   void glTexImage2D( GLenum         target,          // ex: GL_TEXTURE_2D */
-    /*                      GLint          level,           // mipmap level */
-    /*                      GLint          internal_format, // ex: GL_RGB */
-    /*                      GLsizei        width, */
-    /*                      GLsizei        height, */
-    /*                      GLint          border,          // must be 0 */
-    /*                      GLenum         format,          // ex: GL_RGB */
-    /*                      GLenum         type,            // ex: GL_UNSIGNED_BYTE */
-    /*                      const GLvoid*  data */
-    /*  *\/ */
-    /* glTexImage2D(GL_TEXTURE_2D, */
-    /*              0, */
-    /*              GL_RGB, */
-    /*              img.img_width, */
-    /*              img.img_height, */
-    /*              0, */
-    /*              GL_RGB, */
-    /*              GL_UNSIGNED_BYTE, */
-    /*              (void*) img.img_pixels); */
+    glBindTexture(GL_TEXTURE_2D, test_bitmap_renderer->texture2d);
+    /*
 
-    // [ cfarvin::NOTE ] Remove?
-    /* glGenerateMipmap(GL_TEXTURE_2D); */
+      // function spec
+      void glTexImage2D( GLenum         target,          // ex: GL_TEXTURE_2D
+                         GLint          level,           // mipmap level
+                         GLint          internal_format, // ex: GL_RGB
+                         GLsizei        width,
+                         GLsizei        height,
+                         GLint          border,          // must be 0
+                         GLenum         format,          // ex: GL_RGB
+                         GLenum         type,            // ex: GL_UNSIGNED_BYTE
+                         const GLvoid*  data
+
+     */
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB,
+                 img.img_width,
+                 img.img_height,
+                 0,
+                 GL_RGB,
+                 GL_UNSIGNED_BYTE,
+                 img.img_pixels);
+
+    /* [ cfarvin::NOTE ] Remove? */
+    glGenerateMipmap(GL_TEXTURE_2D);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -218,14 +239,13 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
 void
 render_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
 {
-    glClear(GL_COLOR_BUFFER_BIT);
-    /* glActiveTexture(GL_TEXTURE0); */
-    /* glBindTexture(GL_TEXTURE_2D, test_bitmap_renderer->texture2d); */
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, test_bitmap_renderer->texture2d);
     glUseProgram(test_bitmap_renderer->shader_program);
     glBindVertexArray(test_bitmap_renderer->vertex_array_buffer_location);
     glEnableVertexAttribArray(test_bitmap_renderer->vshdr_position_location);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-    /* glBindTexture(GL_TEXTURE_2D, 0); */
+    glBindTexture(GL_TEXTURE_2D, 0);
     glEnableVertexAttribArray(0);
 }

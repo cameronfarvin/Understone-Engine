@@ -435,7 +435,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
     // passing a new image object, not reusing one this is probably a
     // bad assumption in the long term; fine in the short term.
     // img->img_pixels = (u8*) malloc(bitmap_height * bitmap_width * bitcount_modifier);
-    img->img_pixels = (u8*) malloc(bitmap_height * bitmap_width);
+    img->img_pixels = (u8*) malloc(bitmap_height * bitmap_width * 3);
 
 /* #define uBITMAP_FILL_PIXELS                                     \ */
 /*     for (ssize_t x = 0; x < bitmap_width; x++)                  \ */
@@ -464,7 +464,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
 
 /* #undef uBITMAP_FILL_PIXELS */
 
-    memcpy(img->img_pixels, bitmap_bits_begin, (bitmap_height * bitmap_width));
+    memcpy(img->img_pixels, bitmap_bits_begin, (bitmap_height * bitmap_width * 3));
     printf("\t[ DEBUG::SUCCES ]\n");
     return true;
 }
