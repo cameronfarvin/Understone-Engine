@@ -40,19 +40,19 @@ uRefreshInputState()
     switch(sys_event)
     {
         case uEventNone:
-        {
-            return;
-        }
+            {
+                return;
+            }
         case uEventResize:
-        {
-            uHandleWindowResize();
-            return;
-        }
+            {
+                uHandleWindowResize();
+                return;
+            }
         case uEventClose:
-        {
-            RUNNING = false;
-            return;
-        }
+            {
+                RUNNING = false;
+                return;
+            }
     }
 }
 
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
 }
 
 /*
-Master TODO:
+   Master TODO:
    - Textures/Load Bitmap (d: 6)
    - Fix "vshdr/fshdr" prefix on uRenderTargets (d:2)
    - Fonts (d: 10)
@@ -160,6 +160,6 @@ Master TODO:
    - Understand GL texture clamping options (d: 1)
 
    - #define + method that takes __FILE__ and __LINE__ in shader comp error reporting
-   - Parse all files for preproc directive uBKPTERR,
-     load those lines into GDB as brekpoints
-*/
+   - Parse all files for preproc directive uBKPTERR, load those lines into GDB as brekpoints
+   - Vulkan(d: 13)
+ */

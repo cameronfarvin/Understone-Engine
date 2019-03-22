@@ -69,16 +69,16 @@ typedef enum
 
 typedef struct
 {
+    GLuint texture_name;
     GLuint shader_program;
 
-    // attribute_locations
-    GLint vshdr_position_location;
-    GLint modelview_matrix_location;
-    GLint projection_matrix_location;
-    GLint fshdr_color_location;
-    GLint fshdr_texture_coords_location;
-    GLint fshdr_texture_2d_location;
-    GLint mem_texture_location;
+    // attribute locations
+    GLint  shdr_position_location;
+    GLint  shdr_modelview_mat_location;
+    GLint  shdr_proj_matrix_location;
+    GLint  shdr_color_location;
+    GLint  shdr_texture_coords_location;
+    GLuint shdr_texture_2d_location;
 
     // matrix data
     GLfloat modelview_matrix[16];
@@ -88,14 +88,6 @@ typedef struct
     GLuint vertex_array_buffer_location;
     GLuint vertex_buffer_location;
     GLuint element_buffer_location;
-
-    // texture [ cfarvin::DEBUG ]
-    GLuint texture2d;
-
-    // texture map
-    GLuint texture_map;
-    GLuint depth_texture;
-    GLuint framebuffer;
 } uGLRenderTarget;
 
 // [ cfarvin::TODO ] Use for other platforms (don't forget)
@@ -147,7 +139,9 @@ PFNGLGENFRAMEBUFFERSPROC         glGenFramebuffers;
 PFNGLFRAMEBUFFERTEXTURE2DPROC    glFramebufferTexture2D;
 PFNGLCHECKFRAMEBUFFERSTATUSPROC  glCheckFramebufferStatus;
 PFNGLUNIFORMMATRIX4FVPROC        glUniformMatrix4fv;
-PFNGLGENERATEMIPMAPPROC         glGenerateMipmap;
+PFNGLGENERATEMIPMAPPROC          glGenerateMipmap;
+PFNGLUNIFORM1IPROC               glUniform1i;
+
 //
 // signatures
 //

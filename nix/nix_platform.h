@@ -22,10 +22,10 @@
 #include <engine_tools/ogl_tools.h>
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*,
-                                                     GLXFBConfig,
-                                                     GLXContext,
-                                                     bool,
-                                                     const int*);
+        GLXFBConfig,
+        GLXContext,
+        bool,
+        const int*);
 
 typedef struct
 {

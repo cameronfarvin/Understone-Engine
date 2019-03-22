@@ -42,10 +42,10 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
          });
 
     texture_test_renderer->shader_program = 0;
-    texture_test_renderer->vshdr_position_location = -1;
-    texture_test_renderer->modelview_matrix_location = -1;
-    texture_test_renderer->fshdr_color_location = -1;
-    texture_test_renderer->fshdr_texture_coords_location = -1;
+    texture_test_renderer->shdr_position_location = -1;
+    texture_test_renderer->shdr_modelview_mat_location = -1;
+    texture_test_renderer->shdr_color_location = -1;
+    texture_test_renderer->shdr_texture_coords_location = -1;
 
     // [ cfarvin::RETURN ]
     // Thinking about int assignments on mem vs gc for textures, what they mean.
@@ -102,13 +102,13 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     //
     // discover attribute location
     //
-    texture_test_renderer->vshdr_position_location =
+    texture_test_renderer->shdr_position_location =
         glGetAttribLocation(texture_test_renderer->shader_program, "vshdr_pos");
-    texture_test_renderer->modelview_matrix_location =
+    texture_test_renderer->shdr_modelview_mat_location =
         glGetUniformLocation(texture_test_renderer->shader_program, "vshdr_mut_pos");
-    texture_test_renderer->fshdr_color_location =
+    texture_test_renderer->shdr_color_location =
         glGetUniformLocation(texture_test_renderer->shader_program, "fshdr_color");
-    texture_test_renderer->fshdr_texture_coords_location =
+    texture_test_renderer->shdr_texture_coords_location =
         glGetUniformLocation(texture_test_renderer->shader_program, "texture_coordinates_in");;
     glError;
 
@@ -116,16 +116,16 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     glUniform1i(glGetUniformLocation(texture_test_renderer->shader_program, "texture2d"), 0);
     glError;
 
-    assert(texture_test_renderer->vshdr_position_location != -1);
-    assert(texture_test_renderer->modelview_matrix_location != -1);
-    assert(texture_test_renderer->fshdr_color_location != -1);
-    assert(texture_test_renderer->fshdr_texture_coords_location != -1);
+    assert(texture_test_renderer->shdr_position_location != -1);
+    assert(texture_test_renderer->shdr_modelview_mat_location != -1);
+    assert(texture_test_renderer->shdr_color_location != -1);
+    assert(texture_test_renderer->shdr_texture_coords_location != -1);
 
     //
     // set_default_attribute_values
     //
     glError;
-    glUniform3f(texture_test_renderer->fshdr_color_location, 1.0f, 0.0f, 0.0f);
+    glUniform3f(texture_test_renderer->shdr_color_location, 1.0f, 0.0f, 0.0f);
 
     glError;
     GLfloat tmp_modelview[16] =
@@ -141,7 +141,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
         texture_test_renderer->modelview_matrix[ii] = tmp_modelview[ii];
     }
 
-    glUniformMatrix4fv(texture_test_renderer->modelview_matrix_location,
+    glUniformMatrix4fv(texture_test_renderer->shdr_modelview_mat_location,
                        1,
                        GL_TRUE,
                        texture_test_renderer->modelview_matrix);
@@ -166,7 +166,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
                  texture_test_vertex_data,
                  GL_STATIC_DRAW);
 
-    glGenTextures(1, &texture_test_renderer->fshdr_texture_test_location);
+    glGenTextures(1, &texture_test_renderer->texture_name);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -184,14 +184,14 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
 
     */
 
-    glVertexAttribPointer(texture_test_renderer->vshdr_position_location,
+    glVertexAttribPointer(texture_test_renderer->shdr_position_location,
                           2,
                           GL_FLOAT,
                           GL_FALSE,
                           0,
                           (void*) 0);
 
-    glVertexAttribPointer(texture_test_renderer->fshdr_texture_2d_location,
+    glVertexAttribPointer(texture_test_renderer->shdr_texture_2d_location,
                           2,
                           GL_FLOAT,
                           GL_FALSE,
@@ -199,8 +199,6 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
                           (void*) (sizeof(GLfloat) * 8));
 
     stbi_set_flip_vertically_on_load(true);
-
-    glBindTexture(GL_TEXTURE_2D, texture2d);
     u8* texture2d_data;
 
     GLint width, height, nChannels;
@@ -256,7 +254,7 @@ render_texture_test(uGLRenderTarget* const texture_test_renderer)
     texture_test_renderer->modelview_matrix[7] =
         -((viewport.height - mouse_pos.y) / (viewport.height / 2.0f) - 1);
 
-    glUniformMatrix4fv(texture_test_renderer->modelview_matrix_location,
+    glUniformMatrix4fv(texture_test_renderer->shdr_modelview_mat_location,
                        1,
                        GL_TRUE,
                        texture_test_renderer->modelview_matrix);
@@ -265,17 +263,17 @@ render_texture_test(uGLRenderTarget* const texture_test_renderer)
     if (uGetInputPressed(uMouse_right))
     {
         // red triangle
-        glUniform3f(texture_test_renderer->fshdr_color_location, (GLfloat) sin(piCycle), 0.0, 0.0f);
+        glUniform3f(texture_test_renderer->shdr_color_location, (GLfloat) sin(piCycle), 0.0, 0.0f);
     }
     else if (uGetInputPressed(uMouse_left))
     {
         // blue triangle
-        glUniform3f(texture_test_renderer->fshdr_color_location, 0.0f, 0.0f, (GLfloat) sin(piCycle));
+        glUniform3f(texture_test_renderer->shdr_color_location, 0.0f, 0.0f, (GLfloat) sin(piCycle));
     }
     else
     {
         // green triangle
-        glUniform3f(texture_test_renderer->fshdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
+        glUniform3f(texture_test_renderer->shdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
     }
 
     glActiveTexture(GL_TEXTURE0);

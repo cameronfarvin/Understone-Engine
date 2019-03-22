@@ -30,9 +30,9 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
          });
 
     triangle_renderer->shader_program = 0;
-    triangle_renderer->vshdr_position_location = -1;
-    triangle_renderer->modelview_matrix_location = -1;
-    triangle_renderer->fshdr_color_location = -1;
+    triangle_renderer->shdr_position_location = -1;
+    triangle_renderer->shdr_modelview_mat_location = -1;
+    triangle_renderer->shdr_color_location = -1;
 
     GLfloat triangle_vertex_data[] =
         {
@@ -63,23 +63,23 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
     // discover_attribute_locations
     //
     glError;
-    triangle_renderer->vshdr_position_location =
+    triangle_renderer->shdr_position_location =
         glGetAttribLocation(triangle_renderer->shader_program, "vshdr_pos");
-    triangle_renderer->modelview_matrix_location =
+    triangle_renderer->shdr_modelview_mat_location =
         glGetUniformLocation(triangle_renderer->shader_program, "vshdr_mut_pos");
-    triangle_renderer->fshdr_color_location =
+    triangle_renderer->shdr_color_location =
         glGetUniformLocation(triangle_renderer->shader_program, "fshdr_color");
     glError;
 
-    assert(triangle_renderer->vshdr_position_location != -1);
-    assert(triangle_renderer->modelview_matrix_location != -1);
-    assert(triangle_renderer->fshdr_color_location != -1);
+    assert(triangle_renderer->shdr_position_location != -1);
+    assert(triangle_renderer->shdr_modelview_mat_location != -1);
+    assert(triangle_renderer->shdr_color_location != -1);
 
     //
     // set_default_attribute_values
     //
     glError;
-    glUniform3f(triangle_renderer->fshdr_color_location, 1.0f, 0.0f, 0.0f);
+    glUniform3f(triangle_renderer->shdr_color_location, 1.0f, 0.0f, 0.0f);
 
     glError;
     GLfloat tmp_modelview[16] =
@@ -95,7 +95,7 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
         triangle_renderer->modelview_matrix[ii] = tmp_modelview[ii];
     }
 
-    glUniformMatrix4fv(triangle_renderer->modelview_matrix_location,
+    glUniformMatrix4fv(triangle_renderer->shdr_modelview_mat_location,
                       1,
                       GL_TRUE,
                       triangle_renderer->modelview_matrix);
@@ -112,7 +112,7 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
                  triangle_vertex_data,
                  GL_STATIC_DRAW);
 
-    glVertexAttribPointer(triangle_renderer->vshdr_position_location,
+    glVertexAttribPointer(triangle_renderer->shdr_position_location,
                           2,
                           GL_FLOAT,
                           GL_FALSE,
@@ -230,12 +230,12 @@ render_triangle(uGLRenderTarget* const triangle_renderer)
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(triangle_renderer->shader_program);
     glBindVertexArray(triangle_renderer->vertex_array_buffer_location);
-    glEnableVertexAttribArray(triangle_renderer->vshdr_position_location);
+    glEnableVertexAttribArray(triangle_renderer->shdr_position_location);
 
     triangle_renderer->modelview_matrix[3] = -((viewport.width - mouse_pos.x) / (viewport.width / 2.0f) - 1);
     triangle_renderer->modelview_matrix[7] = -((viewport.height - mouse_pos.y) / (viewport.height / 2.0f) - 1);
 
-    glUniformMatrix4fv(triangle_renderer->modelview_matrix_location,
+    glUniformMatrix4fv(triangle_renderer->shdr_modelview_mat_location,
                        1,
                        GL_TRUE,
                        triangle_renderer->modelview_matrix);
@@ -244,17 +244,17 @@ render_triangle(uGLRenderTarget* const triangle_renderer)
     if (uGetInputPressed(uMouse_right))
     {
         // red triangle
-        glUniform3f(triangle_renderer->fshdr_color_location, (GLfloat) sin(piCycle), 0.0, 0.0f);
+        glUniform3f(triangle_renderer->shdr_color_location, (GLfloat) sin(piCycle), 0.0, 0.0f);
     }
     else if (uGetInputPressed(uMouse_left))
     {
         // blue triangle
-        glUniform3f(triangle_renderer->fshdr_color_location, 0.0f, 0.0f, (GLfloat) sin(piCycle));
+        glUniform3f(triangle_renderer->shdr_color_location, 0.0f, 0.0f, (GLfloat) sin(piCycle));
     }
     else
     {
         // green triangle
-        glUniform3f(triangle_renderer->fshdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
+        glUniform3f(triangle_renderer->shdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
     }
 
     glDrawArrays(GL_TRIANGLES, 0, 3);

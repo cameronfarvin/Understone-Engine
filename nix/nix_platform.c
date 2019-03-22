@@ -10,24 +10,24 @@ isExtensionSupported(const char *extList, const char *extension)
     /* Extension names should not have spaces. */
     where = strchr(extension, ' ');
     if (where || *extension == '\0')
-	return false;
+        return false;
 
     for (start=extList;;) {
-	where = strstr(start, extension);
+        where = strstr(start, extension);
 
-	if (!where) {
+        if (!where) {
             break;
-	}
+        }
 
-	terminator = where + strlen(extension);
+        terminator = where + strlen(extension);
 
-	if ( where == start || *(where - 1) == ' ' ) {
+        if ( where == start || *(where - 1) == ' ' ) {
             if ( *terminator == ' ' || *terminator == '\0' ) {
                 return true;
             }
-	}
+        }
 
-	start = terminator;
+        start = terminator;
     }
 
     return false;
@@ -67,27 +67,27 @@ uX11CreateWindow()
     // rather than window buffers { GLX_WINDOW_BIT }. If so, will need to substitue
     // XCreateWindow() for XCreatePixmap()
     GLint glxAttributes[] =
-        {
-            GLX_X_RENDERABLE    , True,
-            GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
-            GLX_RENDER_TYPE     , GLX_RGBA_BIT,
-            GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
-            GLX_RED_SIZE        , 8,
-            GLX_GREEN_SIZE      , 8,
-            GLX_BLUE_SIZE       , 8,
-            GLX_ALPHA_SIZE      , 8,
-            GLX_DEPTH_SIZE      , 24,
-            GLX_STENCIL_SIZE    , 8,
-            GLX_DOUBLEBUFFER    , True,
-            None // last attribute must be 'None', signaling end
-        };
+    {
+        GLX_X_RENDERABLE    , True,
+        GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+        GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+        GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+        GLX_RED_SIZE        , 8,
+        GLX_GREEN_SIZE      , 8,
+        GLX_BLUE_SIZE       , 8,
+        GLX_ALPHA_SIZE      , 8,
+        GLX_DEPTH_SIZE      , 24,
+        GLX_STENCIL_SIZE    , 8,
+        GLX_DOUBLEBUFFER    , True,
+        None // last attribute must be 'None', signaling end
+    };
 
     // Query systyem for available frame buffer(s) matching our description
     int num_possible_frame_buffers;
     GLXFBConfig* frame_buffer_candidates = glXChooseFBConfig(x11.display,
-                                                             XDefaultScreen(x11.display),
-                                                             glxAttributes,
-                                                             &num_possible_frame_buffers);
+            XDefaultScreen(x11.display),
+            glxAttributes,
+            &num_possible_frame_buffers);
     assert(num_possible_frame_buffers);
     printf("Possible Frame_Buffers: %d\n", num_possible_frame_buffers);
 
@@ -95,23 +95,23 @@ uX11CreateWindow()
     int    highest_samples = 0;
     size_t highest_sample_index = 0;
     for (size_t frame_buffer_index = 0;
-         frame_buffer_index < (size_t) num_possible_frame_buffers;
-         frame_buffer_index++)
+            frame_buffer_index < (size_t) num_possible_frame_buffers;
+            frame_buffer_index++)
     {
         XVisualInfo* visual_info =
             glXGetVisualFromFBConfig(x11.display,
-                                     frame_buffer_candidates[frame_buffer_index]);
+                    frame_buffer_candidates[frame_buffer_index]);
         if (visual_info)
         {
             int sample_buffers, samples;
             glXGetFBConfigAttrib(x11.display,
-                                 frame_buffer_candidates[frame_buffer_index],
-                                 GLX_SAMPLE_BUFFERS,
-                                 &sample_buffers);
+                    frame_buffer_candidates[frame_buffer_index],
+                    GLX_SAMPLE_BUFFERS,
+                    &sample_buffers);
             glXGetFBConfigAttrib(x11.display,
-                                 frame_buffer_candidates[frame_buffer_index],
-                                 GLX_SAMPLES,
-                                 &samples);
+                    frame_buffer_candidates[frame_buffer_index],
+                    GLX_SAMPLES,
+                    &samples);
             if (sample_buffers && (samples > highest_samples))
             {
                 highest_samples = samples;
@@ -123,7 +123,7 @@ uX11CreateWindow()
     if (highest_samples < 3)
     {
         printf("\n\n[ WARNING ] Highest available framebuffer has only %d available samples per pixel\n\n",
-               highest_samples);
+                highest_samples);
     }
 
     //
@@ -139,65 +139,65 @@ uX11CreateWindow()
     XFree(frame_buffer_candidates);
 
     x11.set_window_attributes.border_pixel = XBlackPixel(x11.display,
-                                                         x11.default_screen_number);
+            x11.default_screen_number);
     x11.set_window_attributes.background_pixel = XBlackPixel(x11.display,
-                                                             x11.default_screen_number);
+            x11.default_screen_number);
     x11.set_window_attributes.override_redirect = true;
     x11.set_window_attributes.colormap =
         XCreateColormap(x11.display,
-                        XRootWindow(x11.display,
-                                    x11.default_screen_number),
-                        x11.visual_info->visual,
-                        AllocNone);
+                XRootWindow(x11.display,
+                    x11.default_screen_number),
+                x11.visual_info->visual,
+                AllocNone);
     x11.set_window_attributes.event_mask = ExposureMask;
 
     x11.engine_window =
         XCreateWindow(x11.display,                                      // display
-                      XRootWindow(x11.display,
-                                  x11.default_screen_number),           // parent
-                      0,                                                // x
-                      0,                                                // y
-                      x11.display_width,                                // width
-                      x11.display_height,                               // height
-                      0,                                                // border_width
-                      x11.visual_info->depth,                           // depth
-                      InputOutput,                                      // class
-                      x11.visual_info->visual,                          // visual
-                      CWBackPixel|CWColormap|CWBorderPixel|CWEventMask, // valuemask
-                      &x11.set_window_attributes);                      // attributes
+                XRootWindow(x11.display,
+                    x11.default_screen_number),           // parent
+                0,                                                // x
+                0,                                                // y
+                x11.display_width,                                // width
+                x11.display_height,                               // height
+                0,                                                // border_width
+                x11.visual_info->depth,                           // depth
+                InputOutput,                                      // class
+                x11.visual_info->visual,                          // visual
+                CWBackPixel|CWColormap|CWBorderPixel|CWEventMask, // valuemask
+                &x11.set_window_attributes);                      // attributes
 
     // aquire address of glxCreateContext
     glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
     glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc) glXGetProcAddressARB(
-        (const GLubyte*) "glXCreateContextAttribsARB");
+            (const GLubyte*) "glXCreateContextAttribsARB");
 
     int context_attributes[] =
-        {
-            GLX_CONTEXT_MAJOR_VERSION_ARB, 4,
-            GLX_CONTEXT_MINOR_VERSION_ARB, 0,
-            GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-            None
-        };
+    {
+        GLX_CONTEXT_MAJOR_VERSION_ARB, 4,
+        GLX_CONTEXT_MINOR_VERSION_ARB, 0,
+        GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+        None
+    };
 
     const char* glExtensions = glXQueryExtensionsString(x11.display,
-                                                        x11.default_screen_number);
+            x11.default_screen_number);
 
     if (isExtensionSupported(glExtensions, "GLX_ARB_create_context"))
     {
         x11.ogl_context = glXCreateContextAttribsARB(x11.display,
-                                                     target_frame_buffer,
-                                                     0,
-                                                     true,
-                                                     context_attributes);
+                target_frame_buffer,
+                0,
+                true,
+                context_attributes);
     }
     else
     {
         printf("\n\n[ WARNING ] GLX_ARB_create_context extension not found\n");
         x11.ogl_context = glXCreateNewContext(x11.display,
-                                              target_frame_buffer,
-                                              GLX_RGBA_TYPE,
-                                              0,
-                                              true);
+                target_frame_buffer,
+                GLX_RGBA_TYPE,
+                0,
+                true);
     }
     assert(x11.ogl_context);
     assert(glXMakeCurrent(x11.display, x11.engine_window, x11.ogl_context));
@@ -205,24 +205,24 @@ uX11CreateWindow()
     XSync(x11.display, false);
 
     printf("GL Vendor: %s\nGL Renderer: %s\nGL Version: %s\nGLSL: %s\n",
-           glGetString(GL_VENDOR),
-           glGetString(GL_RENDERER),
-           glGetString(GL_VERSION),
-           glGetString(GL_SHADING_LANGUAGE_VERSION));
+            glGetString(GL_VENDOR),
+            glGetString(GL_RENDERER),
+            glGetString(GL_VERSION),
+            glGetString(GL_SHADING_LANGUAGE_VERSION));
 
     XClearWindow(x11.display, x11.engine_window);
     XSelectInput(x11.display, x11.engine_window,
-                 ExposureMask|
-                 KeyPressMask|
-                 ButtonPressMask|
-                 ButtonReleaseMask|
-                 PointerMotionMask|
-                 StructureNotifyMask);
+            ExposureMask|
+            KeyPressMask|
+            ButtonPressMask|
+            ButtonReleaseMask|
+            PointerMotionMask|
+            StructureNotifyMask);
 
     XMapWindow(x11.display, x11.engine_window);
     XGetWindowAttributes(x11.display,
-                         x11.engine_window,
-                         &x11.window_attributes);
+            x11.engine_window,
+            &x11.window_attributes);
 
     // for properly closing window with client messaging protocol
     atomWmDeleteWindow = XInternAtom(x11.display, "WM_DELETE_WINDOW", false);
@@ -373,6 +373,11 @@ uX11CreateWindow()
         glXGetProcAddressARB( (const GLubyte*) "glGenerateMipmap");
     assert(glGenerateMipmap);
 
+    // [ cfarvin::NOTE ] This is likely just <glUniform>
+    glUniform1i = (PFNGLUNIFORM1IPROC)
+       glXGetProcAddressARB( (const GLubyte*) "glUniform1i");
+    assert(glUniform1i);
+
     uX11HandleEvents();
 }
 
@@ -385,107 +390,107 @@ uX11HandleEvents()
         switch(x11.event.type)
         {
             case MotionNotify:
-            {
-                mouse_pos.x = x11.event.xmotion.x;
-                mouse_pos.y = x11.display_height - x11.event.xmotion.y;
-                break;
-            }
+                {
+                    mouse_pos.x = x11.event.xmotion.x;
+                    mouse_pos.y = x11.display_height - x11.event.xmotion.y;
+                    break;
+                }
             case ButtonPress:
-            {
-                switch(x11.event.xbutton.button)
                 {
-                    case 1:
+                    switch(x11.event.xbutton.button)
                     {
-                        uSetInputPressed(uMouse_left);
-                        assert(uGetInputPressed(uMouse_left));
-                        break;
+                        case 1:
+                            {
+                                uSetInputPressed(uMouse_left);
+                                assert(uGetInputPressed(uMouse_left));
+                                break;
+                            }
+                        case 2:
+                            {
+                                uSetInputPressed(uMouse_middle);
+                                assert(uGetInputPressed(uMouse_middle));
+                                break;
+                            }
+                        case 3:
+                            {
+                                uSetInputPressed(uMouse_right);
+                                assert(uGetInputPressed(uMouse_right));
+                                break;
+                            }
+                            /* case 4: */
+                            /* { */
+                            /*     mouse_pos.x = x11.event.xmotion.x; */
+                            /*     mouse_pos.y = x11.event.xmotion.y; */
+                            /*     break; */
+                            /* } */
+                            /* case 5: */
+                            /* { */
+                            /*     mouse_pos.x = x11.event.xmotion.x; */
+                            /*     mouse_pos.y = x11.event.xmotion.y; */
+                            /*     break; */
+                            /* } */
                     }
-                    case 2:
-                    {
-                        uSetInputPressed(uMouse_middle);
-                        assert(uGetInputPressed(uMouse_middle));
-                        break;
-                    }
-                    case 3:
-                    {
-                        uSetInputPressed(uMouse_right);
-                        assert(uGetInputPressed(uMouse_right));
-                        break;
-                    }
-                    /* case 4: */
-                    /* { */
-                    /*     mouse_pos.x = x11.event.xmotion.x; */
-                    /*     mouse_pos.y = x11.event.xmotion.y; */
-                    /*     break; */
-                    /* } */
-                    /* case 5: */
-                    /* { */
-                    /*     mouse_pos.x = x11.event.xmotion.x; */
-                    /*     mouse_pos.y = x11.event.xmotion.y; */
-                    /*     break; */
-                    /* } */
-                }
 
-                break;
-            }
+                    break;
+                }
             case ButtonRelease:
-            {
-                switch(x11.event.xbutton.button)
                 {
-                    case 1:
+                    switch(x11.event.xbutton.button)
                     {
-                        uSetInputReleased(uMouse_left);
-                        assert(!uGetInputPressed(uMouse_left));
-                        break;
+                        case 1:
+                            {
+                                uSetInputReleased(uMouse_left);
+                                assert(!uGetInputPressed(uMouse_left));
+                                break;
+                            }
+                        case 2:
+                            {
+                                uSetInputReleased(uMouse_middle);
+                                assert(!uGetInputPressed(uMouse_middle));
+                                break;
+                            }
+                        case 3:
+                            {
+                                uSetInputReleased(uMouse_right);
+                                assert(!uGetInputPressed(uMouse_right));
+                                break;
+                            }
                     }
-                    case 2:
-                    {
-                        uSetInputReleased(uMouse_middle);
-                        assert(!uGetInputPressed(uMouse_middle));
-                        break;
-                    }
-                    case 3:
-                    {
-                        uSetInputReleased(uMouse_right);
-                        assert(!uGetInputPressed(uMouse_right));
-                        break;
-                    }
-                }
 
-                break;
-            }
+                    break;
+                }
             case Expose:
-            {
-                u16 prev_window_attrib_width = x11.window_attributes.width;
-                u16 prev_window_attrib_height = x11.window_attributes.height;
-                XGetWindowAttributes(x11.display,
-                                     x11.engine_window,
-                                     &x11.window_attributes);
-                if ( (prev_window_attrib_width !=  (size_t) x11.window_attributes.width)
-                     || (prev_window_attrib_height != (size_t) x11.window_attributes.height) )
                 {
-                    viewport.width = x11.window_attributes.width;
-                    viewport.height = x11.window_attributes.height;
+                    u16 prev_window_attrib_width = x11.window_attributes.width;
+                    u16 prev_window_attrib_height = x11.window_attributes.height;
+                    XGetWindowAttributes(x11.display,
+                            x11.engine_window,
+                            &x11.window_attributes);
+                    if ( (prev_window_attrib_width !=  (size_t) x11.window_attributes.width)
+                            || (prev_window_attrib_height != (size_t) x11.window_attributes.height) )
+                    {
+                        viewport.width = x11.window_attributes.width;
+                        viewport.height = x11.window_attributes.height;
+                        return uEventResize;
+                    }
+                    break;
+                }
+            case ClientMessage:
+                {
+                    if ((size_t) x11.event.xclient.data.l[0] == atomWmDeleteWindow)
+                    {
+                        printf("[ NOTIFY ] Recieved destroy signal\n");
+                        return uEventClose;
+                    }
+
+                    break;
+                }
+            case ConfigureNotify:
+                {
+                    x11.display_height = x11.event.xconfigure.height;
+                    x11.display_width = x11.event.xconfigure.width;
                     return uEventResize;
                 }
-                break;
-            }
-            case ClientMessage:
-            {
-                if ((size_t) x11.event.xclient.data.l[0] == atomWmDeleteWindow)
-                {
-                    printf("[ NOTIFY ] Recieved destroy signal\n");
-                    return uEventClose;
-                }
-
-                break;
-            }
-            case ConfigureNotify:
-            {
-                x11.display_height = x11.event.xconfigure.height;
-                x11.display_width = x11.event.xconfigure.width;
-                return uEventResize;
-            }
         }
     }
 
