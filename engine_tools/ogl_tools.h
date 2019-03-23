@@ -29,43 +29,20 @@
 #endif // STRINGIFIED_PIPELINE_STATE_LENGTH
 
 #ifndef glError
-#define print_assert(msg) printf(msg); assert(0);
-#define glError                                                         \
-    switch(glGetError())                                                \
-    {                                                                   \
-        case GL_NO_ERROR: { break; }                                    \
-        case GL_INVALID_ENUM:                                           \
-        {                                                               \
-            print_assert("[ GLERROR ] INVALID_ENUM\n");                 \
-        }                                                               \
-        case GL_INVALID_VALUE:                                          \
-        {                                                               \
-            print_assert("[ GLERROR ] INVALID_VALUE\n");                \
-        }                                                               \
-        case GL_INVALID_OPERATION:                                      \
-        {                                                               \
-            print_assert("[ GLERROR ] INVALID_OPERATION\n");            \
-        }                                                               \
-        case GL_INVALID_FRAMEBUFFER_OPERATION:                          \
-        {                                                               \
-            print_assert("[ GLERROR ] INVALID_FRAMEBUFFER_OPERATION\n"); \
-        }                                                               \
-        case GL_OUT_OF_MEMORY:                                          \
-        {                                                               \
-            print_assert("[ GLERROR ] OUT_OF_MEMORY\n");                \
-        }                                                               \
-        default: { assert(0); }                                         \
-    }
+#define glError glErrorFileLine(__FILE__, __LINE__, __func__)
 #endif // glError
 
+void
+glErrorFileLine(const char* file_name, int line_number, const char* function_name);
+
 typedef enum
-    {
-        pipeline_state_none,
-        pipeline_state_vertex_shader,
-        pipeline_state_geometry_shader,
-        pipeline_state_fragment_shader,
-        pipeline_state_shader_program,
-    } PipelineState;
+{
+    pipeline_state_none,
+    pipeline_state_vertex_shader,
+    pipeline_state_geometry_shader,
+    pipeline_state_fragment_shader,
+    pipeline_state_shader_program,
+} PipelineState;
 
 typedef struct
 {
@@ -150,15 +127,15 @@ uGLStringifyPipelineState(PipelineState pipeline_state);
 
 void
 uGLCheckErrorState(GLuint object, GLenum parameter_to_check,
-                PipelineState pipeline_state);
+        PipelineState pipeline_state);
 
 GLuint
 uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
-                       const GLchar** fragment_shader_source);
+        const GLchar** fragment_shader_source);
 
 GLuint
 uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
-                        const GLchar** geometry_shader_source,
-                        const GLchar** fragment_shader_source);
+        const GLchar** geometry_shader_source,
+        const GLchar** fragment_shader_source);
 
 #endif // __ogl_tools__

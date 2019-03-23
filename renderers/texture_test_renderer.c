@@ -223,7 +223,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
         printf("[ ERROR ] Failed to load image texture (texCrateData)\n");
     }
 
-    stbi_image_free(texCrateData);
+    stbi_image_free(texture2d_data);
     glError;
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -247,7 +247,7 @@ render_texture_test(uGLRenderTarget* const texture_test_renderer)
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(texture_test_renderer->shader_program);
     glBindVertexArray(texture_test_renderer->vertex_array_buffer_location);
-    glEnableVertexAttribArray(texture_test_renderer->vshdr_position_location);
+    glEnableVertexAttribArray(texture_test_renderer->shdr_position_location);
 
     texture_test_renderer->modelview_matrix[3] =
         -((viewport.width - mouse_pos.x) / (viewport.width / 2.0f) - 1);
@@ -277,7 +277,7 @@ render_texture_test(uGLRenderTarget* const texture_test_renderer)
     }
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture2d);
+    glBindTexture(GL_TEXTURE_2D, texture_test_renderer->texture_name);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
