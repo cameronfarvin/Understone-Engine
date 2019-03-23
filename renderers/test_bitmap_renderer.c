@@ -93,7 +93,8 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
     glError;
     test_bitmap_renderer->shader_program = 0;
     test_bitmap_renderer->shader_program = uGLCreateShaderProgram_vf(&vshdr,
-                                                                  &fshdr);
+                                                                  &fshdr,
+                                                                  __FILE__);
     assert(test_bitmap_renderer->shader_program);
     glUseProgram(test_bitmap_renderer->shader_program);
     glError;

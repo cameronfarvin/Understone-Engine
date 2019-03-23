@@ -32,9 +32,6 @@
 #define glError glErrorFileLine(__FILE__, __LINE__, __func__)
 #endif // glError
 
-void
-glErrorFileLine(const char* file_name, int line_number, const char* function_name);
-
 typedef enum
 {
     pipeline_state_none,
@@ -126,16 +123,24 @@ char*
 uGLStringifyPipelineState(PipelineState pipeline_state);
 
 void
-uGLCheckErrorState(GLuint object, GLenum parameter_to_check,
-        PipelineState pipeline_state);
+uGLCheckErrorState(GLuint object,
+                   GLenum parameter_to_check,
+                   PipelineState pipeline_state,
+                   const char* file_name);
 
 GLuint
 uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
-        const GLchar** fragment_shader_source);
+                          const GLchar** fragment_shader_source,
+                          const char*    file_name);
 
 GLuint
 uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
-        const GLchar** geometry_shader_source,
-        const GLchar** fragment_shader_source);
+                           const GLchar** geometry_shader_source,
+                           const GLchar** fragment_shader_source,
+                           const char*    file_name);
+void
+glErrorFileLine(const char* file_name,
+                int line_number,
+                const char* function_name);
 
 #endif // __ogl_tools__

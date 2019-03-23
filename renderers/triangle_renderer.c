@@ -54,7 +54,8 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
     //
     glError;
     triangle_renderer->shader_program = uGLCreateShaderProgram_vf(&vshdr,
-                                                                  &fshdr);
+                                                                  &fshdr,
+                                                                  __FILE__);
     assert(triangle_renderer->shader_program);
     glUseProgram(triangle_renderer->shader_program);
     glError;

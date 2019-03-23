@@ -94,7 +94,8 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     //
     glError;
     texture_test_renderer->shader_program = uGLCreateShaderProgram_vf(&vshdr,
-                                                                      &fshdr);
+                                                                      &fshdr,
+                                                                      __FILE__);
     assert(texture_test_renderer->shader_program);
     glUseProgram(texture_test_renderer->shader_program);
     glError;

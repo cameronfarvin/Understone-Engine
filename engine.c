@@ -71,9 +71,9 @@ uInitializeGameWindowsAndContext()
 void
 uInitializeRenderers()
 {
-    initRenderer_triangle(&triangle_renderer);
+    // initRenderer_triangle(&triangle_renderer);
     // initRenderer_test_bitmap(&test_bitmap_renderer);
-    // initRenderer_texture_test(&texture_test_renderer);
+    initRenderer_texture_test(&texture_test_renderer);
 }
 
 static inline void
@@ -132,8 +132,8 @@ int main(int argc, char** argv)
         uRefreshInputState();
         glError;
 
-        // render_texture_test(&texture_test_renderer);
-        render_triangle(&triangle_renderer);
+        render_texture_test(&texture_test_renderer);
+        // render_triangle(&triangle_renderer);
         // render_test_bitmap(&test_bitmap_renderer);
         glError;
 
