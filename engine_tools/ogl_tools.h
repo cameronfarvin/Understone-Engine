@@ -32,14 +32,6 @@
 #define glError glErrorFileLine(__FILE__, __LINE__, __func__)
 #endif // glError
 
-typedef enum
-{
-    pipeline_state_none,
-    pipeline_state_vertex_shader,
-    pipeline_state_geometry_shader,
-    pipeline_state_fragment_shader,
-    pipeline_state_shader_program,
-} PipelineState;
 
 typedef struct
 {
@@ -119,13 +111,10 @@ PFNGLUNIFORM1IPROC               glUniform1i;
 //
 // signatures
 //
-char*
-uGLStringifyPipelineState(PipelineState pipeline_state);
-
 void
 uGLCheckErrorState(GLuint object,
                    GLenum parameter_to_check,
-                   PipelineState pipeline_state,
+                   const char* pipeline_state,
                    const char* file_name);
 
 GLuint

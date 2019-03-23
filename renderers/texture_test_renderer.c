@@ -20,17 +20,18 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
 
          void main()
          {
-             gl_Position = vshdr_mut_pos * vec4(vshdr_pos,
-                                                0.0f,
-                                                1.0f);
-             texture_coordinates = texture_coordinates_in;
+         gl_Position = vshdr_mut_pos * vec4(vshdr_pos,
+                                            0.0f,
+                                            1.0f);
+
+         texture_coordinates = texture_coordinates_in;
          });
 
     const char* fshdr = GLSL
         (450 core,
 
          uniform vec3      fshdr_color;
-         uniform sampler2d texture2d;
+         uniform sampler2D texture2d;
 
          in      vec2      texture_coordinates;
 
@@ -38,7 +39,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
 
          void main()
          {
-             fshdr_final = texture(texture2d, texture_coordinates) * vec4(fshdr_color, 1.0f);
+         fshdr_final = texture(texture2d, texture_coordinates) * vec4(fshdr_color, 1.0f);
          });
 
     texture_test_renderer->shader_program = 0;
@@ -51,43 +52,43 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     // Thinking about int assignments on mem vs gc for textures, what they mean.
 
     GLfloat texture_test_vertex_data[] =
-        {
-            //
-            // vertex coords
-            //
-            // top right [0]
-            0.1, 0.1,
+    {
+        //
+        // vertex coords
+        //
+        // top right [0]
+        0.1, 0.1,
 
-            // top left [1]
-            -0.1, 0.1,
+        // top left [1]
+        -0.1, 0.1,
 
-            // bottom left [2]
-            -0.1, -0.1,
+        // bottom left [2]
+        -0.1, -0.1,
 
-            // bottom right [3]
-            0.1, -0.1,
+        // bottom right [3]
+        0.1, -0.1,
 
-            //
-            // texture coords
-            //
-            // top right
-            1.0, 1.0,
+        //
+        // texture coords
+        //
+        // top right
+        1.0, 1.0,
 
-            // top left
-            -1.0, 1.0,
+        // top left
+        -1.0, 1.0,
 
-            // bottom left
-            -1.0, -1.0,
+        // bottom left
+        -1.0, -1.0,
 
-            // bottom right
-            1.0, -1.0
-        };
+        // bottom right
+        1.0, -1.0
+    };
 
     GLint ebo_indices[] =
-        {
-            0, 1, 2,
-            2, 3, 0
-        };
+    {
+        0, 1, 2,
+        2, 3, 0
+    };
 
     //
     // create program
@@ -96,6 +97,8 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     texture_test_renderer->shader_program = uGLCreateShaderProgram_vf(&vshdr,
                                                                       &fshdr,
                                                                       __FILE__);
+
+    glError;
     assert(texture_test_renderer->shader_program);
     glUseProgram(texture_test_renderer->shader_program);
     glError;
@@ -130,12 +133,12 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
 
     glError;
     GLfloat tmp_modelview[16] =
-        {
-            +1.0f, +0.0f, +0.0f, +0.0f,
-            +0.0f, +1.0f, +0.0f, +0.0f,
-            +0.0f, +0.0f, +1.0f, +0.0f,
-            +0.0f, +0.0f, +0.0f, +1.0f,
-        };
+    {
+        +1.0f, +0.0f, +0.0f, +0.0f,
+        +0.0f, +1.0f, +0.0f, +0.0f,
+        +0.0f, +0.0f, +1.0f, +0.0f,
+        +0.0f, +0.0f, +0.0f, +1.0f,
+    };
 
     for (size_t ii = 0; ii < 16; ii++)
     {
@@ -183,7 +186,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     GLsizei       stride,
     const GLvoid* pointer);
 
-    */
+     */
 
     glVertexAttribPointer(texture_test_renderer->shdr_position_location,
                           2,
