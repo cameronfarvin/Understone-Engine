@@ -71,9 +71,9 @@ uInitializeGameWindowsAndContext()
 void
 uInitializeRenderers()
 {
-    initRenderer_triangle(&triangle_renderer);
+    // initRenderer_triangle(&triangle_renderer);
     // initRenderer_test_bitmap(&test_bitmap_renderer);
-    // initRenderer_texture_test(&texture_test_renderer);
+    initRenderer_texture_test(&texture_test_renderer);
 }
 
 static inline void
@@ -122,7 +122,7 @@ int main(int argc, char** argv)
     uInitializeRenderers();
 
     /* glClearColor(0.8f, 0.16f, 0.32f, 1.0f); */ // pinkish
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.39f, 0.13f, 0.36f, 1.0f);
 
     while(RUNNING)
     {
@@ -132,9 +132,10 @@ int main(int argc, char** argv)
         uRefreshInputState();
         glError;
 
-        // render_texture_test(&texture_test_renderer);
-        render_triangle(&triangle_renderer);
+        // render_triangle(&triangle_renderer);
         // render_test_bitmap(&test_bitmap_renderer);
+        render_texture_test(&texture_test_renderer);
+
         glError;
 
         uSwapBuffers();

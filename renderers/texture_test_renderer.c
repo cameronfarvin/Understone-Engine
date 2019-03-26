@@ -53,9 +53,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
 
     GLfloat texture_test_vertex_data[] =
     {
-        //
         // vertex coords
-        //
         // top right [0]
         0.1, 0.1,
 
@@ -68,20 +66,18 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
         // bottom right [3]
         0.1, -0.1,
 
-        //
         // texture coords
-        //
-        // top right
-        1.0, 1.0,
+        // top right [0]
+        0.1, 0.1,
 
-        // top left
-        -1.0, 1.0,
+        // top left [1]
+        -0.1, 0.1,
 
-        // bottom left
-        -1.0, -1.0,
+        // bottom left [2]
+        -0.1, -0.1,
 
-        // bottom right
-        1.0, -1.0
+        // bottom right [3]
+        0.1, -0.1,
     };
 
     GLint ebo_indices[] =
@@ -113,7 +109,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     texture_test_renderer->shdr_color_location =
         glGetUniformLocation(texture_test_renderer->shader_program, "fshdr_color");
     texture_test_renderer->shdr_texture_coords_location =
-        glGetUniformLocation(texture_test_renderer->shader_program, "texture_coordinates_in");;
+        glGetAttribLocation(texture_test_renderer->shader_program, "texture_coordinates_in");;
     glError;
 
     // set texture num
@@ -203,13 +199,29 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
                           (void*) (sizeof(GLfloat) * 8));
 
     stbi_set_flip_vertically_on_load(true);
-    u8* texture2d_data;
+    u8* texture2d_data = NULL;
 
     GLint width, height, nChannels;
-    texture2d_data = stbi_load("./assets/FLAG_B24.BMP", &width, &height, &nChannels, 0);
+    texture2d_data = stbi_load("./assets/sails.bmp", &width, &height, &nChannels, 0);
+
+    // [ cfarvin::DEBUG ]
+    printf("[ debug ][ debug ]\n\twidth: %d\n\theight: %d\n\tnum channels: %d\n\t",
+           width, height, nChannels);
 
     if(texture2d_data)
     {
+        /*
+           void glTexImage2D(   GLenum target,
+           GLint level,
+           GLint internalFormat,
+           GLsizei width,
+           GLsizei height,
+           GLint border,
+           GLenum format,
+           GLenum type,
+           const GLvoid * data);
+         */
+
         glTexImage2D(GL_TEXTURE_2D,
                      0,
                      GL_RGB,
@@ -220,7 +232,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
                      GL_UNSIGNED_BYTE,
                      texture2d_data);
 
-        glGenerateMipmap(GL_TEXTURE_2D);
+        // glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
     {
@@ -240,45 +252,45 @@ void
 render_texture_test(uGLRenderTarget* const texture_test_renderer)
 {
     // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ] [ cfarvin::EXPERIMENTAL ]
-    static r32 piCycle = 0.0f;
-    static r32 cycleDelta = 0.025f;
+    //static r32 piCycle = 0.0f;
+    //static r32 cycleDelta = 0.025f;
 
-    if (piCycle > uPI)
-    {
-        piCycle = 0;
-    }
+    //if (piCycle > uPI)
+    //{
+    //    piCycle = 0;
+    //}
 
-    glClear(GL_COLOR_BUFFER_BIT);
+    // glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(texture_test_renderer->shader_program);
     glBindVertexArray(texture_test_renderer->vertex_array_buffer_location);
     glEnableVertexAttribArray(texture_test_renderer->shdr_position_location);
 
-    texture_test_renderer->modelview_matrix[3] =
-        -((viewport.width - mouse_pos.x) / (viewport.width / 2.0f) - 1);
-    texture_test_renderer->modelview_matrix[7] =
-        -((viewport.height - mouse_pos.y) / (viewport.height / 2.0f) - 1);
+    // texture_test_renderer->modelview_matrix[3] =
+    //     -((viewport.width - mouse_pos.x) / (viewport.width / 2.0f) - 1);
+    // texture_test_renderer->modelview_matrix[7] =
+    //     -((viewport.height - mouse_pos.y) / (viewport.height / 2.0f) - 1);
 
-    glUniformMatrix4fv(texture_test_renderer->shdr_modelview_mat_location,
-                       1,
-                       GL_TRUE,
-                       texture_test_renderer->modelview_matrix);
+    // glUniformMatrix4fv(texture_test_renderer->shdr_modelview_mat_location,
+    //                    1,
+    //                    GL_TRUE,
+    //                    texture_test_renderer->modelview_matrix);
 
-    piCycle += cycleDelta;
-    if (uGetInputPressed(uMouse_right))
-    {
-        // red triangle
-        glUniform3f(texture_test_renderer->shdr_color_location, (GLfloat) sin(piCycle), 0.0, 0.0f);
-    }
-    else if (uGetInputPressed(uMouse_left))
-    {
-        // blue triangle
-        glUniform3f(texture_test_renderer->shdr_color_location, 0.0f, 0.0f, (GLfloat) sin(piCycle));
-    }
-    else
-    {
-        // green triangle
-        glUniform3f(texture_test_renderer->shdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
-    }
+    // piCycle += cycleDelta;
+    // if (uGetInputPressed(uMouse_right))
+    // {
+    //     // red triangle
+    //     glUniform3f(texture_test_renderer->shdr_color_location, (GLfloat) sin(piCycle), 0.0, 0.0f);
+    // }
+    // else if (uGetInputPressed(uMouse_left))
+    // {
+    //     // blue triangle
+    //     glUniform3f(texture_test_renderer->shdr_color_location, 0.0f, 0.0f, (GLfloat) sin(piCycle));
+    // }
+    // else
+    // {
+    //     // green triangle
+    //     glUniform3f(texture_test_renderer->shdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
+    // }
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_test_renderer->texture_name);
