@@ -62,36 +62,47 @@ uGLCheckErrorState(GLuint object,
                    const char* pipeline_state,
                    const char* file_name)
 {
+    glError;
+
     GLint   err = GL_TRUE;
     GLsizei log_length = 0;
 
     char* message = (char*) calloc(1024, sizeof(char));
     char* compile_link = (char*) calloc(35, sizeof(char));
 
-    glError;
-    glGetShaderiv(object, parameter_to_check, &err);
-    glError;
-    glGetShaderInfoLog(object, 1024, &log_length, message);
-    glError;
+    switch (parameter_to_check)
+    {
+        case GL_COMPILE_STATUS:
+            {
+                glGetShaderiv(object, parameter_to_check, &err);
+                glError;
+                glGetShaderInfoLog(object, 1024, &log_length, message);
+                glError;
 
+                if (err != GL_TRUE)
+                {
+                    strcpy(compile_link, "GL_COMPILE_STATUS");
+                }
+                break;
+            }
+        case GL_LINK_STATUS:
+            {
+                glGetProgramiv(object, parameter_to_check, &err);
+                glError;
+                glGetProgramInfoLog(object, 1024, &log_length, message);
+                glError;
+
+                if (err != GL_TRUE)
+                {
+                    strcpy(compile_link, "GL_LINK_STATUS");
+                }
+                break;
+            }
+    }
 
     if (err != GL_TRUE)
     {
-        switch (parameter_to_check)
-        {
-            case GL_COMPILE_STATUS:
-                {
-                    strcpy(compile_link, "GL_COMPILE_STATUS");
-                    break;
-                }
-            case GL_LINK_STATUS:
-                {
-                    strcpy(compile_link, "GL_LINK_STATUS");
-                    break;
-                }
-        }
-
-        printf("[ ERROR | %s | %s ] FILE: %s\n%s",
+        printf("[ ERROR | %s | %s ] FILE: %s\n[ Error Message ]%s\n",
                compile_link,
                pipeline_state,
                file_name,
@@ -117,37 +128,55 @@ uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
     GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     assert(vertex_shader);
     glShaderSource(vertex_shader, 1, vertex_shader_source, NULL);
+    glError;
     glCompileShader(vertex_shader);
     uGLCheckErrorState(vertex_shader,
                        GL_COMPILE_STATUS,
                        "VERTEX_SHADER",
                        file_name);
+    // glIsShader(vertex_shader);
+
+    // create, compile & error check vertex shader
+    glShaderSource(vertex_shader, 1, vertex_shader_source, NULL);
+    glError;
+    glCompileShader(vertex_shader);
+    uGLCheckErrorState(vertex_shader,
+                       GL_COMPILE_STATUS,
+                       "VERTEX_SHADER",
+                       file_name);
+    // glIsShader(vertex_shader);
 
     // create, compile & error check fragment shader
     GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     assert(fragment_shader);
     glShaderSource(fragment_shader, 1, fragment_shader_source, NULL);
+    glError;
     glCompileShader(fragment_shader);
     uGLCheckErrorState(fragment_shader,
                        GL_COMPILE_STATUS,
                        "FRAGMENT_SHADER",
                        file_name);
+    // glIsShader(fragment_shader);
 
     // create, attach vert/frag, link & error check shader program
     GLuint shader_program = glCreateProgram();
     assert(shader_program);
     glAttachShader(shader_program, vertex_shader);
+    glError;
     glAttachShader(shader_program, fragment_shader);
+    glError;
     glLinkProgram(shader_program);
     uGLCheckErrorState(shader_program,
                        GL_LINK_STATUS,
                        "SHADER_PROGRAM",
                        file_name);
+    assert(glIsProgram(shader_program));
 
     // delete shaders, return glShaderProgram identifier
     glDeleteShader(vertex_shader);
+    glError;
     glDeleteShader(fragment_shader);
-
+    glError;
     return shader_program;
 }
 
@@ -157,10 +186,13 @@ uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
                            const GLchar** fragment_shader_source,
                            const char*    file_name)
 {
+    glError;
+
     // create, compile & error check vertex shader
     GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     assert(vertex_shader);
     glShaderSource(vertex_shader, 1, vertex_shader_source, NULL);
+    glError;
     glCompileShader(vertex_shader);
     uGLCheckErrorState(vertex_shader,
                        GL_COMPILE_STATUS,
@@ -171,6 +203,7 @@ uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
     GLuint geometry_shader = glCreateShader(GL_GEOMETRY_SHADER);
     assert(geometry_shader);
     glShaderSource(geometry_shader, 1, geometry_shader_source, NULL);
+    glError;
     glCompileShader(geometry_shader);
     uGLCheckErrorState(geometry_shader,
                        GL_COMPILE_STATUS,
@@ -181,6 +214,7 @@ uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
     GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     assert(fragment_shader);
     glShaderSource(fragment_shader, 1, fragment_shader_source, NULL);
+    glError;
     glCompileShader(fragment_shader);
     uGLCheckErrorState(fragment_shader,
                        GL_COMPILE_STATUS,
@@ -191,8 +225,11 @@ uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
     GLuint shader_program = glCreateProgram();
     assert(shader_program);
     glAttachShader(shader_program, vertex_shader);
+    glError;
     glAttachShader(shader_program, geometry_shader);
+    glError;
     glAttachShader(shader_program, fragment_shader);
+    glError;
     glLinkProgram(shader_program);
     uGLCheckErrorState(shader_program,
                        GL_LINK_STATUS,
@@ -201,9 +238,11 @@ uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
 
     // delete shaders, return glShaderProgram identifier
     glDeleteShader(vertex_shader);
+    glError;
     glDeleteShader(geometry_shader);
+    glError;
     glDeleteShader(fragment_shader);
-
+    glError;
     return shader_program;
 }
 

@@ -117,7 +117,7 @@ int main(int argc, char** argv)
         }
     }
 
-    uDetermineSystemEndianness();
+    uDetermineSystemEndianness(); // [ cfarvin::TODO ]
     uInitializeGameWindowsAndContext();
     uInitializeRenderers();
 

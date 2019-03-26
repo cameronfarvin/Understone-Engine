@@ -373,10 +373,17 @@ uX11CreateWindow()
         glXGetProcAddressARB( (const GLubyte*) "glGenerateMipmap");
     assert(glGenerateMipmap);
 
-    // [ cfarvin::NOTE ] This is likely just <glUniform>
     glUniform1i = (PFNGLUNIFORM1IPROC)
        glXGetProcAddressARB( (const GLubyte*) "glUniform1i");
     assert(glUniform1i);
+    
+    glIsShader = (PFNGLISSHADERPROC)
+       glXGetProcAddressARB( (const GLubyte*) "glIsShader");
+    assert(glIsShader);
+
+    glIsProgram = (PFNGLISPROGRAMPROC)
+       glXGetProcAddressARB( (const GLubyte*) "glIsProgram");
+    assert(glIsProgram);
 
     uX11HandleEvents();
 }

@@ -107,6 +107,8 @@ PFNGLCHECKFRAMEBUFFERSTATUSPROC  glCheckFramebufferStatus;
 PFNGLUNIFORMMATRIX4FVPROC        glUniformMatrix4fv;
 PFNGLGENERATEMIPMAPPROC          glGenerateMipmap;
 PFNGLUNIFORM1IPROC               glUniform1i;
+PFNGLISSHADERPROC                glIsShader;
+PFNGLISPROGRAMPROC               glIsProgram;
 
 //
 // signatures
