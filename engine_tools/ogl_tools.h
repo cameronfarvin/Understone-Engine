@@ -1,6 +1,10 @@
 #ifndef __ogl_tools__
 #define __ogl_tools__ 1
 
+#ifndef CHECK_GL_ERRORS
+#define CHECK_GL_ERRORS 1
+#endif // CHECK_Gl_ERRORS
+
 #if __linux__
 #include <nix/nix_platform.h>
 #elif _WIN32
@@ -28,9 +32,16 @@
 #define STRINGIFIED_PIPELINE_STATE_LENGTH 18
 #endif // STRINGIFIED_PIPELINE_STATE_LENGTH
 
+#if CHECK_GL_ERRORS
 #ifndef glError
 #define glError glErrorFileLine(__FILE__, __LINE__, __func__)
 #endif // glError
+#else
+#ifndef glError
+#define glError /* GL error checking disabled. Define GL_CHECK_ERRORS to enable */
+#endif // glError
+#endif // CHECK_GL_ERRORS
+
 
 
 typedef struct
@@ -134,5 +145,7 @@ void
 glErrorFileLine(const char* file_name,
                 int line_number,
                 const char* function_name);
+static bool
+isExtensionSupported(const char *extList, const char *extension);
 
 #endif // __ogl_tools__

@@ -1,5 +1,38 @@
 #include <engine_tools/ogl_tools.h>
 
+// from Khronos Example
+static bool
+isExtensionSupported(const char *extList, const char *extension)
+{
+    const char *start;
+    const char *where, *terminator;
+
+    /* Extension names should not have spaces. */
+    where = strchr(extension, ' ');
+    if (where || *extension == '\0')
+        return false;
+
+    for (start=extList;;) {
+        where = strstr(start, extension);
+
+        if (!where) {
+            break;
+        }
+
+        terminator = where + strlen(extension);
+
+        if ( where == start || *(where - 1) == ' ' ) {
+            if ( *terminator == ' ' || *terminator == '\0' ) {
+                return true;
+            }
+        }
+
+        start = terminator;
+    }
+
+    return false;
+}
+
 void
 glErrorFileLine(const char* file_name,
                 int line_number,

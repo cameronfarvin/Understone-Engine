@@ -12,17 +12,6 @@ uWin32HandleEvents()
 {
     win32_sys_event = uEventNone;
     MSG msg = { 0 };
-    // [ cfarvin::TODO ]
-    /* while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) */
-    /* { */
-    /*     TranslateMessage(&msg); */
-    /*     DispatchMessage(&msg); */
-
-    /*     	if (win32_sys_event == uEventResize) */
-    /*     	{ */
-    /*     		OutputDebugStringA("\n\nVICTORY\n\n"); */
-    /*     	} */
-    /* } */
     PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
     TranslateMessage(&msg);
     DispatchMessage(&msg);
@@ -155,6 +144,8 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 printf("[ UE::WIN::ERROR ] Could not make the GL rendering context current\n");
                 assert(false);
             }
+
+            // wglSwapIntervalExt(-1); // [ cfarvin::TESTING ]
 
             // Load all OpenGL functions
             const HMODULE gl_module = LoadLibraryA("opengl32.dll");

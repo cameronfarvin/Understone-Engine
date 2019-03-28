@@ -6,15 +6,18 @@
 // #define WIN32
 
 #include <windows.h>
-#include <wingdi.h>
 #include <GL\gl.h>
-#include <GL\glu.h>
 #include <GL\glext.h>
+
+// [ cfarvin::TESTING ]
+/* #include <wingdi.h> */
+/* #include <GL\glu.h> */
 
 #include <stdio.h>
 #include <stdint.h>
 
 #include <engine_tools/event_tools.h>
+
 
 typedef struct
 {
