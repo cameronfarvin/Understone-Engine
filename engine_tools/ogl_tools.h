@@ -120,7 +120,9 @@ PFNGLGENERATEMIPMAPPROC          glGenerateMipmap;
 PFNGLUNIFORM1IPROC               glUniform1i;
 PFNGLISSHADERPROC                glIsShader;
 PFNGLISPROGRAMPROC               glIsProgram;
-PFNGLACTIVETEXTUREPROC           glActiveTexture;
+
+// [ cfarvin::NOTE ] Causing redefinition issues on nix
+// PFNGLACTIVETEXTUREPROC           glActiveTexture;
 
 //
 // signatures
@@ -145,7 +147,7 @@ void
 glErrorFileLine(const char* file_name,
                 int line_number,
                 const char* function_name);
-static bool
+extern bool
 isExtensionSupported(const char *extList, const char *extension);
 
 #endif // __ogl_tools__

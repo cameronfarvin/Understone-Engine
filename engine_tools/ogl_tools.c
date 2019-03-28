@@ -1,7 +1,7 @@
 #include <engine_tools/ogl_tools.h>
 
 // from Khronos Example
-static bool
+bool
 isExtensionSupported(const char *extList, const char *extension)
 {
     const char *start;

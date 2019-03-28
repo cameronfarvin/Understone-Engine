@@ -51,8 +51,10 @@ uLoadBitmap(const char* file_path, uImage* const img)
 #ifdef _WIN32
 #pragma warning( push )
 #pragma warning( disable: 4996 )
+#endif
     FILE* file = fopen(file_path, "rb");
-#pragma warning( pop)
+#ifdef _WIN32
+pragma warning( pop)
 #endif
 
     if (!file)
