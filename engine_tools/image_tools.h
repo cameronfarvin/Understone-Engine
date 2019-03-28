@@ -32,7 +32,6 @@ u32 uRead32AsLE(uImage* const img);
 //
 // BitMaps
 //
-
 bool uLoadBitmap(const char* file_path, uImage* const img);
 
 #endif // __image_tools

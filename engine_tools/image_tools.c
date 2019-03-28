@@ -2,7 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+
+#ifdef _linux_
 #include <unistd.h>
+#endif
+
 #include <assert.h>
 #include <engine_tools/image_tools.h>
 
@@ -15,7 +19,10 @@ uReadNextByte(uImage* const img)
     }
 
     printf("[ UE::IMAGE_TOOLS::ERROR ] uReadNextByte(): Out of bounds.\n");
+
+    // [ cfarvin::DEBUG ]
     assert(false);
+    return 0; // [ cfarvin::NOTE ] silence msvc
 }
 
 u16
@@ -41,7 +48,13 @@ uLoadBitmap(const char* file_path, uImage* const img)
         return false;
     }
 
+#ifdef _WIN32
+#pragma warning( push )
+#pragma warning( disable: 4996 )
     FILE* file = fopen(file_path, "rb");
+#pragma warning( pop)
+#endif
+
     if (!file)
     {
         printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Could not open file.\n");
@@ -68,7 +81,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
     img->img_start = img->img_cursor = mem_file;
     img->img_end = mem_file + original_bitmap_size;
 
-    size_t items_read = fread(mem_file, original_bitmap_size, 1, file);
+    size_t items_read = fread(mem_file, (size_t) original_bitmap_size, 1, file);
     if (items_read != 1)
     {
         printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): File read error.\n");
@@ -201,7 +214,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
     u32          bitmap_blueMask   = 0;
     u32          bitmap_alphaMask  = 0;
     u32          bitmap_CSType     = 0;
-    CIEXYZTRIPLE bitmap_endpoints  = {};
+    CIEXYZTRIPLE bitmap_endpoints  = { 0 };
     u32          bitmap_gammaRed   = 0;
     u32          bitmap_gammaGreen = 0;
     u32          bitmap_gammaBlue  = 0;
@@ -368,7 +381,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
 
     // [ cfarvin::TODO ] What is a reasonable maximum for the padding needed between the RGBQuad
     // (if an RGBQuad exists), and the bitmap bits? Going w/ s16, though s8 is probably fine.
-    s16 distance_to_bitmap_bits = bitmap_bits_begin - img->img_cursor; // negative == error
+    s16 distance_to_bitmap_bits = (s16) (bitmap_bits_begin - img->img_cursor); // negative == error
     if (distance_to_bitmap_bits < 0)
     {
         printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): INTERNAL ERROR. Surpassed bitmap bits.\n");

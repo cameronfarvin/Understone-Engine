@@ -5,6 +5,9 @@
 void
 initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
 {
+    // [ cfarvin::DEBUG ]
+    functionFired;
+
     const char* vshdr = GLSL
         (450 core,
 

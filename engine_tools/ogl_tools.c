@@ -7,40 +7,50 @@ glErrorFileLine(const char* file_name,
 {
     char* error_type_string = (char*) calloc(35, sizeof(char));
     bool print_warning = true;
-    switch(glGetError()) 
-    { 
-        case GL_NO_ERROR: 
-            { 
+
+#ifdef _WIN32
+#pragma warning( push )
+#pragma warning( disable: 4996 )
+#endif
+
+    switch(glGetError())
+    {
+        case GL_NO_ERROR:
+            {
                 print_warning = false;
                 break;
-            } 
-        case GL_INVALID_ENUM: 
+            }
+        case GL_INVALID_ENUM:
             {
                 strcpy(error_type_string, "GL_INVALID_ENUM");
                 break;
-            } 
-        case GL_INVALID_VALUE: 
+            }
+        case GL_INVALID_VALUE:
             {
                 strcpy(error_type_string, "GL_INVALID_VALUE");
                 break;
-            } 
-        case GL_INVALID_OPERATION: 
-            { 
+            }
+        case GL_INVALID_OPERATION:
+            {
                 strcpy(error_type_string, "GL_INVALID_OPERATION");
                 break;
-            }                                                               
-        case GL_INVALID_FRAMEBUFFER_OPERATION:                          
-            {                                              
+            }
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            {
                 strcpy(error_type_string, "GL_INVALID_FRAMEBUFFER_OPERATION");
                 break;
-            }                                                               
-        case GL_OUT_OF_MEMORY:                                          
-            {                                                          
+            }
+        case GL_OUT_OF_MEMORY:
+            {
                 strcpy(error_type_string, "GL_OUT_OF_MEMORY");
                 break;
-            }                                                               
-        default: { assert(0); }                                         
+            }
+        default: { assert(0); }
     }
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif
 
     if (print_warning)
     {
@@ -48,7 +58,7 @@ glErrorFileLine(const char* file_name,
                error_type_string,
                file_name,
                line_number,
-               function_name);                
+               function_name);
         if (error_type_string) { free(error_type_string); }
         assert(0);
     }
@@ -70,6 +80,10 @@ uGLCheckErrorState(GLuint object,
     char* message = (char*) calloc(1024, sizeof(char));
     char* compile_link = (char*) calloc(35, sizeof(char));
 
+#ifdef _WIN32
+#pragma warning( push )
+#pragma warning( disable: 4996 )
+#endif
     switch (parameter_to_check)
     {
         case GL_COMPILE_STATUS:
@@ -99,6 +113,10 @@ uGLCheckErrorState(GLuint object,
                 break;
             }
     }
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif
 
     if (err != GL_TRUE)
     {
@@ -134,7 +152,7 @@ uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
                        GL_COMPILE_STATUS,
                        "VERTEX_SHADER",
                        file_name);
-    // glIsShader(vertex_shader);
+    assert(glIsShader(vertex_shader));
 
     // create, compile & error check vertex shader
     glShaderSource(vertex_shader, 1, vertex_shader_source, NULL);
@@ -144,7 +162,7 @@ uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
                        GL_COMPILE_STATUS,
                        "VERTEX_SHADER",
                        file_name);
-    // glIsShader(vertex_shader);
+    assert(glIsShader(vertex_shader));
 
     // create, compile & error check fragment shader
     GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -156,7 +174,7 @@ uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
                        GL_COMPILE_STATUS,
                        "FRAGMENT_SHADER",
                        file_name);
-    // glIsShader(fragment_shader);
+    assert(glIsShader(fragment_shader));
 
     // create, attach vert/frag, link & error check shader program
     GLuint shader_program = glCreateProgram();
@@ -180,6 +198,7 @@ uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
     return shader_program;
 }
 
+//  [ cfarvin::TODO ] add glIsShader/Program checks
 GLuint
 uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
                            const GLchar** geometry_shader_source,
@@ -245,4 +264,3 @@ uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
     glError;
     return shader_program;
 }
-

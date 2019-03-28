@@ -5,6 +5,7 @@
 #include <GL/glu.h>
 #include <engine_tools/ogl_tools.h>
 #include <engine_tools/image_tools.h>
+#include <engine_tools/debug_tools.h>
 
 void
 initRenderer_triangle(uGLRenderTarget* const triangle_renderer);

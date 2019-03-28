@@ -109,6 +109,7 @@ PFNGLGENERATEMIPMAPPROC          glGenerateMipmap;
 PFNGLUNIFORM1IPROC               glUniform1i;
 PFNGLISSHADERPROC                glIsShader;
 PFNGLISPROGRAMPROC               glIsProgram;
+PFNGLACTIVETEXTUREPROC           glActiveTexture;
 
 //
 // signatures

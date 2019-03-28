@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#define RUN_TESTS_ON_STARTUP 1
+#define RUN_TESTS_ON_STARTUP 0
 
 void runAllTests();
 

@@ -4,7 +4,7 @@
 
 #include <triangle_renderer.h>
 /* #include <test_bitmap_renderer.h> */
-#include <texture_test_renderer.h>
+/* #include <texture_test_renderer.h> */
 
 uGLRenderTarget triangle_renderer;
 uGLRenderTarget test_bitmap_renderer;

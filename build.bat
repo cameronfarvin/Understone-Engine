@@ -34,10 +34,11 @@ echo.
 echo [ STARTING COMPILATION ]
 
 cl engine.c  /W4 /WX ^
-engine_tools/ogl_tools.c win/win_platform.c ^
-renderers/triangle_renderer.c ^
-renderers/test_bitmap_renderer.c ^
+win/win_platform.c ^
 data_structures/uDynamicArray.c ^
+engine_tools/ogl_tools.c ^
+engine_tools/type_tools.c ^
+renderers/triangle_renderer.c ^
 tests/tests.c ^
 /I. /Iengine_tools /Iwin /Irenderers /Idata_structures /Itests ^
 -Z7 /GS /MD /EHsc /nologo ^
@@ -50,3 +51,8 @@ odbccp32.lib
 
 echo [ COMPILATION COMPLETE ]
 echo.
+
+rem engine_tools/image_tools.c ^
+rem engine_tools/image_tools.c ^
+rem renderers/test_bitmap_renderer.c ^
+rem renderers/texture_test_renderer.c ^

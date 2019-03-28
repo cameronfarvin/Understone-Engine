@@ -220,6 +220,14 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             assert(glFramebufferTexture2D);
             glCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC) uWin32LoadPFNGL("glCheckFramebufferStatus", &gl_module);
             assert(glCheckFramebufferStatus);
+            glActiveTexture = (PFNGLACTIVETEXTUREPROC) uWin32LoadPFNGL("glActiveTexture", &gl_module);
+            assert(glActiveTexture);
+            glIsShader = (PFNGLISSHADERPROC) uWin32LoadPFNGL("glIsShader", &gl_module);
+            assert(glIsShader);
+            glIsProgram = (PFNGLISPROGRAMPROC) uWin32LoadPFNGL("glIsProgram", &gl_module);
+            assert(glIsProgram);
+            glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC) uWin32LoadPFNGL("glUniformMatrix4fv", &gl_module);
+            assert(glUniformMatrix4fv);
 
             /* glClearColor(1.0f, 0.0f, 0.0f, 1.0f); */
             /* glClear(GL_COLOR_BUFFER_BIT); */
