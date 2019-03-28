@@ -152,7 +152,6 @@ int main(int argc, char** argv)
 /*
    Master TODO:
    - Textures/Load Bitmap (d: 6)
-   - Fix "vshdr/fshdr" prefix on uRenderTargets (d:2)
    - Fonts (d: 10)
 
    - Particle System (d: 6)

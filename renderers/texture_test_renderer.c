@@ -11,8 +11,6 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     const char* vshdr = GLSL
         (450 core,
 
-         uniform mat4 vshdr_mut_pos;
-
          in      vec2 vshdr_pos;
          in      vec2 texture_coordinates_in;
 
@@ -20,9 +18,9 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
 
          void main()
          {
-         gl_Position = vshdr_mut_pos * vec4(vshdr_pos,
-                                            0.0f,
-                                            1.0f);
+         gl_Position = vec4(vshdr_pos,
+                            0.0f,
+                            1.0f);
 
          texture_coordinates = texture_coordinates_in;
          });
@@ -30,7 +28,6 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     const char* fshdr = GLSL
         (450 core,
 
-         uniform vec3      fshdr_color;
          uniform sampler2D texture2d;
 
          in      vec2      texture_coordinates;
@@ -39,13 +36,11 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
 
          void main()
          {
-         fshdr_final = texture(texture2d, texture_coordinates) * vec4(fshdr_color, 1.0f);
+         fshdr_final = texture(texture2d, texture_coordinates) * vec4(0.0f, 0.0f, 1.0f, 1.0f);
          });
 
     texture_test_renderer->shader_program = 0;
     texture_test_renderer->shdr_position_location = -1;
-    texture_test_renderer->shdr_modelview_mat_location = -1;
-    texture_test_renderer->shdr_color_location = -1;
     texture_test_renderer->shdr_texture_coords_location = -1;
 
     // [ cfarvin::RETURN ]
@@ -55,29 +50,29 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     {
         // vertex coords
         // top right [0]
-        0.1, 0.1,
+        0.25, 0.25,
 
         // top left [1]
-        -0.1, 0.1,
+        -0.25, 0.25,
 
         // bottom left [2]
-        -0.1, -0.1,
+        -0.25, -0.25,
 
         // bottom right [3]
-        0.1, -0.1,
+        0.25, -0.25,
 
         // texture coords
         // top right [0]
-        0.1, 0.1,
+        0.25, 0.25,
 
         // top left [1]
-        -0.1, 0.1,
+        -0.25, 0.25,
 
         // bottom left [2]
-        -0.1, -0.1,
+        -0.25, -0.25,
 
         // bottom right [3]
-        0.1, -0.1,
+        0.25, -0.25,
     };
 
     GLint ebo_indices[] =
@@ -93,7 +88,6 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     texture_test_renderer->shader_program = uGLCreateShaderProgram_vf(&vshdr,
                                                                       &fshdr,
                                                                       __FILE__);
-
     glError;
     assert(texture_test_renderer->shader_program);
     glUseProgram(texture_test_renderer->shader_program);
@@ -104,10 +98,6 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     //
     texture_test_renderer->shdr_position_location =
         glGetAttribLocation(texture_test_renderer->shader_program, "vshdr_pos");
-    texture_test_renderer->shdr_modelview_mat_location =
-        glGetUniformLocation(texture_test_renderer->shader_program, "vshdr_mut_pos");
-    texture_test_renderer->shdr_color_location =
-        glGetUniformLocation(texture_test_renderer->shader_program, "fshdr_color");
     texture_test_renderer->shdr_texture_coords_location =
         glGetAttribLocation(texture_test_renderer->shader_program, "texture_coordinates_in");;
     glError;
@@ -117,34 +107,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     glError;
 
     assert(texture_test_renderer->shdr_position_location != -1);
-    assert(texture_test_renderer->shdr_modelview_mat_location != -1);
-    assert(texture_test_renderer->shdr_color_location != -1);
     assert(texture_test_renderer->shdr_texture_coords_location != -1);
-
-    //
-    // set_default_attribute_values
-    //
-    glError;
-    glUniform3f(texture_test_renderer->shdr_color_location, 1.0f, 0.0f, 0.0f);
-
-    glError;
-    GLfloat tmp_modelview[16] =
-    {
-        +1.0f, +0.0f, +0.0f, +0.0f,
-        +0.0f, +1.0f, +0.0f, +0.0f,
-        +0.0f, +0.0f, +1.0f, +0.0f,
-        +0.0f, +0.0f, +0.0f, +1.0f,
-    };
-
-    for (size_t ii = 0; ii < 16; ii++)
-    {
-        texture_test_renderer->modelview_matrix[ii] = tmp_modelview[ii];
-    }
-
-    glUniformMatrix4fv(texture_test_renderer->shdr_modelview_mat_location,
-                       1,
-                       GL_TRUE,
-                       texture_test_renderer->modelview_matrix);
 
     glError;
     glGenVertexArrays(1, &texture_test_renderer->vertex_array_buffer_location);
@@ -166,7 +129,10 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
                  texture_test_vertex_data,
                  GL_STATIC_DRAW);
 
+    glError;
     glGenTextures(1, &texture_test_renderer->texture_name);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture_test_renderer->texture_name);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -184,6 +150,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
 
      */
 
+    glError;
     glVertexAttribPointer(texture_test_renderer->shdr_position_location,
                           2,
                           GL_FLOAT,
@@ -203,6 +170,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
 
     GLint width, height, nChannels;
     texture2d_data = stbi_load("./assets/sails.bmp", &width, &height, &nChannels, 0);
+    // texture2d_data = stbi_load("./assets/FLAG.BMP", &width, &height, &nChannels, 0);
 
     // [ cfarvin::DEBUG ]
     printf("[ debug ][ debug ]\n\twidth: %d\n\theight: %d\n\tnum channels: %d\n\t",
@@ -222,6 +190,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
            const GLvoid * data);
          */
 
+        glError;
         glTexImage2D(GL_TEXTURE_2D,
                      0,
                      GL_RGB,
@@ -232,7 +201,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
                      GL_UNSIGNED_BYTE,
                      texture2d_data);
 
-        // glGenerateMipmap(GL_TEXTURE_2D);
+        glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
     {
@@ -242,6 +211,7 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
     stbi_image_free(texture2d_data);
     glError;
 
+    glBindTexture(GL_TEXTURE_2D, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glUseProgram(0);
@@ -251,52 +221,14 @@ initRenderer_texture_test(uGLRenderTarget* const texture_test_renderer)
 void
 render_texture_test(uGLRenderTarget* const texture_test_renderer)
 {
-    // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ] [ cfarvin::EXPERIMENTAL ]
-    //static r32 piCycle = 0.0f;
-    //static r32 cycleDelta = 0.025f;
-
-    //if (piCycle > uPI)
-    //{
-    //    piCycle = 0;
-    //}
-
-    // glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(texture_test_renderer->shader_program);
     glBindVertexArray(texture_test_renderer->vertex_array_buffer_location);
     glEnableVertexAttribArray(texture_test_renderer->shdr_position_location);
-
-    // texture_test_renderer->modelview_matrix[3] =
-    //     -((viewport.width - mouse_pos.x) / (viewport.width / 2.0f) - 1);
-    // texture_test_renderer->modelview_matrix[7] =
-    //     -((viewport.height - mouse_pos.y) / (viewport.height / 2.0f) - 1);
-
-    // glUniformMatrix4fv(texture_test_renderer->shdr_modelview_mat_location,
-    //                    1,
-    //                    GL_TRUE,
-    //                    texture_test_renderer->modelview_matrix);
-
-    // piCycle += cycleDelta;
-    // if (uGetInputPressed(uMouse_right))
-    // {
-    //     // red triangle
-    //     glUniform3f(texture_test_renderer->shdr_color_location, (GLfloat) sin(piCycle), 0.0, 0.0f);
-    // }
-    // else if (uGetInputPressed(uMouse_left))
-    // {
-    //     // blue triangle
-    //     glUniform3f(texture_test_renderer->shdr_color_location, 0.0f, 0.0f, (GLfloat) sin(piCycle));
-    // }
-    // else
-    // {
-    //     // green triangle
-    //     glUniform3f(texture_test_renderer->shdr_color_location, 0.0f, (GLfloat) sin(piCycle), 0.0f);
-    // }
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_test_renderer->texture_name);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
 
     glBindVertexArray(0);
     glEnableVertexAttribArray(0);
