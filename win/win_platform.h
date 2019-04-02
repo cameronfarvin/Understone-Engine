@@ -6,12 +6,15 @@
 // #define WIN32
 
 #include <windows.h>
-#include <GL\gl.h>
-#include <GL\glext.h>
-
-// [ cfarvin::TESTING ]
 /* #include <wingdi.h> */
 /* #include <GL\glu.h> */
+
+#include <GL\gl.h>
+#include <GL\glext.h>
+#include <GL\glxext.h>
+#include <GL\wglext.h>
+#include <GL\glcorearb.h>
+
 
 #include <stdio.h>
 #include <stdint.h>

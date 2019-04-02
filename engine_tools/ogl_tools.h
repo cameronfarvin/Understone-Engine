@@ -14,15 +14,15 @@
 #include <assert.h>
 #include <math.h>
 
-#ifndef APIENTRY
-#define APIENTRY
-#endif
-#ifndef APIENTRYP
-#define APIENTRYP APIENTRY *
-#endif
-#ifndef GLAPI
-#define GLAPI extern
-#endif
+/* #ifndef APIENTRY */
+/* #define APIENTRY */
+/* #endif */
+/* #ifndef APIENTRYP */
+/* #define APIENTRYP APIENTRY * */
+/* #endif */
+/* #ifndef GLAPI */
+/* #define GLAPI extern */
+/* #endif */
 
 #ifndef GLSL
 #define GLSL(version, shaderSrc) "#version " #version "\n" #shaderSrc
@@ -41,7 +41,6 @@
 #define glError /* GL error checking disabled. Define GL_CHECK_ERRORS to enable */
 #endif // glError
 #endif // CHECK_GL_ERRORS
-
 
 
 typedef struct
@@ -82,6 +81,7 @@ typedef struct
 } VIEWPORT;
 VIEWPORT viewport;
 
+PFNGLGETINTEGERVPROC             glGetIntegerv;
 PFNGLGETSHADERIVPROC             glGetShaderiv;
 PFNGLGETSHADERINFOLOGPROC        glGetShaderInfoLog;
 PFNGLGETPROGRAMIVPROC            glGetProgramiv;
@@ -120,9 +120,9 @@ PFNGLGENERATEMIPMAPPROC          glGenerateMipmap;
 PFNGLUNIFORM1IPROC               glUniform1i;
 PFNGLISSHADERPROC                glIsShader;
 PFNGLISPROGRAMPROC               glIsProgram;
-
-// [ cfarvin::NOTE ] Causing redefinition issues on nix
-// PFNGLACTIVETEXTUREPROC           glActiveTexture;
+PFNGLGETSTRINGIPROC              glGetStringi;
+/* PFNGLGETINTEGERVPROC             glGetIntegerv; */
+PFNGLACTIVETEXTUREARBPROC        glActiveTextureARB;
 
 //
 // signatures

@@ -4,6 +4,7 @@
 #include <engine_tools/type_tools.h>
 #include <engine_tools/event_tools.h>
 #include <engine_tools/ogl_tools.h>
+#include <data_structures/data_structures.h>
 
 extern void* uWin32LoadPFNGL(const char* fn_name, const HMODULE* gl_module);
 
@@ -145,8 +146,6 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 assert(false);
             }
 
-            // wglSwapIntervalExt(-1); // [ cfarvin::TESTING ]
-
             // Load all OpenGL functions
             const HMODULE gl_module = LoadLibraryA("opengl32.dll");
             if (!gl_module)
@@ -155,6 +154,30 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 assert(false);
             }
 
+            // Determine supported extensions
+            glGetIntegerv = (PFNGLGETINTEGERVPROC) uWin32LoadPFNGL("glGetIntegerv", &gl_module);
+            assert(glGetIntegerv);
+
+            GLint num_supported_extensions = 0;
+            glGetIntegerv(GL_NUM_EXTENSIONS, &num_supported_extensions);
+            glError;
+
+            // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ]
+            printf("[ debug ] number of extensions found: %d\n", num_supported_extensions);
+
+            uDynamicArray* supported_extensions = uDAInit(const char*);
+            glGetStringi = (PFNGLGETSTRINGIPROC) uWin32LoadPFNGL("glGetStringi", &gl_module);
+            assert(glGetStringi);
+
+            for (size_t ii = 0; ii < num_supported_extensions; ii++)
+            {
+                uDAPush(supported_extensions, (void** const)(glGetStringi(GL_EXTENSIONS, (GLuint)ii)));
+                glError;
+            }
+
+            /* isExtensionSupported(); */
+
+            // Load core functions
             glUseProgram = (PFNGLUSEPROGRAMPROC) uWin32LoadPFNGL("glUseProgram", &gl_module);
             assert(glUseProgram);
             glGetShaderiv = (PFNGLGETSHADERIVPROC) uWin32LoadPFNGL("glGetShaderiv", &gl_module);
@@ -211,8 +234,8 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             assert(glFramebufferTexture2D);
             glCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC) uWin32LoadPFNGL("glCheckFramebufferStatus", &gl_module);
             assert(glCheckFramebufferStatus);
-            glActiveTexture = (PFNGLACTIVETEXTUREPROC) uWin32LoadPFNGL("glActiveTexture", &gl_module);
-            assert(glActiveTexture);
+            glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC) uWin32LoadPFNGL("glActiveTextureARB", &gl_module);
+            assert(glActiveTextureARB);
             glIsShader = (PFNGLISSHADERPROC) uWin32LoadPFNGL("glIsShader", &gl_module);
             assert(glIsShader);
             glIsProgram = (PFNGLISPROGRAMPROC) uWin32LoadPFNGL("glIsProgram", &gl_module);

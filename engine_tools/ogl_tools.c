@@ -87,7 +87,7 @@ glErrorFileLine(const char* file_name,
 
     if (print_warning)
     {
-        printf("[ GLERROR ] %s\n\tFILE: %s\n\tLINE: %d\n\tFUNCTION: %s\n",
+        printf("[ GLERROR ] %s\n\tFILE: %s\n\tLINE: %d\n\tFUNCTION: \t%s\n",
                error_type_string,
                file_name,
                line_number,

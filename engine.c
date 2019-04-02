@@ -72,10 +72,12 @@ uInitializeGameWindowsAndContext()
 void
 uInitializeRenderers()
 {
+	glError;
     functionFired;
     initRenderer_triangle(&triangle_renderer);
     // initRenderer_test_bitmap(&test_bitmap_renderer);
     /* initRenderer_texture_test(&texture_test_renderer); */
+	glError;
 }
 
 static inline void
