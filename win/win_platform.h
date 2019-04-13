@@ -1,16 +1,16 @@
 #ifndef __win_platform__
 #define __win_platform__ 1
 
-// MSVC will define _WIN32 but nwo WIN32. WIN32 Needed
-// for includsion of some headers.
-// #define WIN32
+/* MSVC will define _WIN32 but nwo WIN32. WIN32 Needed */
+/* for includsion of some headers. */
+#define WIN32
 
 #include <windows.h>
-/* #include <wingdi.h> */
+#include <wingdi.h>
 
 #include <GL\gl.h>
 #include <GL\glext.h>
-/* #include <GL\glu.h> */
+#include <GL\glu.h>
 /* #include <GL\wglext.h> */
 #include <GL\glcorearb.h>
 

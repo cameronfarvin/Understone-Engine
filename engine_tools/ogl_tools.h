@@ -71,7 +71,10 @@ typedef struct
 } VIEWPORT;
 VIEWPORT viewport;
 
+#ifndef _WIN32
 PFNGLGETINTEGERVPROC             glGetIntegerv;
+#endif
+
 PFNGLGETSHADERIVPROC             glGetShaderiv;
 PFNGLGETSHADERINFOLOGPROC        glGetShaderInfoLog;
 PFNGLGETPROGRAMIVPROC            glGetProgramiv;

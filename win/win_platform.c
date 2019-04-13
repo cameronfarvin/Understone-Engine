@@ -154,10 +154,6 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 assert(false);
             }
 
-            // Determine supported extensions
-            glGetIntegerv = (PFNGLGETINTEGERVPROC) uWin32LoadPFNGL("glGetIntegerv", &gl_module);
-            assert(glGetIntegerv);
-
             GLint num_supported_extensions = 0;
             glGetIntegerv(GL_NUM_EXTENSIONS, &num_supported_extensions);
             glError;
