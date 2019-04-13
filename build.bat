@@ -1,10 +1,13 @@
 @echo off
 
 @where cl >nul 2>nul
-:: If cl was not found in path, initialize for x64
-IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall" x64 >nul
+:: If cl was not found in path, initialize for x64 (Community Edition 2017)
+rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall" x64 >nul
 
-:: If cl was not found in path, initialize for x86
+:: If cl was not found in path, initialize for x86 (Enterprise Edition 2017)
+IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall" x64 >nul
+
+:: If cl was not found in path, initialize for x86 (Community Edition 2019)
 REM IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall" x86 >nul
 
 

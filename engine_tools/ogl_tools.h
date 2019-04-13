@@ -14,16 +14,6 @@
 #include <assert.h>
 #include <math.h>
 
-/* #ifndef APIENTRY */
-/* #define APIENTRY */
-/* #endif */
-/* #ifndef APIENTRYP */
-/* #define APIENTRYP APIENTRY * */
-/* #endif */
-/* #ifndef GLAPI */
-/* #define GLAPI extern */
-/* #endif */
-
 #ifndef GLSL
 #define GLSL(version, shaderSrc) "#version " #version "\n" #shaderSrc
 #endif // GLSL
@@ -121,7 +111,6 @@ PFNGLUNIFORM1IPROC               glUniform1i;
 PFNGLISSHADERPROC                glIsShader;
 PFNGLISPROGRAMPROC               glIsProgram;
 PFNGLGETSTRINGIPROC              glGetStringi;
-/* PFNGLGETINTEGERVPROC             glGetIntegerv; */
 PFNGLACTIVETEXTUREARBPROC        glActiveTextureARB;
 
 //
