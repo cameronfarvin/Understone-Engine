@@ -6,6 +6,8 @@
 #include <engine_tools/ogl_tools.h>
 #include <data_structures/data_structures.h>
 
+#include <string.h>
+
 extern void* uWin32LoadPFNGL(const char* fn_name, const HMODULE* gl_module);
 
 uSystemEvent
@@ -158,20 +160,42 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             glGetIntegerv(GL_NUM_EXTENSIONS, &num_supported_extensions);
             glError;
 
-            // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ]
-            printf("[ debug ] number of extensions found: %d\n", num_supported_extensions);
-
-            uDynamicArray* supported_extensions = uDAInit(const char*);
+            uDynamicArray* supported_extensions = uDAInit(uString*);
             glGetStringi = (PFNGLGETSTRINGIPROC) uWin32LoadPFNGL("glGetStringi", &gl_module);
             assert(glGetStringi);
 
-            for (size_t ii = 0; ii < num_supported_extensions; ii++)
+            for (size_t ii = 0; ii < (size_t) num_supported_extensions; ii++)
             {
-                uDAPush(supported_extensions, (void** const)(glGetStringi(GL_EXTENSIONS, (GLuint)ii)));
+                uDAPush(supported_extensions, uStringInit((const char*)glGetStringi(GL_EXTENSIONS, (GLuint)ii)));
                 glError;
             }
 
-            /* isExtensionSupported(); */
+            // Check for OpenGL vsync control extensions (may help with screens stutter)
+            if (uIsExtensionSupported(supported_extensions, "EXT_swap_control_tear") ||
+                uIsExtensionSupported(supported_extensions, "WGL_EXT_swap_control_tear"))
+            {
+                printf("[ debug ] Extension found!\n");
+            }
+            else
+            {
+                // [ cfarvin::NOTE ] [ cfarvin::TODO ] If we find that this branch is ever taken, we need to
+                // consider also checking wglGetExtensionsStringARB() to say with 100% confidence that the
+                // plugin does not exist. We would then be looking for the WGL_EXT_swap_control plugin, not
+                // EXT_swap_control. This plugin does not support adaptive vsync (I think).
+                printf("[ UE::WIN::WARNING ] EXT_swap_control OpenGL extension NOT found. Screen tear risk.\n");
+            }
+
+            for (size_t ii = 0; ii < supported_extensions->length; ii++)
+            {
+                uString* string_member = (uString*) uDAIndex(supported_extensions, ii);
+                if (string_member->data)
+                {
+                    free(string_member->data);
+                }
+            }
+
+            uDADestroy(supported_extensions);
+
 
             // Load core functions
             glUseProgram = (PFNGLUSEPROGRAMPROC) uWin32LoadPFNGL("glUseProgram", &gl_module);

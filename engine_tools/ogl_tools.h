@@ -13,6 +13,8 @@
 
 #include <assert.h>
 #include <math.h>
+#include <string.h>
+#include <uDynamicArray.h>
 
 #ifndef GLSL
 #define GLSL(version, shaderSrc) "#version " #version "\n" #shaderSrc
@@ -139,7 +141,13 @@ void
 glErrorFileLine(const char* file_name,
                 int line_number,
                 const char* function_name);
-extern bool
-isExtensionSupported(const char *extList, const char *extension);
+
+// [ cfarvin::NOTE ] Remvoed this as we use uDyanicArray now. See uIsExtensionSupported()
+/* extern bool */
+/* isExtensionSupported(const char *extList, const char *extension); */
+
+bool
+uIsExtensionSupported(uDynamicArray* uDA, const char* extension_name);
+
 
 #endif // __ogl_tools__

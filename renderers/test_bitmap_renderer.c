@@ -240,7 +240,7 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
 void
 render_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
 {
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTextureARB(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, test_bitmap_renderer->shdr_texture_2d_location);
     glUseProgram(test_bitmap_renderer->shader_program);
     glBindVertexArray(test_bitmap_renderer->vertex_array_buffer_location);

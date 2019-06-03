@@ -41,19 +41,19 @@ uRefreshInputState()
     switch(sys_event)
     {
         case uEventNone:
-            {
-                return;
-            }
+        {
+            return;
+        }
         case uEventResize:
-            {
-                uHandleWindowResize();
-                return;
-            }
+        {
+            uHandleWindowResize();
+            return;
+        }
         case uEventClose:
-            {
-                RUNNING = false;
-                return;
-            }
+        {
+            RUNNING = false;
+            return;
+        }
     }
 }
 
@@ -72,12 +72,12 @@ uInitializeGameWindowsAndContext()
 void
 uInitializeRenderers()
 {
-	glError;
+    glError;
     functionFired;
     initRenderer_triangle(&triangle_renderer);
     // initRenderer_test_bitmap(&test_bitmap_renderer);
     /* initRenderer_texture_test(&texture_test_renderer); */
-	glError;
+    glError;
 }
 
 static inline void
@@ -121,7 +121,7 @@ int main(int argc, char** argv)
         }
     }
 
-    uDetermineSystemEndianness(); // [ cfarvin::TODO ]
+    uDetermineSystemEndianness();
     uInitializeGameWindowsAndContext();
     uInitializeRenderers();
 
@@ -154,16 +154,17 @@ int main(int argc, char** argv)
 }
 
 /*
-   Master TODO:
-   - Textures/Load Bitmap (d: 6)
-   - Fonts (d: 10)
+  Master TODO:
+  - Textures/Load Bitmap (d: 6)
+  - Fonts (d: 10)
 
-   - Particle System (d: 6)
-   - Data Structures (Hash, List) (d: 5)
-   - Statistics update (d: 2)
-   - Understand GL texture clamping options (d: 1)
+  - Particle System (d: 6)
+  - Data Structures (Hash, List) (d: 5)
+  - Statistics update (d: 2)
+  - Clean up data structure API (uDynamicArray, uString, uStringArray)
+  - Understand GL texture clamping options (d: 1)
 
-   - #define + method that takes __FILE__ and __LINE__ in shader comp error reporting
-   - Parse all files for preproc directive uBKPTERR, load those lines into GDB as brekpoints
-   - Vulkan(d: 13)
- */
+  - #define + method that takes __FILE__ and __LINE__ in shader comp error reporting
+  - Parse all files for preproc directive uBKPTERR, load those lines into GDB as brekpoints
+  - Vulkan(d: 13)
+*/

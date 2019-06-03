@@ -8,26 +8,80 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+#define uDAInit(type) uAPI_uDAInit(sizeof(type))
+#define uDAPush(da, data_in) uAPI_uDAPush(da, VPPC_STR_LITERAL(void** const) data_in)
+
+
 // Optimize for random access, "push back", "pop last",
 // capping out at 2^16 elements via IEEE size_t.
 typedef struct
 {
-    void* data;
+    void* volatile data;
 
-    void (*const push)(void*);
-    void (*const at)(size_t);
-
-    volatile const size_t num_elements;
-    const size_t scaling_factor;
     const size_t datatype_size;
-    const size_t max_elements;
+    volatile const size_t length;
+    volatile const size_t scaling_factor;
+    volatile const size_t max_length;
 } uDynamicArray;
 
-void uDAPush(uDynamicArray* const da, void** const data);
 
-static inline void* uDAIndex(uDynamicArray* const da, const size_t index)
+// [ cfarvin::NOTE ] Note the following definition:
+// #define uDAInit(type) uAPI_uDAInit(sizeof(type))
+static inline uDynamicArray*
+uAPI_uDAInit(const size_t datatypesize_in)
 {
-    if (da && (index < da->num_elements))
+    uDynamicArray* da = (uDynamicArray*) calloc(1, sizeof(uDynamicArray));
+
+    // Initialize Statics
+    size_t* non_const_length = (size_t*) &(da->length);
+    size_t* non_const_scaling_factor = (size_t*) &(da->scaling_factor);
+    size_t* non_const_max_length = (size_t*) &(da->max_length);
+    size_t* non_const_datatype_size = (size_t*) &(da->datatype_size);
+
+    *non_const_length = 0;
+    *non_const_scaling_factor = 2;
+    *non_const_max_length = 2;
+    *non_const_datatype_size = datatypesize_in;
+
+    // Initialize Dynamics
+    da->data = (void*) malloc(*non_const_datatype_size * da->max_length);
+
+    return da;
+}
+
+
+static inline bool
+uAPI_uDAPush(uDynamicArray* const da, void** const data_in)
+{
+    if (da && data_in)
+    {
+        // [ cfarvin::TODO ] Properly check for failure on realloc
+        if (da->length >= da->max_length)
+        {
+            size_t* non_const_max_length = (size_t*) &(da->max_length);
+            *non_const_max_length = da->max_length * da->scaling_factor;
+            da->data = realloc(da->data, (da->datatype_size * da->max_length));
+        }
+
+        memcpy((char*)da->data + (da->length * da->datatype_size),
+               data_in,
+               da->datatype_size);
+
+        size_t* non_const_length = (size_t*) &(da->length);
+        *non_const_length = *non_const_length + 1;
+
+        return true;
+    }
+
+    return false;
+}
+
+
+static inline void*
+uDAIndex(uDynamicArray* const da, const size_t index)
+{
+    if (da && (index < da->length))
     {
         return (void*)((char*)da->data + (index * da->datatype_size));
     }
@@ -35,31 +89,67 @@ static inline void* uDAIndex(uDynamicArray* const da, const size_t index)
     return NULL;
 }
 
-static inline void uDAPop(uDynamicArray* const da)
+
+static inline bool
+uDAPop(uDynamicArray* const da)
 {
-    if (da && da->num_elements)
+    if (da && da->length && da->length <= da->max_length)
     {
-        size_t* non_const_num_elements = (size_t*) &(da->num_elements);
-        *non_const_num_elements = (*non_const_num_elements) - 1;
+        size_t* non_const_length = (size_t*) &(da->length);
+        *non_const_length = (*non_const_length) - 1;
+
+        return true;
     }
+
+    return false;
 }
 
-static inline void uDAFitToSize(uDynamicArray* const da)
+
+static inline bool
+uDAFitToSize(uDynamicArray* const da)
 {
-    if (da && (da->num_elements > da->scaling_factor))
+    if (da && (da->length > da->scaling_factor))
     {
-        size_t* non_const_max_elements = (size_t*) &(da->max_elements);
-        *non_const_max_elements = da->num_elements;
-        da->data = realloc(da->data, (da->datatype_size * da->max_elements));
+        size_t* non_const_max_length = (size_t*) &(da->max_length);
+        *non_const_max_length = da->length;
+        da->data = realloc(da->data, (da->datatype_size * da->max_length));
+
+        return true;
     }
+
+    return false;
 }
 
-void uDASetScalingFactor(uDynamicArray* const da, const size_t scaling_factor_in);
 
-#define uDAInit(type) uAPI_DAInit(sizeof(type))
-uDynamicArray* uAPI_DAInit(const size_t datatype_size_in);
+static inline bool
+uDASetScalingFactor(uDynamicArray* const da, const size_t scaling_factor_in)
+{
+    if (da && scaling_factor_in > 1)
+    {
+        size_t* non_const_scaling_factor = (size_t*) &da->scaling_factor;
+        *non_const_scaling_factor = scaling_factor_in;
 
-void uDADestroy(uDynamicArray* const da);
+        return true;
+    }
+
+    return false;
+}
+
+
+static inline bool
+uDADestroy(uDynamicArray* const da)
+{
+    if (da && da->data)
+    {
+        free(da->data);
+        free(da);
+
+        return true;
+    }
+
+    return false;
+}
+
 
 
 #endif // __uDynamicArray

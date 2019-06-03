@@ -17,10 +17,12 @@ C:\MinGW64\bin\gcc.exe -D__USE_MINGW_ANSI_STDIO=1 ^
 -fno-diagnostics-color -Wno-unknown-pragmas ^
 engine.c ^
 engine_tools\ogl_tools.c ^
+engine_tools\event_tools.c ^
+engine_tools\image_tools.c ^
+engine_tools\type_tools.c ^
 win\win_platform.c ^
 renderers\triangle_renderer.c ^
 renderers\test_bitmap_renderer.c ^
-data_structures\uDynamicArray.c ^
 tests\tests.c ^
 -Inix -Iwin -Iengine_tools -Irenderers -I. -Idata_structures -Itests ^
 -lopengl32 -luser32 -lgdi32 -lshell32 -lodbccp32 ^

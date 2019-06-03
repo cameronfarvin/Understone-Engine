@@ -1,37 +1,26 @@
 #include <engine_tools/ogl_tools.h>
+#include <data_structures/data_structures.h>
 
-// from Khronos Example
 bool
-isExtensionSupported(const char *extList, const char *extension)
+uIsExtensionSupported(uDynamicArray* uDA, const char* extension_name)
 {
-    const char *start;
-    const char *where, *terminator;
-
-    /* Extension names should not have spaces. */
-    where = strchr(extension, ' ');
-    if (where || *extension == '\0')
+    if (strchr(extension_name, ' ') || *extension_name == '\0')
+    {
         return false;
+    }
 
-    for (start=extList;;) {
-        where = strstr(start, extension);
-
-        if (!where) {
-            break;
+    size_t atomic_elements = uDA->length;
+    for (size_t ii = 0; ii < atomic_elements; ii++)
+    {
+        if ((strcmp( ((uString*)uDAIndex(uDA, ii))->data, extension_name)) == 0)
+        {
+            return true;
         }
-
-        terminator = where + strlen(extension);
-
-        if ( where == start || *(where - 1) == ' ' ) {
-            if ( *terminator == ' ' || *terminator == '\0' ) {
-                return true;
-            }
-        }
-
-        start = terminator;
     }
 
     return false;
 }
+
 
 void
 glErrorFileLine(const char* file_name,

@@ -28,6 +28,8 @@
 /* #define u32   uint_fast32_t */
 /* #define u64   uint_fast64_t */
 
+#define VPPC_STR_LITERAL(vppc) (vppc)
+
 typedef enum
     {
         false = 0,
