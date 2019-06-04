@@ -148,7 +148,9 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 assert(false);
             }
 
+            //
             // Load all OpenGL functions
+            //
             const HMODULE gl_module = LoadLibraryA("opengl32.dll");
             if (!gl_module)
             {
@@ -160,21 +162,22 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             glGetIntegerv(GL_NUM_EXTENSIONS, &num_supported_extensions);
             glError;
 
-            uDynamicArray* supported_extensions = uDAInit(uString*);
             glGetStringi = (PFNGLGETSTRINGIPROC) uWin32LoadPFNGL("glGetStringi", &gl_module);
             assert(glGetStringi);
 
+            uDynamicArray* supported_extensions = uDAInit(uString*);
             for (size_t ii = 0; ii < (size_t) num_supported_extensions; ii++)
             {
                 uDAPush(supported_extensions, uStringInit((const char*)glGetStringi(GL_EXTENSIONS, (GLuint)ii)));
-                glError;
             }
+            glError;
 
             // Check for OpenGL vsync control extensions (may help with screens stutter)
-            if (uIsExtensionSupported(supported_extensions, "EXT_swap_control_tear") ||
-                uIsExtensionSupported(supported_extensions, "WGL_EXT_swap_control_tear"))
+            if (uIsExtensionSupported(supported_extensions, "WGL_EXT_swap_control"))
             {
-                printf("[ debug ] Extension found!\n");
+                wglSwapIntervalEXT  = (PFNWGLSWAPINTERVALEXTPROC) uWin32LoadPFNGL("wglSwapIntervalEXT",
+                                                                                           &gl_module);
+                wglSwapIntervalEXT(1);
             }
             else
             {

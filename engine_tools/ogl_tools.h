@@ -118,6 +118,7 @@ PFNGLISPROGRAMPROC               glIsProgram;
 PFNGLGETSTRINGIPROC              glGetStringi;
 PFNGLACTIVETEXTUREARBPROC        glActiveTextureARB;
 
+
 //
 // signatures
 //

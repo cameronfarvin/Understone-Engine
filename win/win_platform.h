@@ -9,15 +9,18 @@
 #include <wingdi.h>
 
 #include <GL\gl.h>
+#include <GL\wglext.h>
 #include <GL\glext.h>
-#include <GL\glu.h>
-/* #include <GL\wglext.h> */
-#include <GL\glcorearb.h>
+/* #include <GL\glu.h> */
+/* #include <GL\glcorearb.h> */
 
 #include <stdio.h>
 #include <stdint.h>
 
 #include <engine_tools/event_tools.h>
+
+// Win32 Specific OpenGL Extensions
+PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
 
 typedef struct

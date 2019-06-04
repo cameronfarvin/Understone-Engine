@@ -112,7 +112,7 @@ int main(int argc, char** argv)
     runAllTests();
 #endif
 
-    printf("[ UNINSTALL ENGINE ]\n");
+    printf("[ UNDERSTONE ENGINE ]\n");
     if (argc)
     {
         for (size_t ii = 0; ii < (size_t) argc; ii++)

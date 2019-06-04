@@ -24,7 +24,7 @@ win\win_platform.c ^
 renderers\triangle_renderer.c ^
 renderers\test_bitmap_renderer.c ^
 tests\tests.c ^
--Inix -Iwin -Iengine_tools -Irenderers -I. -Idata_structures -Itests ^
+-Inix -Iwin -Iwin/GL -Iwin/KHR -Iengine_tools -Irenderers -I. -Idata_structures -Itests ^
 -lopengl32 -luser32 -lgdi32 -lshell32 -lodbccp32 ^
 -o engine
 
