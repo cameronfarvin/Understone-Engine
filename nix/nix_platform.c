@@ -150,7 +150,8 @@ uX11CreateWindow()
     const char* glExtensions = glXQueryExtensionsString(x11.display,
             x11.default_screen_number);
 
-    if (isExtensionSupported(glExtensions, "GLX_ARB_create_context"))
+    char* create_context_extension = strstr(glExtensions, "GLX_ARB_create_context");
+    if (create_context_extension)
     {
         x11.ogl_context = glXCreateContextAttribsARB(x11.display,
                 target_frame_buffer,

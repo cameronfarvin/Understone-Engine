@@ -14,12 +14,17 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+
 #include <GL/glx.h>
 #include <GL/glxext.h>
 
 #include <engine_tools/type_tools.h>
 #include <engine_tools/event_tools.h>
 #include <engine_tools/ogl_tools.h>
+
+#include <data_structures/uDynamicArray.h>
+#include <data_structures/uString.h>
+
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*,
         GLXFBConfig,

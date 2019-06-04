@@ -73,9 +73,9 @@ typedef struct
 } VIEWPORT;
 VIEWPORT viewport;
 
-#ifndef _WIN32
-PFNGLGETINTEGERVPROC             glGetIntegerv;
-#endif
+/* #ifdef _WIN32 */
+/* PFNGLGETINTEGERVPROC             glGetIntegerv; */
+/* #endif */
 
 PFNGLGETSHADERIVPROC             glGetShaderiv;
 PFNGLGETSHADERINFOLOGPROC        glGetShaderInfoLog;
@@ -116,7 +116,7 @@ PFNGLUNIFORM1IPROC               glUniform1i;
 PFNGLISSHADERPROC                glIsShader;
 PFNGLISPROGRAMPROC               glIsProgram;
 PFNGLGETSTRINGIPROC              glGetStringi;
-PFNGLACTIVETEXTUREARBPROC        glActiveTextureARB;
+/* PFNGLACTIVETEXTUREARBPROC        glActiveTextureARB; */
 
 
 //

@@ -10,7 +10,6 @@ gcc -g3 -O0 -Wall -Werror -Wextra -Wshadow -Wcast-align -std=c11 -o engine\
     \
     renderers/texture_test_renderer.c \
     \
-    data_structures/uDynamicArray.c \
     tests/tests.c \
-    -Inix -Iwin -Iengine_tools -Irenderers -I. -Idata_structures -Itests \
+    -Inix -Iengine_tools -Irenderers -I. -Idata_structures -Itests \
     -lX11 -lGL -lGLU -lm
