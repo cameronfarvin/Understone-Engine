@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <math.h>
 #include <string.h>
-#include <uDynamicArray.h>
+#include <data_structures/uDynamicArray.h>
 
 #ifndef GLSL
 #define GLSL(version, shaderSrc) "#version " #version "\n" #shaderSrc
@@ -35,27 +35,14 @@
 #endif // CHECK_GL_ERRORS
 
 
+#define renderSelf(x) renderSelf_API((uGLRenderTarget*)(x));
 typedef struct
 {
-    GLuint texture_name;
-    GLuint shader_program;
+    // void* cast to (uGLRenderTarget)
+    void (*renderSelf_API)(void*);
 
-    // attribute locations
-    GLint  shdr_position_location;
-    GLint  shdr_modelview_mat_location;
-    GLint  shdr_proj_matrix_location;
-    GLint  shdr_color_location;
-    GLint  shdr_texture_coords_location;
-    GLuint shdr_texture_2d_location;
-
-    // matrix data
-    GLfloat modelview_matrix[16];
-    GLfloat project_matrix[16];
-
-    // vao/vbo/ebo
-    GLuint vertex_array_buffer_location;
-    GLuint vertex_buffer_location;
-    GLuint element_buffer_location;
+    // void* cast to (uGLRenderTarget)
+    void* self;
 } uGLRenderTarget;
 
 // [ cfarvin::TODO ] Use for other platforms (don't forget)
@@ -72,10 +59,6 @@ typedef struct
     u16 height;
 } VIEWPORT;
 VIEWPORT viewport;
-
-/* #ifdef _WIN32 */
-/* PFNGLGETINTEGERVPROC             glGetIntegerv; */
-/* #endif */
 
 PFNGLGETSHADERIVPROC             glGetShaderiv;
 PFNGLGETSHADERINFOLOGPROC        glGetShaderInfoLog;
@@ -94,6 +77,7 @@ PFNGLGETUNIFORMLOCATIONPROC      glGetUniformLocation;
 PFNGLUNIFORM1FPROC               glUniform1f;
 PFNGLUNIFORM2FPROC               glUniform2f;
 PFNGLUNIFORM3FPROC               glUniform3f;
+PFNGLUNIFORM1IPROC               glUniform1i;
 PFNGLGENVERTEXARRAYSPROC         glGenVertexArrays;
 PFNGLBINDVERTEXARRAYPROC         glBindVertexArray;
 PFNGLGENBUFFERSPROC              glGenBuffers;
@@ -101,54 +85,82 @@ PFNGLBINDBUFFERPROC              glBindBuffer;
 PFNGLBUFFERDATAPROC              glBufferData;
 PFNGLVERTEXATTRIBPOINTERPROC     glVertexAttribPointer;
 PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
-/* PFNGLDRAWARRAYSPROC              glDrawArrays; */
 PFNGLBINDFRAMEBUFFERPROC         glBindFramebuffer;
 PFNGLGENFRAMEBUFFERSPROC         glGenFramebuffers;
-/* PFNGLGENTEXTURESPROC             glGenTextures; */
-/* PFNGLBINDTEXTURESPROC             glBindTexture; // NOTE: glBindTexture(s), not glBindTexture in PFNPROC */
-/* PFNGLTEXPARAMETERIPROC           glTexParameteri; */
-/* PFNGLTEXIMAGE2DPROC              glTexImage2D; */
 PFNGLFRAMEBUFFERTEXTURE2DPROC    glFramebufferTexture2D;
 PFNGLCHECKFRAMEBUFFERSTATUSPROC  glCheckFramebufferStatus;
 PFNGLUNIFORMMATRIX4FVPROC        glUniformMatrix4fv;
 PFNGLGENERATEMIPMAPPROC          glGenerateMipmap;
-PFNGLUNIFORM1IPROC               glUniform1i;
 PFNGLISSHADERPROC                glIsShader;
 PFNGLISPROGRAMPROC               glIsProgram;
 PFNGLGETSTRINGIPROC              glGetStringi;
-/* PFNGLACTIVETEXTUREARBPROC        glActiveTextureARB; */
+#ifdef _WIN32
+PFNGLACTIVETEXTUREARBPROC        glActiveTexture;
+#endif // _Win32
+
+void
+glErrorFileLine(const char* file_name,
+                int line_number,
+                const char* function_name);
+
+bool
+uIsExtensionSupported(uDynamicArray* uDA, const char* extension_name);
 
 
-//
-// signatures
-//
 void
 uGLCheckErrorState(GLuint object,
                    GLenum parameter_to_check,
                    const char* pipeline_state,
                    const char* file_name);
 
+
+#define uGLCreateShaderProgram_vf(shdrSrc, frgSrc)              \
+    uGLCreateShaderProgram_vf_API(shdrSrc, frgSrc, __FILE__)
 GLuint
-uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
-                          const GLchar** fragment_shader_source,
-                          const char*    file_name);
+uGLCreateShaderProgram_vf_API(const GLchar** vertex_shader_source,
+                              const GLchar** fragment_shader_source,
+                              const char*    file_name);
 
+
+#define uGLCreateShaderProgram_vgf(shdrSrc, frgSrc)             \
+    uGLCreateShaderProgram_vgf_API(shdrSrc, frgSrc, __FILE__)
 GLuint
-uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
-                           const GLchar** geometry_shader_source,
-                           const GLchar** fragment_shader_source,
-                           const char*    file_name);
-void
-glErrorFileLine(const char* file_name,
-                int line_number,
-                const char* function_name);
+uGLCreateShaderProgram_vgf_API(const GLchar** vertex_shader_source,
+                               const GLchar** geometry_shader_source,
+                               const GLchar** fragment_shader_source,
+                               const char*    file_name);
 
-// [ cfarvin::NOTE ] Remvoed this as we use uDyanicArray now. See uIsExtensionSupported()
-/* extern bool */
-/* isExtensionSupported(const char *extList, const char *extension); */
 
-bool
-uIsExtensionSupported(uDynamicArray* uDA, const char* extension_name);
+size_t
+uGLInitRenderTarget(void (*init_function)(size_t),
+                    void (*render_function)(size_t));
+
+
+static inline void
+uGLDestroyRenderTarget(uGLRenderTarget* const render_target)
+{
+    if (render_target)
+    {
+        free(render_target);
+    }
+}
+
+
+// [ cfarvin::TODO ] Add API && #define to autofill size_t num_targets
+//
+// [ cfarvin::NOTE ] Aim is to be able to pass multiple calls of this function to different
+// threads wiritng to framebuffers. render_target_array should be tightly packed. Render calls
+// can be made with GL state set ahead of time, rather than each render function setting up and
+// tearing down the same or slightly different state via glEnable() calls and the like. The cost
+// of this will be the poitner dereference and passage of pointer parameter for renderSelf();
+static inline void
+uGLRender(uGLRenderTarget* render_target_array, size_t num_render_targets)
+{
+    for (size_t ii = 0; ii < num_render_targets; ii++)
+    {
+            render_target_array[ii].renderSelf(render_target_array[ii].self);
+    }
+}
 
 
 #endif // __ogl_tools__

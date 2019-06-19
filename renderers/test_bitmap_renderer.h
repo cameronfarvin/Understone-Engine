@@ -1,16 +1,16 @@
 #ifndef __test_bitmap_renderer__
 #define __test_bitmap_renderer__
 
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include <engine_tools/ogl_tools.h>
 #include <engine_tools/image_tools.h>
 
 void
-initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer);
+initRenderer_test_bitmap();
 
 void
-render_test_bitmap(uGLRenderTarget* const test_bitmap_renderer);
+render_test_bitmap();
+
+uGLRenderTarget* test_bitmap_renderer;
 
 // [ cfarvin::TODO ]
 /* void */

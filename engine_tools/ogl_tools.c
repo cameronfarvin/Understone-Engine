@@ -16,6 +16,11 @@ uIsExtensionSupported(uDynamicArray* uDA, const char* extension_name)
         {
             return true;
         }
+
+        if (ii == (atomic_elements - 1))
+        {
+            printf("ext: %s\n", ((uString*)uDAIndex(uDA, ii))->data);
+        }
     }
 
     return false;
@@ -38,35 +43,35 @@ glErrorFileLine(const char* file_name,
     switch(glGetError())
     {
         case GL_NO_ERROR:
-            {
-                print_warning = false;
-                break;
-            }
+        {
+            print_warning = false;
+            break;
+        }
         case GL_INVALID_ENUM:
-            {
-                strcpy(error_type_string, "GL_INVALID_ENUM");
-                break;
-            }
+        {
+            strcpy(error_type_string, "GL_INVALID_ENUM");
+            break;
+        }
         case GL_INVALID_VALUE:
-            {
-                strcpy(error_type_string, "GL_INVALID_VALUE");
-                break;
-            }
+        {
+            strcpy(error_type_string, "GL_INVALID_VALUE");
+            break;
+        }
         case GL_INVALID_OPERATION:
-            {
-                strcpy(error_type_string, "GL_INVALID_OPERATION");
-                break;
-            }
+        {
+            strcpy(error_type_string, "GL_INVALID_OPERATION");
+            break;
+        }
         case GL_INVALID_FRAMEBUFFER_OPERATION:
-            {
-                strcpy(error_type_string, "GL_INVALID_FRAMEBUFFER_OPERATION");
-                break;
-            }
+        {
+            strcpy(error_type_string, "GL_INVALID_FRAMEBUFFER_OPERATION");
+            break;
+        }
         case GL_OUT_OF_MEMORY:
-            {
-                strcpy(error_type_string, "GL_OUT_OF_MEMORY");
-                break;
-            }
+        {
+            strcpy(error_type_string, "GL_OUT_OF_MEMORY");
+            break;
+        }
         default: { assert(0); }
     }
 
@@ -76,11 +81,12 @@ glErrorFileLine(const char* file_name,
 
     if (print_warning)
     {
-        printf("[ GLERROR ] %s\n\tFILE: %s\n\tLINE: %d\n\tFUNCTION: \t%s\n",
+        printf("[ GLERROR ] %s\n\tFILE: %s\n\tLINE: %d\n\tFUNCTION: %s\n",
                error_type_string,
                file_name,
                line_number,
                function_name);
+        fflush(stdout);
         if (error_type_string) { free(error_type_string); }
         assert(0);
     }
@@ -109,31 +115,31 @@ uGLCheckErrorState(GLuint object,
     switch (parameter_to_check)
     {
         case GL_COMPILE_STATUS:
-            {
-                glGetShaderiv(object, parameter_to_check, &err);
-                glError;
-                glGetShaderInfoLog(object, 1024, &log_length, message);
-                glError;
+        {
+            glGetShaderiv(object, parameter_to_check, &err);
+            glError;
+            glGetShaderInfoLog(object, 1024, &log_length, message);
+            glError;
 
-                if (err != GL_TRUE)
-                {
-                    strcpy(compile_link, "GL_COMPILE_STATUS");
-                }
-                break;
+            if (err != GL_TRUE)
+            {
+                strcpy(compile_link, "GL_COMPILE_STATUS");
             }
+            break;
+        }
         case GL_LINK_STATUS:
-            {
-                glGetProgramiv(object, parameter_to_check, &err);
-                glError;
-                glGetProgramInfoLog(object, 1024, &log_length, message);
-                glError;
+        {
+            glGetProgramiv(object, parameter_to_check, &err);
+            glError;
+            glGetProgramInfoLog(object, 1024, &log_length, message);
+            glError;
 
-                if (err != GL_TRUE)
-                {
-                    strcpy(compile_link, "GL_LINK_STATUS");
-                }
-                break;
+            if (err != GL_TRUE)
+            {
+                strcpy(compile_link, "GL_LINK_STATUS");
             }
+            break;
+        }
     }
 
 #ifdef _WIN32
@@ -160,9 +166,9 @@ uGLCheckErrorState(GLuint object,
 }
 
 GLuint
-uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
-                          const GLchar** fragment_shader_source,
-                          const char*    file_name)
+uGLCreateShaderProgram_vf_API(const GLchar** vertex_shader_source,
+                              const GLchar** fragment_shader_source,
+                              const char*    file_name)
 {
     // create, compile & error check vertex shader
     GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -222,10 +228,10 @@ uGLCreateShaderProgram_vf(const GLchar** vertex_shader_source,
 
 //  [ cfarvin::TODO ] add glIsShader/Program checks
 GLuint
-uGLCreateShaderProgram_vgf(const GLchar** vertex_shader_source,
-                           const GLchar** geometry_shader_source,
-                           const GLchar** fragment_shader_source,
-                           const char*    file_name)
+uGLCreateShaderProgram_vgf_API(const GLchar** vertex_shader_source,
+                               const GLchar** geometry_shader_source,
+                               const GLchar** fragment_shader_source,
+                               const char*    file_name)
 {
     glError;
 

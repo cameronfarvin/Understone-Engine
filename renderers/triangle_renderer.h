@@ -1,17 +1,17 @@
 #ifndef __triangle_renderer__
 #define __triangle_renderer__
 
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include <engine_tools/ogl_tools.h>
 #include <engine_tools/image_tools.h>
 #include <engine_tools/debug_tools.h>
 
 void
-initRenderer_triangle(uGLRenderTarget* const triangle_renderer);
+initRenderer_triangle();
 
 void
-render_triangle(uGLRenderTarget* const tirangle_renderer);
+render_triangle();
+
+uGLRenderTarget* triangle_renderer;
 
 // [ cfarvin::TODO ]
 /* void */

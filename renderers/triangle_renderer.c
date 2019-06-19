@@ -1,36 +1,37 @@
-#include <engine_tools/ogl_tools.h>
 #include <renderers/triangle_renderer.h>
 
 
 void
-initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
+initRenderer_triangle()
 {
-    // [ cfarvin::DEBUG ]
-    functionFired;
+    const char* vshdr = GLSL(450 core,
 
-    const char* vshdr = GLSL
-        (450 core,
+                             in vec2 vshdr_pos;
+                             uniform mat4 vshdr_mut_pos;
 
-         in vec2 vshdr_pos;
-         uniform mat4 vshdr_mut_pos;
+                             void main()
+                             {
+                                 gl_Position = vshdr_mut_pos * vec4(vshdr_pos,
+                                                                    0.0f,
+                                                                    1.0f);
+                             }
+        );
 
-         void main()
-         {
-             gl_Position = vshdr_mut_pos * vec4(vshdr_pos,
-                                0.0f,
-                                1.0f);
-         });
+    const char* fshdr = GLSL(450 core,
 
-    const char* fshdr = GLSL
-        (450 core,
+                             uniform vec3 fshdr_color;
+                             out vec4 fshdr_final;
 
-         uniform vec3 fshdr_color;
-         out vec4 fshdr_final;
+                             void main()
+                             {
+                                 fshdr_final = vec4(fshdr_color, 1.0f);
+                             }
+        );
 
-         void main()
-         {
-             fshdr_final = vec4(fshdr_color, 1.0f);
-         });
+    if (!triangle_renderer)
+    {
+        triangle_renderer = (uGLRenderTarget*)malloc(sizeof(uGLRenderTarget));
+    }
 
     triangle_renderer->shader_program = 0;
     triangle_renderer->shdr_position_location = -1;
@@ -57,8 +58,7 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
     //
     glError;
     triangle_renderer->shader_program = uGLCreateShaderProgram_vf(&vshdr,
-                                                                  &fshdr,
-                                                                  __FILE__);
+                                                                  &fshdr);
     assert(triangle_renderer->shader_program);
     glUseProgram(triangle_renderer->shader_program);
     glError;
@@ -100,17 +100,17 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
     }
 
     glUniformMatrix4fv(triangle_renderer->shdr_modelview_mat_location,
-                      1,
-                      GL_TRUE,
-                      triangle_renderer->modelview_matrix);
+                       1,
+                       GL_TRUE,
+                       triangle_renderer->modelview_matrix);
 
     glError;
-    glGenVertexArrays(1, &triangle_renderer->vertex_array_buffer_location);
-    glBindVertexArray(triangle_renderer->vertex_array_buffer_location);
+    glGenVertexArrays(1, &triangle_renderer->vertex_array_object);
+    glBindVertexArray(triangle_renderer->vertex_array_object);
     glError;
 
-    glGenBuffers(1, &triangle_renderer->vertex_buffer_location);
-    glBindBuffer(GL_ARRAY_BUFFER, triangle_renderer->vertex_buffer_location);
+    glGenBuffers(1, &triangle_renderer->vertex_buffer_object);
+    glBindBuffer(GL_ARRAY_BUFFER, triangle_renderer->vertex_buffer_object);
     glBufferData(GL_ARRAY_BUFFER,
                  sizeof(triangle_vertex_data),
                  triangle_vertex_data,
@@ -220,7 +220,7 @@ initRenderer_triangle(uGLRenderTarget* const triangle_renderer)
 }
 
 void
-render_triangle(uGLRenderTarget* const triangle_renderer)
+render_triangle()
 {
     // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ] [ cfarvin::EXPERIMENTAL ]
     static r32 piCycle = 0.0f;
@@ -233,7 +233,7 @@ render_triangle(uGLRenderTarget* const triangle_renderer)
 
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(triangle_renderer->shader_program);
-    glBindVertexArray(triangle_renderer->vertex_array_buffer_location);
+    glBindVertexArray(triangle_renderer->vertex_array_object);
     glEnableVertexAttribArray(triangle_renderer->shdr_position_location);
 
     triangle_renderer->modelview_matrix[3] = -((viewport.width - mouse_pos.x) / (viewport.width / 2.0f) - 1);
@@ -265,9 +265,3 @@ render_triangle(uGLRenderTarget* const triangle_renderer)
     glBindVertexArray(0);
     glEnableVertexAttribArray(0);
 }
-
-/* void */
-/* destroyRenderer_triangle(uGLRenderer* const triangle_renderer) */
-/* { */
-/*     // [ cfarvin::TODO ] */
-/* } */

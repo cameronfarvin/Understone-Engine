@@ -59,7 +59,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
 
     if (!file)
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Could not open file.\n");
+        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Could not open file at location %s.\n", file_path);
         fclose(file);
         return false;
     }

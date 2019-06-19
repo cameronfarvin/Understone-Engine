@@ -148,6 +148,9 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 assert(false);
             }
 
+            // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ]
+            printf("[ debug ] OpenGL context created, version: %s\n", glGetString(GL_VERSION));
+
             //
             // Load all OpenGL functions
             //
@@ -172,7 +175,7 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
             glError;
 
-            // Check for OpenGL vsync control extensions (may help with screens stutter)
+            // Check for OpenGL vsync control extensions, helps with screen stutter
             if (uIsExtensionSupported(supported_extensions, "WGL_EXT_swap_control"))
             {
                 wglSwapIntervalEXT  = (PFNWGLSWAPINTERVALEXTPROC) uWin32LoadPFNGL("wglSwapIntervalEXT",
@@ -199,8 +202,6 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
             uDADestroy(supported_extensions);
 
-
-            // Load core functions
             glUseProgram = (PFNGLUSEPROGRAMPROC) uWin32LoadPFNGL("glUseProgram", &gl_module);
             assert(glUseProgram);
             glGetShaderiv = (PFNGLGETSHADERIVPROC) uWin32LoadPFNGL("glGetShaderiv", &gl_module);
@@ -235,6 +236,8 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             assert(glUniform2f);
             glUniform3f = (PFNGLUNIFORM3FPROC) uWin32LoadPFNGL("glUniform3f", &gl_module);
             assert(glUniform3f);
+            glUniform1i = (PFNGLUNIFORM1IPROC) uWin32LoadPFNGL("glUniform1i", &gl_module);
+            assert(glUniform1i);
             glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC) uWin32LoadPFNGL("glGenVertexArrays", &gl_module);
             assert(glGenVertexArrays);
             glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC) uWin32LoadPFNGL("glBindVertexArray", &gl_module);
@@ -257,14 +260,17 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             assert(glFramebufferTexture2D);
             glCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC) uWin32LoadPFNGL("glCheckFramebufferStatus", &gl_module);
             assert(glCheckFramebufferStatus);
-            glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC) uWin32LoadPFNGL("glActiveTextureARB", &gl_module);
-            assert(glActiveTextureARB);
+            glActiveTexture = (PFNGLACTIVETEXTUREARBPROC) uWin32LoadPFNGL("glActiveTextureARB", &gl_module);
+            assert(glActiveTexture);
             glIsShader = (PFNGLISSHADERPROC) uWin32LoadPFNGL("glIsShader", &gl_module);
             assert(glIsShader);
             glIsProgram = (PFNGLISPROGRAMPROC) uWin32LoadPFNGL("glIsProgram", &gl_module);
             assert(glIsProgram);
             glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC) uWin32LoadPFNGL("glUniformMatrix4fv", &gl_module);
             assert(glUniformMatrix4fv);
+            glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC) uWin32LoadPFNGL("glGenerateMipmap", &gl_module);
+            assert(glGenerateMipmap);
+
 
             /* glClearColor(1.0f, 0.0f, 0.0f, 1.0f); */
             /* glClear(GL_COLOR_BUFFER_BIT); */

@@ -3,6 +3,7 @@
 #include <engine_tools/event_tools.h>
 #include <engine_tools/ogl_tools.h>
 #include <engine_tools/stats_tools.h>
+#include <engine_tools/memory_tools.h>
 #include <data_structures/data_structures.h>
 #include <tests/tests.h>
 
@@ -73,10 +74,9 @@ void
 uInitializeRenderers()
 {
     glError;
-    functionFired;
-    initRenderer_triangle(&triangle_renderer);
-    // initRenderer_test_bitmap(&test_bitmap_renderer);
-    /* initRenderer_texture_test(&texture_test_renderer); */
+    /* initRenderer_triangle(); */
+    /* initRenderer_test_bitmap(); */
+    /* initRenderer_texture_test(); */
     glError;
 }
 
@@ -109,6 +109,7 @@ int main(int argc, char** argv)
 #endif // _WIN32
 
 #if RUN_TESTS_ON_STARTUP
+    // See tests/tests.h
     runAllTests();
 #endif
 
@@ -122,30 +123,24 @@ int main(int argc, char** argv)
     }
 
     uDetermineSystemEndianness();
-    uInitializeGameWindowsAndContext();
-    uInitializeRenderers();
+    /* uInitializeGameWindowsAndContext(); */
+    /* uInitializeRenderers(); */
 
-    /* glClearColor(0.8f, 0.16f, 0.32f, 1.0f); */ // pinkish
-    glClearColor(0.39f, 0.13f, 0.36f, 1.0f);
+    /* /\* glClearColor(0.8f, 0.16f, 0.32f, 1.0f); *\/ // pinkish */
+    /* glClearColor(0.3f, 0.5f, 0.7f, 1.0f); */
 
-    while(RUNNING)
-    {
-        glClear(GL_COLOR_BUFFER_BIT);
-        glError;
+    /* while(RUNNING) */
+    /* { */
+    /*     glClear(GL_COLOR_BUFFER_BIT); */
+    /*     uRefreshInputState(); */
 
-        uRefreshInputState();
-        glError;
+    /*     /\* render_triangle(); *\/ */
+    /*     /\* render_test_bitmap(&test_bitmap_renderer); *\/ */
+    /*     /\* render_texture_test(&texture_test_renderer); *\/ */
 
-        render_triangle(&triangle_renderer);
-        /* render_test_bitmap(&test_bitmap_renderer); */
-        /* render_texture_test(&texture_test_renderer); */
-
-        glError;
-
-        uSwapBuffers();
-
-        glError;
-    }
+    /*     uSwapBuffers(); */
+    /*     glError; */
+    /* } */
 
     uDestroyEngine();
 
@@ -154,6 +149,10 @@ int main(int argc, char** argv)
 }
 
 /*
+  In Progress:
+  - Arena allocation
+  - Improve OGL system
+
   Master TODO:
   - Textures/Load Bitmap (d: 6)
   - Fonts (d: 10)
@@ -161,10 +160,8 @@ int main(int argc, char** argv)
   - Particle System (d: 6)
   - Data Structures (Hash, List) (d: 5)
   - Statistics update (d: 2)
-  - Clean up data structure API (uDynamicArray, uString, uStringArray)
-  - Understand GL texture clamping options (d: 1)
 
-  - #define + method that takes __FILE__ and __LINE__ in shader comp error reporting
-  - Parse all files for preproc directive uBKPTERR, load those lines into GDB as brekpoints
+  - #define + method that takes __FILE__ and __LINE__ in shader comp error reporting (d: 3)
+  - Parse all files for preproc directive uBKPTERR, load those lines into GDB as breakpoints
   - Vulkan(d: 13)
 */

@@ -61,7 +61,11 @@ uAPI_uDAPush(uDynamicArray* const da, void** const data_in)
         {
             size_t* non_const_max_length = (size_t*) &(da->max_length);
             *non_const_max_length = da->max_length * da->scaling_factor;
-            da->data = realloc(da->data, (da->datatype_size * da->max_length));
+            void* allocated = realloc(da->data, (da->datatype_size * da->max_length));
+			if (allocated)
+			{
+				da->data = allocated;
+			}
         }
 
         memcpy((char*)da->data + (da->length * da->datatype_size),

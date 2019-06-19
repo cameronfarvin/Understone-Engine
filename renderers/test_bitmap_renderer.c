@@ -6,7 +6,7 @@
 /* #include <engine_tools/../test_dep/stb_image.h> */
 
 void
-initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
+initRenderer_test_bitmap()
 {
     const char* vshdr = GLSL(
         450 core,
@@ -27,7 +27,6 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
     const char* fshdr = GLSL(
         450 core,
 
-
         uniform vec3      fshdr_frag_color;
         uniform sampler2D fshdr_texture_2d;
 
@@ -41,8 +40,12 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
             // fshdr_final = vec4(fshdr_frag_color, 1.0f);
             fshdr_final = texture(fshdr_texture_2d, fshdr_frag_coords);
         }
-
         );
+
+    if (!test_bitmap_renderer)
+    {
+        test_bitmap_renderer = (uGLRenderTarget*)malloc(sizeof(uGLRenderTarget));
+    }
 
     GLfloat position_vertex_data[] =
         {
@@ -93,8 +96,7 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
     glError;
     test_bitmap_renderer->shader_program = 0;
     test_bitmap_renderer->shader_program = uGLCreateShaderProgram_vf(&vshdr,
-                                                                  &fshdr,
-                                                                  __FILE__);
+                                                                     &fshdr);
     assert(test_bitmap_renderer->shader_program);
     glUseProgram(test_bitmap_renderer->shader_program);
     glError;
@@ -127,28 +129,28 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
     glUniform3f(test_bitmap_renderer->shdr_color_location, 0.64f, 0.64f, 0.16f);
     glError;
 
-    glGenVertexArrays(1, &test_bitmap_renderer->vertex_array_buffer_location);
-    glBindVertexArray(test_bitmap_renderer->vertex_array_buffer_location);
+    glGenVertexArrays(1, &test_bitmap_renderer->vertex_array_object);
+    glBindVertexArray(test_bitmap_renderer->vertex_array_object);
     glError;
 
-    glGenBuffers(1, &test_bitmap_renderer->vertex_buffer_location);
-    glBindBuffer(GL_ARRAY_BUFFER, test_bitmap_renderer->vertex_buffer_location);
+    glGenBuffers(1, &test_bitmap_renderer->vertex_buffer_object);
+    glBindBuffer(GL_ARRAY_BUFFER, test_bitmap_renderer->vertex_buffer_object);
     glBufferData(GL_ARRAY_BUFFER,
                  sizeof(position_vertex_data),
                  position_vertex_data,
                  GL_STATIC_DRAW);
     glError;
 
-    glGenBuffers(1, &test_bitmap_renderer->element_buffer_location);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, test_bitmap_renderer->element_buffer_location);
+    glGenBuffers(1, &test_bitmap_renderer->element_buffer_object);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, test_bitmap_renderer->element_buffer_object);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                  sizeof(indices),
                  indices,
                  GL_STATIC_DRAW);
     glError;
 
-    glGenTextures(1, &test_bitmap_renderer->shdr_texture_2d_location);
-    glBindTexture(GL_TEXTURE_2D, test_bitmap_renderer->shdr_texture_2d_location);
+    glGenTextures(1, &test_bitmap_renderer->texture_id);
+    glBindTexture(GL_TEXTURE_2D, test_bitmap_renderer->texture_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -160,12 +162,12 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
     //
     /*
       void glVertexAttribPointer( GLuint        index,
-                                  GLint         size,
-                                  GLenum        type,
-                                  GLboolean     normalized,
-                                  GLsizei       stride,
-                                  const GLvoid* pointer);
-     */
+      GLint         size,
+      GLenum        type,
+      GLboolean     normalized,
+      GLsizei       stride,
+      const GLvoid* pointer);
+    */
     /* glVertexAttribPointer(test_bitmap_renderer->vshdr_position_location, */
     /*                       2, */
     /*                       GL_FLOAT, */
@@ -205,18 +207,18 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
     glBindTexture(GL_TEXTURE_2D, test_bitmap_renderer->shdr_texture_2d_location);
     /*
 
-      // function spec
-      void glTexImage2D( GLenum         target,          // ex: GL_TEXTURE_2D
-                         GLint          level,           // mipmap level
-                         GLint          internal_format, // ex: GL_RGB
-                         GLsizei        width,
-                         GLsizei        height,
-                         GLint          border,          // must be 0
-                         GLenum         format,          // ex: GL_RGB
-                         GLenum         type,            // ex: GL_UNSIGNED_BYTE
-                         const GLvoid*  data
+    // function spec
+    void glTexImage2D( GLenum         target,          // ex: GL_TEXTURE_2D
+    GLint          level,           // mipmap level
+    GLint          internal_format, // ex: GL_RGB
+    GLsizei        width,
+    GLsizei        height,
+    GLint          border,          // must be 0
+    GLenum         format,          // ex: GL_RGB
+    GLenum         type,            // ex: GL_UNSIGNED_BYTE
+    const GLvoid*  data
 
-     */
+    */
     glTexImage2D(GL_TEXTURE_2D,
                  0,
                  GL_RGB,
@@ -228,22 +230,26 @@ initRenderer_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
                  img.img_pixels);
 
     /* [ cfarvin::NOTE ] Remove? */
-    glGenerateMipmap(GL_TEXTURE_2D);
+    //glGenerateMipmap(GL_TEXTURE_2D);
+    glError;
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glError;
     glBindVertexArray(0);
+    glError;
     glUseProgram(0);
+    glError;
 
     glError;
 }
 
 void
-render_test_bitmap(uGLRenderTarget* const test_bitmap_renderer)
+render_test_bitmap()
 {
-    glActiveTextureARB(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, test_bitmap_renderer->shdr_texture_2d_location);
     glUseProgram(test_bitmap_renderer->shader_program);
-    glBindVertexArray(test_bitmap_renderer->vertex_array_buffer_location);
+    glBindVertexArray(test_bitmap_renderer->vertex_array_object);
     glEnableVertexAttribArray(test_bitmap_renderer->shdr_position_location);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
