@@ -115,17 +115,18 @@ void runDynamicArrayTests()
 void
 runMemoryArenaTests()
 {
-    size_t allocation_size = 0;
+    u16 allocation_size = 0;
 
     puts("\tRunning memory arena tests...");
-    uMemoryArena* memory_arena_zero_alloc_test = uInitMemoryArena(allocation_size);
+    uMemoryArena* memory_arena_zero_alloc_test = uMAInit(allocation_size);
     assert(memory_arena_zero_alloc_test == NULL);
 
     allocation_size = 512;
-    uMemoryArena* memory_arena_ptr_test = uInitMemoryArena(allocation_size);
+    uMemoryArena* memory_arena_ptr_test = uMAInit(allocation_size);
     assert(memory_arena_ptr_test != NULL);
     assert(memory_arena_ptr_test->data != NULL);
-    assert(memory_arena_ptr_test->data == memory_arena_ptr_test->data_ptr);
+    assert(memory_arena_ptr_test->data == (memory_arena_ptr_test->data +
+                                           memory_arena_ptr_test->offset));
     assert(memory_arena_ptr_test->arena_size == allocation_size);
 }
 

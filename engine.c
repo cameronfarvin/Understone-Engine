@@ -1,10 +1,22 @@
+//
+//
+//  Understone Engine
+//  An acedmic dabbling in masochism.
+//
+//  By: Cameron Farvin // assemblyDruid
+//
+//
+
+// Set __uDEBUG_SYSTEM__ == 0 in debug_tools.h to disable system debugging functionality,
 #include <engine_tools/debug_tools.h>
 #include <engine_tools/type_tools.h>
 #include <engine_tools/event_tools.h>
+// Set __uDEBUG_GL__ == 0 in ogl_tools.h to disable all debugging functionality,
 #include <engine_tools/ogl_tools.h>
 #include <engine_tools/stats_tools.h>
 #include <engine_tools/memory_tools.h>
 #include <data_structures/data_structures.h>
+// Set __uTESTS_ENABLED__ == 0 in tests.h to disable tests on startup
 #include <tests/tests.h>
 
 #if __linux__
@@ -14,7 +26,6 @@
 #endif // _WIN32
 
 #include <renderers/master_renderer.h>
-
 
 bool RUNNING = true;
 
@@ -108,8 +119,8 @@ int main(int argc, char** argv)
     win32.class_name  = "UE Window Class";
 #endif // _WIN32
 
-#if RUN_TESTS_ON_STARTUP
-    // See tests/tests.h
+#if __uTESTS_ENABLED__
+    // See tests/tests.h to disable
     runAllTests();
 #endif
 

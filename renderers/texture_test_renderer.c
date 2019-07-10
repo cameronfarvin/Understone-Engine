@@ -220,7 +220,7 @@ initRenderer_texture_test()
     }
     else
     {
-        printf("[ ERROR ] Failed to load image texture\n");
+        uError_v("[ ERROR ] Failed to load image texture\n");
         assert(0);
     }
 

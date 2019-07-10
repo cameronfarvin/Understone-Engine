@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#define RUN_TESTS_ON_STARTUP 1
+#define __uTESTS_ENABLED__ 1
 
 void runAllTests();
 

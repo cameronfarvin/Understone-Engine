@@ -1,8 +1,8 @@
 #ifndef __ogl_tools__
 #define __ogl_tools__ 1
 
-#ifndef CHECK_GL_ERRORS
-#define CHECK_GL_ERRORS 1
+#ifndef __uDEBUG_GL__
+#define __uDEBUG_GL__ 1
 #endif // CHECK_Gl_ERRORS
 
 #if __linux__
@@ -24,7 +24,7 @@
 #define STRINGIFIED_PIPELINE_STATE_LENGTH 18
 #endif // STRINGIFIED_PIPELINE_STATE_LENGTH
 
-#if CHECK_GL_ERRORS
+#if __uDEBUG_GL__
 #ifndef glError
 #define glError glErrorFileLine(__FILE__, __LINE__, __func__)
 #endif // glError
@@ -32,7 +32,7 @@
 #ifndef glError
 #define glError /* GL error checking disabled. Define GL_CHECK_ERRORS to enable */
 #endif // glError
-#endif // CHECK_GL_ERRORS
+#endif // __uDEBUG_GL__
 
 
 #define renderSelf(x) renderSelf_API((uGLRenderTarget*)(x));

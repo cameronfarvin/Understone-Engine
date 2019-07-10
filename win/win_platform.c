@@ -1,6 +1,7 @@
 #include <win_platform.h>
 #include <assert.h>
 
+#include <engine_tools/debug_tools.h>
 #include <engine_tools/type_tools.h>
 #include <engine_tools/event_tools.h>
 #include <engine_tools/ogl_tools.h>
@@ -43,7 +44,7 @@ uWin32CreateWindow()
 
     if (!RegisterClassEx(&window_class))
     {
-        printf("[ UE::WIN::ERROR ] Could not register window class\n");
+        uError_v("Could not register window class\n");
     }
 
     win32.window = CreateWindowEx(0,
@@ -61,7 +62,7 @@ uWin32CreateWindow()
 
     if (win32.window == NULL)
     {
-        printf("[ UE::WIN::ERROR ] Windows returned null handle to client window.\n");
+        uError_v("Windows returned null handle to client window.\n");
     }
 
     ShowWindow(win32.window, win32.command_show);
@@ -123,14 +124,14 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             win32.device_context = GetDC(hwnd);
             if (!win32.device_context)
             {
-                printf("[ UE::WIN::ERROR ] Could not obtain a valid device context\n");
+                uError_v("Could not obtain a valid device context\n");
                 assert(false);
             }
 
             int pixel_format = ChoosePixelFormat(win32.device_context, &pixel_format_desc);
             if (!pixel_format)
             {
-                printf("[ UE::WIN::ERROR ] Could not obtain a valid pixel format\n");
+                uError_v("Could not obtain a valid pixel format\n");
                 assert(false);
             }
             SetPixelFormat(win32.device_context, pixel_format, &pixel_format_desc);
@@ -138,18 +139,15 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             win32.gl_context = wglCreateContext(win32.device_context);
             if (!win32.gl_context)
             {
-                printf("[ UE::WIN::ERROR ] Could not obtain a GL rendering context\n");
+                uError_v("Could not obtain a GL rendering context\n");
                 assert(false);
             }
 
             if (!wglMakeCurrent(win32.device_context, win32.gl_context))
             {
-                printf("[ UE::WIN::ERROR ] Could not make the GL rendering context current\n");
+                uError_v("Could not make the GL rendering context current\n");
                 assert(false);
             }
-
-            // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ]
-            printf("[ debug ] OpenGL context created, version: %s\n", glGetString(GL_VERSION));
 
             //
             // Load all OpenGL functions
@@ -157,7 +155,7 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             const HMODULE gl_module = LoadLibraryA("opengl32.dll");
             if (!gl_module)
             {
-                printf("[ UE::WIN::ERROR ] Could not load opengl32.dll\n");
+                uError_v("Could not load opengl32.dll\n");
                 assert(false);
             }
 
@@ -179,7 +177,7 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             if (uIsExtensionSupported(supported_extensions, "WGL_EXT_swap_control"))
             {
                 wglSwapIntervalEXT  = (PFNWGLSWAPINTERVALEXTPROC) uWin32LoadPFNGL("wglSwapIntervalEXT",
-                                                                                           &gl_module);
+                                                                                  &gl_module);
                 wglSwapIntervalEXT(1);
             }
             else

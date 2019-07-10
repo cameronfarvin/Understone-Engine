@@ -1,4 +1,5 @@
 #include <engine_tools/ogl_tools.h>
+#include <engine_tools/debug_tools.h>
 #include <data_structures/data_structures.h>
 
 bool
@@ -15,11 +16,6 @@ uIsExtensionSupported(uDynamicArray* uDA, const char* extension_name)
         if ((strcmp( ((uString*)uDAIndex(uDA, ii))->data, extension_name)) == 0)
         {
             return true;
-        }
-
-        if (ii == (atomic_elements - 1))
-        {
-            printf("ext: %s\n", ((uString*)uDAIndex(uDA, ii))->data);
         }
     }
 
@@ -81,7 +77,7 @@ glErrorFileLine(const char* file_name,
 
     if (print_warning)
     {
-        printf("[ GLERROR ] %s\n\tFILE: %s\n\tLINE: %d\n\tFUNCTION: %s\n",
+        uError_v("[ GLERROR ] %s\n\tFILE: %s\n\tLINE: %d\n\tFUNCTION: %s\n",
                error_type_string,
                file_name,
                line_number,
@@ -148,7 +144,7 @@ uGLCheckErrorState(GLuint object,
 
     if (err != GL_TRUE)
     {
-        printf("[ ERROR | %s | %s ] FILE: %s\n[ Error Message ]%s\n",
+        uError("[ ERROR | %s | %s ] FILE: %s\n[ Error Message ]%s\n",
                compile_link,
                pipeline_state,
                file_name,

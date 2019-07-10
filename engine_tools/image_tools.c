@@ -8,6 +8,8 @@
 #endif
 
 #include <assert.h>
+
+#include <engine_tools/debug_tools.h>
 #include <engine_tools/image_tools.h>
 
 u8
@@ -18,7 +20,7 @@ uReadNextByte(uImage* const img)
         return *img->img_cursor++;
     }
 
-    printf("[ UE::IMAGE_TOOLS::ERROR ] uReadNextByte(): Out of bounds.\n");
+    uError_v("uReadNextByte(): Out of bounds.\n");
 
     // [ cfarvin::DEBUG ]
     assert(false);
@@ -44,7 +46,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
 {
     if (!file_path || !strlen(file_path))
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Invalid file path.\n");
+        uError_v("uLoadBitmap(): Invalid file path.\n");
         return false;
     }
 
@@ -59,7 +61,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
 
     if (!file)
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Could not open file at location %s.\n", file_path);
+        uError_v("uLoadBitmap(): Could not open file at location %s.\n", file_path);
         fclose(file);
         return false;
     }
@@ -69,7 +71,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
 
     if (!original_bitmap_size)
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Invalid bitmap file.\n");
+        uError_v("uLoadBitmap(): Invalid bitmap file.\n");
         return false;
     }
 
@@ -86,7 +88,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
     size_t items_read = fread(mem_file, (size_t) original_bitmap_size, 1, file);
     if (items_read != 1)
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): File read error.\n");
+        uError_v("uLoadBitmap(): File read error.\n");
         fclose(file);
         return false;
     }
@@ -97,32 +99,37 @@ uLoadBitmap(const char* file_path, uImage* const img)
     //
     if (uReadNextByte(img) != 'B')
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Invalid bitmap header type.\n");
+        uError_v("uLoadBitmap(): Invalid bitmap header type.\n");
         return false;
     }
 
     if (uReadNextByte(img) != 'M')
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Invalid bitmap header type.\n");
+        uError_v("uLoadBitmap(): Invalid bitmap header type.\n");
         return false;
     }
 
     u32 bitmap_size = uRead32AsLE(img);
+
+    //
+    // debug print
+    //
     printf("\t[ debug ] bitmap_size: %d\n", bitmap_size);
+
     if (!bitmap_size)
     {
-        printf("[ UE::IMAGE_TOOLS::WARNING ] uLoadBitmap(): Possible bad bitmap, indicates 0 size.\n");
+        uError_v("[ UE::IMAGE_TOOLS::WARNING ] uLoadBitmap(): Possible bad bitmap, indicates 0 size.\n");
     }
 
     if (uRead16AsLE(img) != 0)
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Invalid bitmap reserved bytes.\n");
+        uError_v("uLoadBitmap(): Invalid bitmap reserved bytes.\n");
         return false;
     }
 
     if (uRead16AsLE(img) != 0)
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Invalid bitmap reserved bytes.\n");
+        uError_v("uLoadBitmap(): Invalid bitmap reserved bytes.\n");
         return false;
     }
 
@@ -145,10 +152,13 @@ uLoadBitmap(const char* file_path, uImage* const img)
     //
     u32 bitmap_info_header_size = uRead32AsLE(img);
 
+    //
+    // debug print
+    //
     printf("\t[ debug ] bitmap_info_header_size: %d\n", bitmap_info_header_size);
     if (bitmap_info_header_size > 124)
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Invalid bitmap header read.\n");
+        uError_v("uLoadBitmap(): Invalid bitmap header read.\n");
         return false;
     }
 
@@ -157,7 +167,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
         bitmap_info_header_size != 108 &&
         bitmap_info_header_size != 124)
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Unsupported bitmap format.\n");
+        uError_v("uLoadBitmap(): Unsupported bitmap format.\n");
         return false;
     }
 
@@ -228,9 +238,15 @@ uLoadBitmap(const char* file_path, uImage* const img)
     u32 bitmap_profileSize = 0;
     u32 bitmap_reserved    = 0;
 
+    //
+    // debug print
+    //
     printf("\t[ debug::NOTE ] Final (non-sequential) bitmap header type printed is type found\n");
     if (bitmap_info_header_size == 12) // BITMAPCOREHEADER ONLY
     {
+        //
+        // debug print
+        //
         printf("\t[ debug ] BITMAP HEADER TYPE: BITMAPCOREHEADER\n");
         bitmap_width = (s32) uRead16AsLE(img);
         bitmap_height = (s32) uRead16AsLE(img);
@@ -240,6 +256,9 @@ uLoadBitmap(const char* file_path, uImage* const img)
     }
     else // EVERYONE ELSE
     {
+        //
+        // debug print
+        //
         printf("\t[ debug ] BITMAP HEADER TYPE: BITMAPINFOHEADER\n");
         bitmap_width = (s32) uRead32AsLE(img);
         printf("\t[ debug ] bitmap_width: %d\n", bitmap_width);
@@ -249,6 +268,10 @@ uLoadBitmap(const char* file_path, uImage* const img)
         printf("\t[ debug ] bitmap_planes: %d\n", bitmap_planes);
         assert(bitmap_planes == 1);
 
+
+        //
+        // debug print
+        //
         bitmap_bitCount = uRead16AsLE(img);
         printf("\t[ debug ] bitmap_bitCount: %d\n", bitmap_bitCount);
         bitmap_compression = uRead32AsLE(img);
@@ -277,6 +300,9 @@ uLoadBitmap(const char* file_path, uImage* const img)
         // BITMAPV4HEADER && BITMAPV5HEADER
         if (bitmap_info_header_size >= 108)
         {
+            //
+            // debug print
+            //
             printf("\t[ debug ] BITMAP HEADER TYPE: BITMAPV4HEADER\n");
             bitmap_redMask = uRead32AsLE(img);
             printf("\t[ debug ] bitmap_redMask: %d\n", bitmap_redMask);
@@ -355,14 +381,14 @@ uLoadBitmap(const char* file_path, uImage* const img)
              ((bitmap_compression != uBI_RGB) ||
               (bitmap_compression != uBI_BITFIELDS)) )
         {
-            printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Unsupported bitmap compression.\n");
+            uError_v("uLoadBitmap(): Unsupported bitmap compression.\n");
             return false;
         }
     }
 
     if (!bitmap_width)
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Invliad bitmap height.\n");
+        uError_v("uLoadBitmap(): Invliad bitmap height.\n");
         return false;
     }
 
@@ -386,7 +412,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
     s16 distance_to_bitmap_bits = (s16) (bitmap_bits_begin - img->img_cursor); // negative == error
     if (distance_to_bitmap_bits < 0)
     {
-        printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): INTERNAL ERROR. Surpassed bitmap bits.\n");
+        uError_v("uLoadBitmap(): INTERNAL ERROR. Surpassed bitmap bits.\n");
         return false;
     }
 
@@ -406,7 +432,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
     {
         if (distance_to_bitmap_bits < 4)
         {
-            printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Invalid bitmap RGBQuad format.\n");
+            uError_v("uLoadBitmap(): Invalid bitmap RGBQuad format.\n");
             return false;
         }
 
@@ -417,7 +443,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
 
         if (bitmap_reserved_quad != 0)
         {
-            printf("[ UE::IMAGE_TOOLS::ERROR ] uLoadBitmap(): Unsupported bitmap color intensities.\n");
+            uError_v("uLoadBitmap(): Unsupported bitmap color intensities.\n");
             return false;
         }
 
@@ -462,7 +488,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
 
 /*     if (bitmap_direction == BOTTOM_UP) */
 /*     { */
-/*         printf("\t[ debug ] Populating color bits: BOTTOM_UP...\n."); */
+/*         uError_v("\t[ debug ] Populating color bits: BOTTOM_UP...\n."); */
 /*         for (ssize_t y = bitmap_height; y > 0; y--) */
 /*         { */
 /*             uBITMAP_FILL_PIXELS; */
@@ -470,7 +496,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
 /*     } */
 /*     else */
 /*     { */
-/*         printf("\t[ debug ] Populating color bits: TOP_DOWN...\n."); */
+/*         uError_v("\t[ debug ] Populating color bits: TOP_DOWN...\n."); */
 /*         for (ssize_t y = 0; y > bitmap_height; y++) */
 /*         { */
 /*             uBITMAP_FILL_PIXELS; */
