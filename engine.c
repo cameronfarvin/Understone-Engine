@@ -10,11 +10,11 @@
 // Set __uDEBUG_SYSTEM__ == 0 in debug_tools.h to disable system debugging functionality,
 #include <engine_tools/debug_tools.h>
 #include <engine_tools/type_tools.h>
+#include <engine_tools/memory_tools.h>
 #include <engine_tools/event_tools.h>
 // Set __uDEBUG_GL__ == 0 in ogl_tools.h to disable all debugging functionality,
 #include <engine_tools/ogl_tools.h>
 #include <engine_tools/stats_tools.h>
-#include <engine_tools/memory_tools.h>
 #include <data_structures/data_structures.h>
 // Set __uTESTS_ENABLED__ == 0 in tests.h to disable tests on startup
 #include <tests/tests.h>
@@ -32,7 +32,7 @@ bool RUNNING = true;
 void
 uHandleWindowResize()
 {
-    /* printf("viewport.width: %ld\nviewport.height: %ld\n", viewport.width, viewport.height); */
+    /* uDBGPrint("viewport.width: %ld\nviewport.height: %ld\n", viewport.width, viewport.height); */
     glViewport(0, 0, viewport.width, viewport.height);
     /* glMatrixMode(GL_PROJECTION); */
     /* glOrtho(0.0f, viewport.width, viewport.height, 0.0f, 0.0f, 1.0f); */
@@ -104,7 +104,7 @@ uSwapBuffers()
 void
 uDestroyEngine()
 {
-    printf("[ DESTROY ENGINE ]\n");
+    uDBGPrint("[ DESTROY ENGINE ]\n");
 #if __linux__
     uX11Destroy();
 #endif // __linux__
@@ -124,12 +124,12 @@ int main(int argc, char** argv)
     runAllTests();
 #endif
 
-    printf("[ UNDERSTONE ENGINE ]\n");
+    uDBGPrint("[ UNDERSTONE ENGINE ]\n");
     if (argc)
     {
         for (size_t ii = 0; ii < (size_t) argc; ii++)
         {
-            printf("\targ%zd: %s\n", ii, argv[ii]);
+            uDBGPrint("\targ%zd: %s\n", ii, argv[ii]);
         }
     }
 
@@ -155,7 +155,7 @@ int main(int argc, char** argv)
 
     uDestroyEngine();
 
-    printf("[ SUCCESS ]\n");
+    uDBGPrint("[ SUCCESS ]\n");
     return 0;
 }
 
@@ -163,6 +163,8 @@ int main(int argc, char** argv)
   In Progress:
   - Arena allocation
   - Improve OGL system
+  - Improve debug/error reporting system
+  - Annotate all functions
 
   Master TODO:
   - Textures/Load Bitmap (d: 6)

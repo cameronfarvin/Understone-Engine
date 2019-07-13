@@ -1,6 +1,5 @@
 #include <engine_tools/ogl_tools.h>
-#include <engine_tools/debug_tools.h>
-#include <data_structures/data_structures.h>
+
 
 bool
 uIsExtensionSupported(uDynamicArray* uDA, const char* extension_name)

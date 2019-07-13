@@ -9,7 +9,6 @@
 
 #include <assert.h>
 
-#include <engine_tools/debug_tools.h>
 #include <engine_tools/image_tools.h>
 
 u8
@@ -76,16 +75,35 @@ uLoadBitmap(const char* file_path, uImage* const img)
     }
 
     // [ cfarvin::NOTE ] [ cfarvin::TODO ]
-    // For now, let's assume that the user is passing reasonable file sizes, and that it
-    // is safe to read the entire file into memory.
-    u8* mem_file = (u8*) malloc(original_bitmap_size + 1);
-    mem_file[original_bitmap_size] = '\0';
+    // Need to intergrate with an Arena for more than this single image
+    // in the future. This is a single test case
+    if (!imageArena)
+    {
+        imageArena = uMAInit((u16)40000);
+    }
+
+    // [ cfarvin::TODO ] Ensure that conversion does not result in loss of data
+    // for very very large assets. Extremely unlikely.
+
+    // [ cfarvin::NOTE ] Replaced with Arena
+    /* u8* mem_file = (u8*) malloc(original_bitmap_size + 1); */
+    if (imageArena->arena_size < original_bitmap_size)
+    {
+        uError_v("Image arena not large enough for this image\n");
+        return false;
+    }
+
+    // [ cfarvin::NOTE ] Removed.
+    /* mem_file[original_bitmap_size] = '\0'; */
     fseek(file, 0, SEEK_SET);
 
-    img->img_start = img->img_cursor = mem_file;
-    img->img_end = mem_file + original_bitmap_size;
+    img->img_start = img->img_cursor = uMANext(imageArena);
+    img->img_end = img->img_start + original_bitmap_size;
 
-    size_t items_read = fread(mem_file, (size_t) original_bitmap_size, 1, file);
+    size_t items_read = fread(uMANext(imageArena),
+                              (size_t) original_bitmap_size,
+                              1,
+                              file);
     if (items_read != 1)
     {
         uError_v("uLoadBitmap(): File read error.\n");
@@ -111,10 +129,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
 
     u32 bitmap_size = uRead32AsLE(img);
 
-    //
-    // debug print
-    //
-    printf("\t[ debug ] bitmap_size: %d\n", bitmap_size);
+    uDBGPrint("bitmap_size: %d\n", bitmap_size);
 
     if (!bitmap_size)
     {
@@ -152,10 +167,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
     //
     u32 bitmap_info_header_size = uRead32AsLE(img);
 
-    //
-    // debug print
-    //
-    printf("\t[ debug ] bitmap_info_header_size: %d\n", bitmap_info_header_size);
+    uDBGPrint("bitmap_info_header_size: %d\n", bitmap_info_header_size);
     if (bitmap_info_header_size > 124)
     {
         uError_v("uLoadBitmap(): Invalid bitmap header read.\n");
@@ -238,16 +250,10 @@ uLoadBitmap(const char* file_path, uImage* const img)
     u32 bitmap_profileSize = 0;
     u32 bitmap_reserved    = 0;
 
-    //
-    // debug print
-    //
-    printf("\t[ debug::NOTE ] Final (non-sequential) bitmap header type printed is type found\n");
+    uDBGPrint("Final (non-sequential) bitmap header type printed is type found\n");
     if (bitmap_info_header_size == 12) // BITMAPCOREHEADER ONLY
     {
-        //
-        // debug print
-        //
-        printf("\t[ debug ] BITMAP HEADER TYPE: BITMAPCOREHEADER\n");
+        uDBGPrint("BITMAP HEADER TYPE: BITMAPCOREHEADER\n");
         bitmap_width = (s32) uRead16AsLE(img);
         bitmap_height = (s32) uRead16AsLE(img);
         bitmap_planes = uRead16AsLE(img);
@@ -256,24 +262,17 @@ uLoadBitmap(const char* file_path, uImage* const img)
     }
     else // EVERYONE ELSE
     {
-        //
-        // debug print
-        //
-        printf("\t[ debug ] BITMAP HEADER TYPE: BITMAPINFOHEADER\n");
+        uDBGPrint("BITMAP HEADER TYPE: BITMAPINFOHEADER\n");
         bitmap_width = (s32) uRead32AsLE(img);
-        printf("\t[ debug ] bitmap_width: %d\n", bitmap_width);
+        uDBGPrint("bitmap_width: %d\n", bitmap_width);
         bitmap_height = (s32) uRead32AsLE(img);
-        printf("\t[ debug ] bitmap_height: %d\n", bitmap_height);
+        uDBGPrint("bitmap_height: %d\n", bitmap_height);
         bitmap_planes = uRead16AsLE(img);
-        printf("\t[ debug ] bitmap_planes: %d\n", bitmap_planes);
+        uDBGPrint("bitmap_planes: %d\n", bitmap_planes);
         assert(bitmap_planes == 1);
 
-
-        //
-        // debug print
-        //
         bitmap_bitCount = uRead16AsLE(img);
-        printf("\t[ debug ] bitmap_bitCount: %d\n", bitmap_bitCount);
+        uDBGPrint("bitmap_bitCount: %d\n", bitmap_bitCount);
         bitmap_compression = uRead32AsLE(img);
         assert((bitmap_compression == uBI_RGB)       ||
                (bitmap_compression == uBI_RLE8)      || // [ cfarvin::TODO ]
@@ -284,86 +283,83 @@ uLoadBitmap(const char* file_path, uImage* const img)
                (bitmap_compression == uBI_CMYK)      || // [ cfarvin::TODO ]
                (bitmap_compression == uBI_CMYKRLE8)  || // [ cfarvin::TODO ]
                (bitmap_compression == uBI_CMYKRLE4));
-        printf("\t[ debug ] bitmap_compression: %d\n", bitmap_compression);
+        uDBGPrint("bitmap_compression: %d\n", bitmap_compression);
         bitmap_sizeImage = uRead32AsLE(img);
-        printf("\t[ debug ] bitmap_sizeImage: %d\n", bitmap_sizeImage);
+        uDBGPrint("bitmap_sizeImage: %d\n", bitmap_sizeImage);
         bitmap_xPelsPerMeter = (s32) uRead32AsLE(img);
-        printf("\t[ debug ] bitmap_xPelsPerMeter: %d\n", bitmap_xPelsPerMeter);
+        uDBGPrint("bitmap_xPelsPerMeter: %d\n", bitmap_xPelsPerMeter);
         bitmap_yPelsPerMeter = (s32) uRead32AsLE(img);
-        printf("\t[ debug ] bitmap_yPelsPerMeter: %d\n", bitmap_yPelsPerMeter);
+        uDBGPrint("bitmap_yPelsPerMeter: %d\n", bitmap_yPelsPerMeter);
         bitmap_clrUsed = uRead32AsLE(img);
-        printf("\t[ debug ] bitmap_clrUsed: %d\n", bitmap_clrUsed);
+        uDBGPrint("bitmap_clrUsed: %d\n", bitmap_clrUsed);
         bitmap_clrImportant = uRead32AsLE(img);
-        printf("\t[ debug ] bitmap_clrImportant: %d\n", bitmap_clrImportant);
+        uDBGPrint("bitmap_clrImportant: %d\n", bitmap_clrImportant);
 
         // [ cfarvin::UNTESTED ]
         // BITMAPV4HEADER && BITMAPV5HEADER
         if (bitmap_info_header_size >= 108)
         {
-            //
-            // debug print
-            //
-            printf("\t[ debug ] BITMAP HEADER TYPE: BITMAPV4HEADER\n");
+            uDBGPrint("BITMAP HEADER TYPE: BITMAPV4HEADER\n");
             bitmap_redMask = uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_redMask: %d\n", bitmap_redMask);
+            uDBGPrint("bitmap_redMask: %d\n", bitmap_redMask);
             bitmap_greenMask = uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_greenMask: %d\n", bitmap_greenMask);
+            uDBGPrint("bitmap_greenMask: %d\n", bitmap_greenMask);
             bitmap_blueMask = uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_blueMask: %d\n", bitmap_blueMask);
+            uDBGPrint("bitmap_blueMask: %d\n", bitmap_blueMask);
             bitmap_alphaMask = uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_alphaMask: %d\n", bitmap_alphaMask);
+            uDBGPrint("bitmap_alphaMask: %d\n", bitmap_alphaMask);
             bitmap_CSType = uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_CSType: %d\n", bitmap_CSType);
+            uDBGPrint("bitmap_CSType: %d\n", bitmap_CSType);
 
             // [ cfarvin::VERIFY_CORRECTES ] [ cfarvin::UNTESTED ]
             bitmap_endpoints.ciexyzRed.ciexyzX   = (s32) uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_endpoints.ciexyzRed.ciexyzX: %d\n",
-                   bitmap_endpoints.ciexyzRed.ciexyzX);
+            uDBGPrint("bitmap_endpoints.ciexyzRed.ciexyzX: %d\n",
+                      bitmap_endpoints.ciexyzRed.ciexyzX);
             bitmap_endpoints.ciexyzRed.ciexyzY   = (s32) uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_endpoints.ciexyzRed.ciexyzY: %d\n",
-                   bitmap_endpoints.ciexyzRed.ciexyzY);
+            uDBGPrint("bitmap_endpoints.ciexyzRed.ciexyzY: %d\n",
+                      bitmap_endpoints.ciexyzRed.ciexyzY);
             bitmap_endpoints.ciexyzRed.ciexyzZ   = (s32) uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_endpoints.ciexyzRed.ciexyzZ: %d\n",
-                   bitmap_endpoints.ciexyzRed.ciexyzZ);
+            uDBGPrint("bitmap_endpoints.ciexyzRed.ciexyzZ: %d\n",
+                      bitmap_endpoints.ciexyzRed.ciexyzZ);
             bitmap_endpoints.ciexyzGreen.ciexyzX = (s32) uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_endpoints.ciexyzGreen.ciexyZ: %d\n",
-                   bitmap_endpoints.ciexyzGreen.ciexyzX);
+            uDBGPrint("bitmap_endpoints.ciexyzGreen.ciexyZ: %d\n",
+                      bitmap_endpoints.ciexyzGreen.ciexyzX);
             bitmap_endpoints.ciexyzGreen.ciexyzY = (s32) uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_endpoints.ciexyzGreen.ciexyzY: %d\n",
-                   bitmap_endpoints.ciexyzGreen.ciexyzY);
+            uDBGPrint("bitmap_endpoints.ciexyzGreen.ciexyzY: %d\n",
+                      bitmap_endpoints.ciexyzGreen.ciexyzY);
             bitmap_endpoints.ciexyzGreen.ciexyzZ = (s32) uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_endpoints.ciexyzGreen.ciexyzZ: %d\n",
-                   bitmap_endpoints.ciexyzGreen.ciexyzZ);
+            uDBGPrint("bitmap_endpoints.ciexyzGreen.ciexyzZ: %d\n",
+                      bitmap_endpoints.ciexyzGreen.ciexyzZ);
             bitmap_endpoints.ciexyzBlue.ciexyzX  = (s32) uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_endpoints.ciexyzBlue.ciexyzX: %d\n",
-                   bitmap_endpoints.ciexyzBlue.ciexyzX);
+            uDBGPrint("bitmap_endpoints.ciexyzBlue.ciexyzX: %d\n",
+                      bitmap_endpoints.ciexyzBlue.ciexyzX);
             bitmap_endpoints.ciexyzBlue.ciexyzY  = (s32) uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_endpoints.ciexyzBlue.ciexyzY: %d\n",
-                   bitmap_endpoints.ciexyzBlue.ciexyzY);
+            uDBGPrint("bitmap_endpoints.ciexyzBlue.ciexyzY: %d\n",
+                      bitmap_endpoints.ciexyzBlue.ciexyzY);
             bitmap_endpoints.ciexyzBlue.ciexyzZ  = (s32) uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_endpoints.ciexyzBlue.ciexyZ: %d\n",
-                   bitmap_endpoints.ciexyzBlue.ciexyzZ);
+            uDBGPrint("bitmap_endpoints.ciexyzBlue.ciexyZ: %d\n",
+                      bitmap_endpoints.ciexyzBlue.ciexyzZ);
 
-            /* printf("\t[ debug ] bitmap_clrImportant: %d\n", bitmap_clrImportant);         */
+            /* uDBGPrint("bitmap_clrImportant: %d\n", bitmap_clrImportant);         */
             bitmap_gammaRed = uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_gammaRed: %d\n", bitmap_gammaRed);
+            uDBGPrint("bitmap_gammaRed: %d\n", bitmap_gammaRed);
             bitmap_gammaGreen = uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_gammaGreen: %d\n", bitmap_gammaGreen);
+            uDBGPrint("bitmap_gammaGreen: %d\n", bitmap_gammaGreen);
             bitmap_gammaBlue = uRead32AsLE(img);
-            printf("\t[ debug ] bitmap_gammaBlue: %d\n", bitmap_gammaBlue);
+            uDBGPrint("bitmap_gammaBlue: %d\n", bitmap_gammaBlue);
 
             // [ cfarvin::UNTESTED ]
             if (bitmap_info_header_size >= 124) // BITMAPV5HEADER ONLY
             {
-                printf("\t[ debug ] BITMAP HEADER TYPE: BITMAPV5HEADER\n");
+                uDBGPrint("BITMAP HEADER TYPE: BITMAPV5HEADER\n");
                 bitmap_intent = uRead32AsLE(img);
-                printf("\t[ debug ] bitmap_intent: %d\n", bitmap_intent);
+                uDBGPrint("bitmap_intent: %d\n", bitmap_intent);
                 bitmap_profileData = uRead32AsLE(img);
-                printf("\t[ debug ] bitmap_profileData: %d\n", bitmap_profileData);
+                uDBGPrint("bitmap_profileData: %d\n", bitmap_profileData);
                 bitmap_profileSize = uRead32AsLE(img);
-                printf("\t[ debug ] bitmap_profileSize: %d\n", bitmap_profileSize);
+                uDBGPrint("bitmap_profileSize: %d\n", bitmap_profileSize);
                 bitmap_reserved = uRead32AsLE(img);
-                printf("\t[ debug ] bitmap_reserved: %d\n", bitmap_reserved);
+                uDBGPrint("bitmap_reserved: %d\n", bitmap_reserved);
             }
         }
     }
@@ -447,10 +443,10 @@ uLoadBitmap(const char* file_path, uImage* const img)
             return false;
         }
 
-        printf("\t[ debug ] r: %d, g: %d, b:%d\n",
-               intensityRed,
-               intensityGreen,
-               intensityBlue);
+        uDBGPrint("r: %d, g: %d, b:%d\n",
+                  intensityRed,
+                  intensityGreen,
+                  intensityBlue);
 
         // [ cfarvin::TODO ] Continue parsing or use color intensities
     }
@@ -476,7 +472,12 @@ uLoadBitmap(const char* file_path, uImage* const img)
     // passing a new image object, not reusing one this is probably a
     // bad assumption in the long term; fine in the short term.
     // img->img_pixels = (u8*) malloc(bitmap_height * bitmap_width * bitcount_modifier);
-    img->img_pixels = (u8*) malloc(bitmap_height * bitmap_width * 3);
+
+
+    // [ cfarvin::REMOVED ]
+    // Once we're ready to start using the loader, need to load the bits in via
+    // arena rather than malloc
+    /* img->img_pixels = (u8*) malloc(bitmap_height * bitmap_width * 3); */
 
 /* #define uBITMAP_FILL_PIXELS                                     \ */
 /*     for (ssize_t x = 0; x < bitmap_width; x++)                  \ */
@@ -488,7 +489,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
 
 /*     if (bitmap_direction == BOTTOM_UP) */
 /*     { */
-/*         uError_v("\t[ debug ] Populating color bits: BOTTOM_UP...\n."); */
+/*         uError_v("Populating color bits: BOTTOM_UP...\n."); */
 /*         for (ssize_t y = bitmap_height; y > 0; y--) */
 /*         { */
 /*             uBITMAP_FILL_PIXELS; */
@@ -496,7 +497,7 @@ uLoadBitmap(const char* file_path, uImage* const img)
 /*     } */
 /*     else */
 /*     { */
-/*         uError_v("\t[ debug ] Populating color bits: TOP_DOWN...\n."); */
+/*         uError_v("Populating color bits: TOP_DOWN...\n."); */
 /*         for (ssize_t y = 0; y > bitmap_height; y++) */
 /*         { */
 /*             uBITMAP_FILL_PIXELS; */
@@ -506,6 +507,6 @@ uLoadBitmap(const char* file_path, uImage* const img)
 /* #undef uBITMAP_FILL_PIXELS */
 
     memcpy(img->img_pixels, bitmap_bits_begin, (bitmap_height * bitmap_width * 3));
-    printf("\t[ DEBUG::SUCCES ]\n");
+    uDBGPrint("[ SUCCES ]\n");
     return true;
 }

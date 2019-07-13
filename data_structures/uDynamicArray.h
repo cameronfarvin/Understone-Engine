@@ -9,10 +9,6 @@
 #include <string.h>
 
 
-#define uDAInit(type) uAPI_uDAInit(sizeof(type))
-#define uDAPush(da, data_in) uAPI_uDAPush(da, VPPC_STR_LITERAL(void** const) data_in)
-
-
 // Optimize for random access, "push back", "pop last",
 // capping out at 2^16 elements via IEEE size_t.
 typedef struct
@@ -26,8 +22,7 @@ typedef struct
 } uDynamicArray;
 
 
-// [ cfarvin::NOTE ] Note the following definition:
-// #define uDAInit(type) uAPI_uDAInit(sizeof(type))
+#define uDAInit(type) uAPI_uDAInit(sizeof(type))
 static inline uDynamicArray*
 uAPI_uDAInit(const size_t datatypesize_in)
 {
@@ -50,7 +45,7 @@ uAPI_uDAInit(const size_t datatypesize_in)
     return da;
 }
 
-
+#define uDAPush(da, data_in) uAPI_uDAPush(da, VPPC_STR_LITERAL(void** const) data_in)
 static inline bool
 uAPI_uDAPush(uDynamicArray* const da, void** const data_in)
 {

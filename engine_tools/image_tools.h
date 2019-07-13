@@ -2,6 +2,13 @@
 #define __image_tools__ 1
 
 #include <engine_tools/type_tools.h>
+#include <engine_tools/memory_tools.h>
+#include <engine_tools/debug_tools.h>
+
+uMemoryArena* imageArena;
+#define imagePushData(new_data, type) uMAPushData(imageArena, new_data, type)
+#define imagePushArray(new_data, type, num_bytes) uMAPushArray(imageArena, new_data, type, num_bytes)
+/* #define imageAlloc(type, num_bytes) uMAAllocate(imageArena, type, num_bytes) */
 
 // [ cfarvin::NOTE ] used in ms bitmap
 #define uBI_RGB        0x0000

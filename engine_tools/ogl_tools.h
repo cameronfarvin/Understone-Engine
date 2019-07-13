@@ -14,7 +14,10 @@
 #include <assert.h>
 #include <math.h>
 #include <string.h>
-#include <data_structures/uDynamicArray.h>
+
+#include <data_structures/data_structures.h>
+#include <engine_tools/debug_tools.h>
+
 
 #ifndef GLSL
 #define GLSL(version, shaderSrc) "#version " #version "\n" #shaderSrc
@@ -30,7 +33,7 @@
 #endif // glError
 #else
 #ifndef glError
-#define glError /* GL error checking disabled. Define GL_CHECK_ERRORS to enable */
+#define glError /* GL error checking disabled. */
 #endif // glError
 #endif // __uDEBUG_GL__
 

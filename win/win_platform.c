@@ -176,7 +176,7 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             // Check for OpenGL vsync control extensions, helps with screen stutter
             if (uIsExtensionSupported(supported_extensions, "WGL_EXT_swap_control"))
             {
-                wglSwapIntervalEXT  = (PFNWGLSWAPINTERVALEXTPROC) uWin32LoadPFNGL("wglSwapIntervalEXT",
+                wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC) uWin32LoadPFNGL("wglSwapIntervalEXT",
                                                                                   &gl_module);
                 wglSwapIntervalEXT(1);
             }
