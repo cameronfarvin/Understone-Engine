@@ -8,11 +8,11 @@
 #include <stdio.h>
 
 typedef enum
-    {
-        uEventNone,
-        uEventClose,
-        uEventResize,
-    } uSystemEvent;
+{
+    uEventNone,
+    uEventClose,
+    uEventResize,
+} uSystemEvent;
 
 // Center of the screen is (0, 0, 0)
 typedef struct
@@ -71,19 +71,23 @@ int64_t input_state;
 #define uMouse_left        (1ULL << 45)
 #define uMouse_middle      (1ULL << 46)
 
-static inline void uSetInputPressed(uint64_t key)
+__UE_internal__ __UE_inline__ void
+uSetInputPressed(const uint64_t key)
 {
     input_state |= key;
 }
 
-static inline void uSetInputReleased(uint64_t key)
+__UE_internal__ __UE_inline__ void
+uSetInputReleased(const uint64_t key)
 {
     input_state &= ~key;
 }
 
-static inline uint64_t uGetInputPressed(uint64_t key)
+__UE_internal__ __UE_inline__ uint64_t
+uGetInputPressed(const  uint64_t key)
 {
     return input_state & key;
 }
+
 
 #endif // __event_tools__

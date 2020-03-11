@@ -1,18 +1,32 @@
-#ifndef __debug_tools__
-#define __debug_tools__ 1
+#ifndef __UE_DEBUG_TOOLS_H__
+#define __UE_DEBUG_TOOLS_H__
 
 #include <string.h>
 
+
+//
 // Set to 0 to disable all debugging functions
-#define __uDEBUG_SYSTEM__ 1
+//
+#define __UE_DEBUG__ 1
+//
+//
+//
+
+#if  __UE_DEBUG__
+#define __UE_inline__    /* INLINE REMOVED */
+#else // __UE_DEBUG__
+#define __UE_inline__    inline
+#endif // __UE_DEBUG__
+
 
 #ifndef functionFired
-#if __uDEBUG_SYSTEM__
+#if __UE_DEBUG__
 #define functionFired  printf("[ debug ] function fired: %s\n", __func__);
 #else
 #define functionFired  /* Debugging is disabled: functionFired */
-#endif // __uDEBUG_SYSTEM__
+#endif // __UE_DEBUG__
 #endif // functionFired
+
 
 /*
  * Understone Error Reporting
@@ -24,17 +38,17 @@
  *        information to stderr (does not halt).
  *
  * Debug printing:
- *    1. `uDBGPrint_v` (Verbose): Print a formatted debug string
+ *    1. `uDebugPrint_v` (Verbose): Print a formatted debug string
  *        with file and line information to stderr. (does not
  *        halt).
- *    2. `uDBGPrint`: Print a formatted debug string without
+ *    2. `uDebugPrint`: Print a formatted debug string without
  *        file and line information to stderr. (does not halt).
  *
  * Debug assertions:
- *    1. `uDBGAssert_v` (Verbose): If the condition is false,
+ *    1. `uAssert_v` (Verbose): If the condition is false,
  *        print a message with file and line information to
  *        stderr and exit the process with code 666.
- *    1. `uDBGAssert` (Verbose): If the condition is false,
+ *    1. `uAssert` (Verbose): If the condition is false,
  *        print a message without file and line information to
  *        stderr and exit the process with code 666.
  *
@@ -42,22 +56,24 @@
  * `MAX_ERROR_LEN` macro set in the lines below.
  *
  */
-#if __uDEBUG_SYSTEM__
-#define MAX_ERROR_LEN 150
+#if __UE_DEBUG__
+#define MAX_ERROR_LEN 256
 char _error_buffer[MAX_ERROR_LEN];
 char _message_buffer[MAX_ERROR_LEN];
 
+// uError_v()
 #define uError_v(...)                                           \
     snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);      \
     snprintf(_error_buffer,                                     \
              MAX_ERROR_LEN,                                     \
-             "[ error::%s::%d ] %s",                            \
+             "[ error ] [ %s::%d ] %s\n",                       \
              __FILE__,                                          \
              __LINE__,                                          \
              _message_buffer);                                  \
     fputs(_error_buffer, stderr);                               \
     fflush(stderr)
 
+// uError()
 #define uError(...)                                             \
     snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);      \
     snprintf(_error_buffer,                                     \
@@ -66,18 +82,21 @@ char _message_buffer[MAX_ERROR_LEN];
              _message_buffer);                                  \
     fputs(_error_buffer, stderr)
 
-#define uDBGPrint_v(...)                                        \
+
+// uDebugPrint_v()
+#define uDebugPrint_v(...)                                      \
     snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);      \
     snprintf(_error_buffer,                                     \
              MAX_ERROR_LEN,                                     \
-             "[ debug::%s::%d ] %s",                            \
+             "[ debug ] [ %s::%d ] %s",                         \
              __FILE__,                                          \
              __LINE__,                                          \
              _message_buffer);                                  \
     fputs(_error_buffer, stderr);                               \
     fflush(stderr)
 
-#define uDBGPrint(...)                                          \
+// uDebugPrint()
+#define uDebugPrint(...)                                        \
     snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);      \
     snprintf(_error_buffer,                                     \
              MAX_ERROR_LEN,                                     \
@@ -86,7 +105,8 @@ char _message_buffer[MAX_ERROR_LEN];
     fputs(_error_buffer, stderr);                               \
     fflush(stderr)
 
-#define uDBGAssertMsg(cond, ...)                                \
+// uAssertMsg()
+#define uAssertMsg(cond, ...)                                   \
     if (!cond) {                                                \
         snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);  \
         snprintf(_error_buffer,                                 \
@@ -97,39 +117,32 @@ char _message_buffer[MAX_ERROR_LEN];
         fflush(stderr);                                         \
         exit(666); }
 
-#define uDBGAssertMsg_v(cond, ...)                              \
+// uAssert_v()
+#define uAssertMsg_v(cond, ...)                                 \
     if (!(cond)) {                                              \
-    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);      \
-    snprintf(_error_buffer,                                     \
-             MAX_ERROR_LEN,                                     \
-             "[ assertion::%s::%d ] %s",                        \
-             __FILE__,                                          \
-             __LINE__,                                          \
-             _message_buffer);                                  \
-    fputs(_error_buffer, stderr);                               \
-    fflush(stderr);                                             \
-    exit(666); }
+        snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);  \
+        snprintf(_error_buffer,                                 \
+                 MAX_ERROR_LEN,                                 \
+                 "[ assertion ] [ %s::%d ] %s",                 \
+                 __FILE__,                                      \
+                 __LINE__,                                      \
+                 _message_buffer);                              \
+        fputs(_error_buffer, stderr);                           \
+        fflush(stderr);                                         \
+        exit(666); }
 
-#define uDBGAssert(cond)                        \
+// uAssert()
+#define uAssert(cond)                           \
     if (!((long long) (cond))) { exit(666); }   \
 
-// [ cfarvin::TODO ] [ cfarvin::IMPLEMENT ]
-// Implement a warning(s) level debug message.
-// Example of needing such a thing would be incomplete or
-// erroneous frees/mallocs that should not print for debug
-// nor crash the engine.
 
+#else // __UE_DEBUG__
+#define uError_v(...)           /* System debugging is disabled */
+#define uError(...)             /* System debugging is disabled */
+#define uDebugPrint_v(...)        /* System debugging is disabled */
+#define uDebugPrint(...)          /* System debugging is disabled */
+#define uAssert(cond, ...)   /* System debugging is disabled */
+#define uAssert_v(cond, ...) /* System debugging is disabled */
+#endif // __UE_DEBUG__
 
-
-#else // __uDEBUG_SYSTEM__
-#define uError_v(...) /* System debugging is disabled */
-#define uError(...) /* System debugging is disabled */
-#define uDBGPrint_v(...) /* System debugging is disabled */
-#define uDBGPrint(...) /* System debugging is disabled */
-#define uDBGAssert(cond, ...) /* System debugging is disabled */
-#define uDBGAssert_v(cond, ...) /* System debugging is disabled */
-#endif // __uDEBUG_SYSTEM__
-
-
-
-#endif // __debug_tools
+#endif // __UE_DEBUG_TOOLS_H__

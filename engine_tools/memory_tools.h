@@ -8,6 +8,9 @@
 #include <engine_tools/type_tools.h>
 #include <engine_tools/debug_tools.h>
 
+
+// [ cfarvin::TODO ] This file needs _Generic
+
 // Optimize for 64 byte cache line size,
 // 32bit word alignment
 typedef struct
@@ -18,8 +21,8 @@ typedef struct
 } uMemoryArena;
 
 
-static inline uMemoryArena*
-uMAInit(u16 arena_bytes)
+__UE_internal__ __UE_inline__ uMemoryArena*
+uMAInit(const u16 arena_bytes)
 {
     if (!arena_bytes)
     {
@@ -36,8 +39,8 @@ uMAInit(u16 arena_bytes)
     return memory_arena;
 }
 
-static inline void*
-uMANext(uMemoryArena* memory_arena)
+__UE_internal__ __UE_inline__ void*
+uMANext(const uMemoryArena* restrict const memory_arena)
 {
     if(!(memory_arena && memory_arena->data && memory_arena->arena_size))
     {
@@ -50,7 +53,9 @@ uMANext(uMemoryArena* memory_arena)
 
 #define uMAAllocate(arena, type, num_bytes)     \
     (type*)uMAAllocate_API__(arena, num_bytes)
-static inline void* uMAAllocate_API__(uMemoryArena* memory_arena, u16 num_bytes)
+__UE_internal__ __UE_inline__ void*
+uMAAllocate_API__(_mut_ uMemoryArena* restrict const memory_arena,
+                  const u16                          num_bytes)
 {
     if (!(num_bytes && memory_arena && memory_arena->data))
     {
@@ -73,10 +78,10 @@ static inline void* uMAAllocate_API__(uMemoryArena* memory_arena, u16 num_bytes)
 //
 #define uMAPushData( arena, new_data, type )                            \
     (type*)uMAPushData_API( arena, (type*)&(new_data), sizeof(type) )
-static inline void*
-uMAPushData_API(uMemoryArena* memory_arena,
-                void* new_data,
-                u16 new_data_size)
+__UE_internal__ __UE_inline__ void*
+uMAPushData_API(_mut_ uMemoryArena* restrict const memory_arena,
+                const void*         restrict const new_data,
+                const u16                          new_data_size)
 {
     if (!(memory_arena &&
           new_data &&
@@ -102,7 +107,7 @@ uMAPushData_API(uMemoryArena* memory_arena,
 
 #define uMAPushArray( arena, new_data, type, num_bytes )        \
     (type*)uMAPushArray_API( arena, new_data, num_bytes )
-static inline void*
+__UE_internal__ __UE_inline__ void*
 uMAPushArray_API(uMemoryArena* memory_arena,
                  void* new_data,
                  u16 new_data_size)
@@ -130,12 +135,12 @@ uMAPushArray_API(uMemoryArena* memory_arena,
 }
 
 
-static inline bool
+__UE_internal__ __UE_inline__ bool
 uMADestroy(uMemoryArena* memory_arena)
 {
     if (!(memory_arena && memory_arena->data))
     {
-        // [ cfarvin::NOTE ] [ cfarvin::TODO ]Was printing during tests in which
+        // [ cfarvin::NOTE ] [ cfarvin::TODO ] Was printing during tests in which
         // this was *supposed* to fail.
         /* uError("Invlid memory arena free\n"); */
         return false;

@@ -1,3 +1,19 @@
+/*
+   uDynamicArray Limitations
+   -------------------------
+     - uDynamicArray does not account for functions which modify the `data`
+       member directly, as it cannot tell how many elements may have been
+       added. To do this safely, the dynamic array must have been set up
+       manually or with a call to uDAInit() which allocated to proper number
+       of bytes before the direct modification. If this is the case, ask
+       yourself: "Do I really need a dynamic array?". If the answer is still
+       yes, just remember that uDynamicArray only tracks element-counts and
+       resizes properly via functions designed to interact with and modify
+       uDynamicArrays, like uDAPush(). You may run into issues with assertions
+       and sanity checks within the uDynamicArray functions if you attempt to
+       use them after altering the `data` member yourself.
+*/
+
 #ifndef __uDynamicArray__
 #define __uDynamicArray__ 1
 
@@ -9,13 +25,14 @@
 #include <string.h>
 
 
+
 // Optimize for random access, "push back", "pop last",
 // capping out at 2^16 elements via IEEE size_t.
 typedef struct
 {
-    void* volatile data;
+    _mut_ void* volatile data;
 
-    const size_t datatype_size;
+    const          size_t datatype_size;
     volatile const size_t length;
     volatile const size_t scaling_factor;
     volatile const size_t max_length;
@@ -23,12 +40,13 @@ typedef struct
 
 
 #define uDAInit(type) uAPI_uDAInit(sizeof(type))
-static inline uDynamicArray*
+__UE_internal__ __UE_inline__ uDynamicArray*
 uAPI_uDAInit(const size_t datatypesize_in)
 {
-    uDynamicArray* da = (uDynamicArray*) calloc(1, sizeof(uDynamicArray));
+    uAssertMsg_v(datatypesize_in, "Data type size must be non-zero.\n");
+    uDynamicArray* const da = (uDynamicArray*) calloc(1, sizeof(uDynamicArray));
 
-    // Initialize Statics
+    // Initialize statics
     size_t* non_const_length = (size_t*) &(da->length);
     size_t* non_const_scaling_factor = (size_t*) &(da->scaling_factor);
     size_t* non_const_max_length = (size_t*) &(da->max_length);
@@ -46,9 +64,13 @@ uAPI_uDAInit(const size_t datatypesize_in)
 }
 
 #define uDAPush(da, data_in) uAPI_uDAPush(da, VPPC_STR_LITERAL(void** const) data_in)
-static inline bool
-uAPI_uDAPush(uDynamicArray* const da, void** const data_in)
+__UE_internal__ __UE_inline__ bool
+uAPI_uDAPush(_mut_ uDynamicArray* const       restrict da,
+             const void**         const const restrict data_in)
 {
+    uAssertMsg_v(da,      "Null uDynamicArray ptr provided.\n");
+    uAssertMsg_v(data_in, "Null data ptr pvoided.\n");
+
     if (da && data_in)
     {
         // [ cfarvin::TODO ] Properly check for failure on realloc
@@ -57,10 +79,10 @@ uAPI_uDAPush(uDynamicArray* const da, void** const data_in)
             size_t* non_const_max_length = (size_t*) &(da->max_length);
             *non_const_max_length = da->max_length * da->scaling_factor;
             void* allocated = realloc(da->data, (da->datatype_size * da->max_length));
-			if (allocated)
-			{
-				da->data = allocated;
-			}
+            if (allocated)
+            {
+                da->data = allocated;
+            }
         }
 
         memcpy((char*)da->data + (da->length * da->datatype_size),
@@ -77,9 +99,16 @@ uAPI_uDAPush(uDynamicArray* const da, void** const data_in)
 }
 
 
-static inline void*
-uDAIndex(uDynamicArray* const da, const size_t index)
+__UE_internal__ __UE_inline__ void*
+uDAIndex(_mut_ uDynamicArray* const restrict da,
+         const size_t index)
 {
+    uAssertMsg_v(da, "Null uDynamicArray ptr pvoided.\n");
+    uAssertMsg_v(index < da->length,
+                 "Index [ %zd ] surpasses dynamic array length: [ %zd ].\n",
+                 index,
+                 da->length);
+
     if (da && (index < da->length))
     {
         return (void*)((char*)da->data + (index * da->datatype_size));
@@ -89,9 +118,14 @@ uDAIndex(uDynamicArray* const da, const size_t index)
 }
 
 
-static inline bool
-uDAPop(uDynamicArray* const da)
+__UE_internal__ __UE_inline__ bool
+uDAPop(_mut_ uDynamicArray* const restrict da)
 {
+    uAssertMsg_v(da,         "Null uDynamicArray ptr pvoided.\n");
+    uAssertMsg_v(da->length, "Dynamic array length must be non-zero\n");
+    uAssertMsg_v(da->length <= da->max_length,
+                 "Dynamic array length must be less than the maximum length");
+
     if (da && da->length && da->length <= da->max_length)
     {
         size_t* non_const_length = (size_t*) &(da->length);
@@ -104,9 +138,11 @@ uDAPop(uDynamicArray* const da)
 }
 
 
-static inline bool
-uDAFitToSize(uDynamicArray* const da)
+__UE_internal__ __UE_inline__ bool
+uDAFitToSize(_mut_ uDynamicArray* const restrict da)
 {
+    uAssertMsg_v(da,      "Null uDynamicArray ptr provided.\n");
+
     if (da && (da->length > da->scaling_factor))
     {
         size_t* non_const_max_length = (size_t*) &(da->max_length);
@@ -120,9 +156,14 @@ uDAFitToSize(uDynamicArray* const da)
 }
 
 
-static inline bool
-uDASetScalingFactor(uDynamicArray* const da, const size_t scaling_factor_in)
+__UE_internal__ __UE_inline__ bool
+uDASetScalingFactor(_mut_ uDynamicArray* const restrict da,
+                    const size_t scaling_factor_in)
 {
+    uAssertMsg_v(da, "Null uDynamicArray ptr provided.\n");
+    uAssertMsg_v(scaling_factor_in > 1,
+                 "Scaling factor must be greater than 1.\n");
+
     if (da && scaling_factor_in > 1)
     {
         size_t* non_const_scaling_factor = (size_t*) &da->scaling_factor;
@@ -135,8 +176,8 @@ uDASetScalingFactor(uDynamicArray* const da, const size_t scaling_factor_in)
 }
 
 
-static inline bool
-uDADestroy(uDynamicArray* const da)
+__UE_internal__ __UE_inline__ bool
+uDADestroy(_mut_ uDynamicArray* const restrict da)
 {
     if (da && da->data)
     {

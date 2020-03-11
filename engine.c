@@ -1,21 +1,12 @@
-//
-//
-//  Understone Engine
-//  An acedmic dabbling in masochism.
-//
-//  By: Cameron Farvin // assemblyDruid
-//
-//
-
 // Set __uDEBUG_SYSTEM__ == 0 in debug_tools.h to disable system debugging functionality,
 #include <engine_tools/debug_tools.h>
 #include <engine_tools/type_tools.h>
 #include <engine_tools/memory_tools.h>
 #include <engine_tools/event_tools.h>
-// Set __uDEBUG_GL__ == 0 in ogl_tools.h to disable all debugging functionality,
-#include <engine_tools/ogl_tools.h>
-#include <engine_tools/stats_tools.h>
+#include <engine_tools/vulkan_tools.h>
+
 #include <data_structures/data_structures.h>
+
 // Set __uTESTS_ENABLED__ == 0 in tests.h to disable tests on startup
 #include <tests/tests.h>
 
@@ -25,17 +16,13 @@
 #include <win/win_platform.h>
 #endif // _WIN32
 
-#include <renderers/master_renderer.h>
-
 bool RUNNING = true;
 
 void
 uHandleWindowResize()
 {
-    /* uDBGPrint("viewport.width: %ld\nviewport.height: %ld\n", viewport.width, viewport.height); */
-    glViewport(0, 0, viewport.width, viewport.height);
-    /* glMatrixMode(GL_PROJECTION); */
-    /* glOrtho(0.0f, viewport.width, viewport.height, 0.0f, 0.0f, 1.0f); */
+    uDebugPrint("TODO: Handle Window Resize\n");
+    uDebugPrint("viewport.width: %ld\nviewport.height: %ld\n", viewport.width, viewport.height);
 }
 
 // Query the mouse and keyboard state
@@ -43,13 +30,15 @@ void
 uRefreshInputState()
 {
     uSystemEvent sys_event = uEventNone;
+
 #if __linux__
-    sys_event = uX11HandleEvents();
+    sys_event = uNixHandleEvents();
 #elif _WIN32
     sys_event = uWin32HandleEvents();
 #else
     assert(0);
 #endif // __linux__ _WIN32
+
     switch(sys_event)
     {
         case uEventNone:
@@ -69,11 +58,12 @@ uRefreshInputState()
     }
 }
 
+
 void
-uInitializeGameWindowsAndContext()
+uInitializeWindows()
 {
 #if __linux__
-    uX11CreateWindow();
+    uNixCreateWindow();
 #endif // __linux__
 
 #if _WIN32
@@ -81,42 +71,37 @@ uInitializeGameWindowsAndContext()
 #endif // _WIN32
 }
 
-void
-uInitializeRenderers()
-{
-    glError;
-    /* initRenderer_triangle(); */
-    /* initRenderer_test_bitmap(); */
-    /* initRenderer_texture_test(); */
-    glError;
-}
 
 static inline void
 uSwapBuffers()
 {
+
 #if __linux__
-    glXSwapBuffers(x11.display, x11.engine_window);
+    // [ cfarvin::TODO ] Weyland swap buffers
 #elif _WIN32
     SwapBuffers(win32.device_context);
 #endif
 }
 
+
 void
 uDestroyEngine()
 {
-    uDBGPrint("[ DESTROY ENGINE ]\n");
+    uDebugPrint("[ DESTROY ENGINE ]\n");
 #if __linux__
-    uX11Destroy();
+    uNixDestroyWindow();
 #endif // __linux__
     // [ cfarvin::TODO ] destroy eingine functionality for win32
 }
 
+
 int main(int argc, char** argv)
 {
+
 #if _WIN32
     win32.instance = GetModuleHandle(NULL);
     win32.command_show = 10;
-    win32.class_name  = "UE Window Class";
+    win32.class_name  = (const LPCSTR) "UE Window Class";
 #endif // _WIN32
 
 #if __uTESTS_ENABLED__
@@ -124,45 +109,33 @@ int main(int argc, char** argv)
     runAllTests();
 #endif
 
-    uDBGPrint("[ UNDERSTONE ENGINE ]\n");
-    if (argc)
+    if (argc && argv) {}
+
+    uInitializeWindows();
+
+    // [ cfarvin::TODO ] App name
+    char* validation_layers[] = { "VK_LAYER_KHRONOS_validation" };
+    uInitializeVulkan("", validation_layers, 1);
+
+    while(RUNNING)
     {
-        for (size_t ii = 0; ii < (size_t) argc; ii++)
-        {
-            uDBGPrint("\targ%zd: %s\n", ii, argv[ii]);
-        }
+        uRefreshInputState();
     }
 
-    uDetermineSystemEndianness();
-    /* uInitializeGameWindowsAndContext(); */
-    /* uInitializeRenderers(); */
-
-    /* /\* glClearColor(0.8f, 0.16f, 0.32f, 1.0f); *\/ // pinkish */
-    /* glClearColor(0.3f, 0.5f, 0.7f, 1.0f); */
-
-    /* while(RUNNING) */
-    /* { */
-    /*     glClear(GL_COLOR_BUFFER_BIT); */
-    /*     uRefreshInputState(); */
-
-    /*     /\* render_triangle(); *\/ */
-    /*     /\* render_test_bitmap(&test_bitmap_renderer); *\/ */
-    /*     /\* render_texture_test(&texture_test_renderer); *\/ */
-
-    /*     uSwapBuffers(); */
-    /*     glError; */
-    /* } */
-
+    uDestroyVulkan(&vulkan_info);
     uDestroyEngine();
-
-    uDBGPrint("[ SUCCESS ]\n");
+    uDebugPrint("[ SUCCESS ]\n");
     return 0;
 }
 
+
 /*
+  Priority:
+  - Abandon OpenGL in favor of Vulkan
+  - Abandon X11 in favor of Weyland
+
   In Progress:
   - Arena allocation
-  - Improve OGL system
   - Improve debug/error reporting system
   - Annotate all functions
 
