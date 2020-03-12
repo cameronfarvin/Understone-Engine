@@ -16,7 +16,23 @@
 #include <win/win_platform.h>
 #endif // _WIN32
 
+
+
+
 bool RUNNING = true;
+
+
+char* required_validation_layers[] =
+{
+    "VK_LAYER_KHRONOS_validation"
+};
+
+
+char* required_extensions[] =
+{
+    VK_EXT_DEBUG_UTILS_EXTENSION_NAME
+};
+
 
 void
 uHandleWindowResize()
@@ -41,20 +57,20 @@ uRefreshInputState()
 
     switch(sys_event)
     {
-        case uEventNone:
-        {
-            return;
-        }
-        case uEventResize:
-        {
-            uHandleWindowResize();
-            return;
-        }
-        case uEventClose:
-        {
-            RUNNING = false;
-            return;
-        }
+    case uEventNone:
+    {
+        return;
+    }
+    case uEventResize:
+    {
+        uHandleWindowResize();
+        return;
+    }
+    case uEventClose:
+    {
+        RUNNING = false;
+        return;
+    }
     }
 }
 
@@ -114,8 +130,11 @@ int main(int argc, char** argv)
     uInitializeWindows();
 
     // [ cfarvin::TODO ] App name
-    char* validation_layers[] = { "VK_LAYER_KHRONOS_validation" };
-    uInitializeVulkan("", validation_layers, 1);
+    uInitializeVulkan("Understone",
+                      required_validation_layers,
+                      sizeof(required_validation_layers)/sizeof(char*),
+                      required_extensions,
+                      sizeof(required_extensions)/sizeof(char*));
 
     while(RUNNING)
     {

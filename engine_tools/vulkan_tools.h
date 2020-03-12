@@ -1,6 +1,10 @@
 #ifndef __UE_VULKAN_TOOLS_H__
 #define __UE_VULKAN_TOOLS_H__
 
+#ifndef __UE_VK_VERBOSE__
+#define __UE_VK_VERBOSE__ 1
+#endif // __UE_VK_VERBOSE__
+
 #include <vulkan/vulkan.h>
 #include <engine_tools/memory_tools.h>
 #include <data_structures/data_structures.h>
@@ -9,7 +13,9 @@
 
 typedef struct
 {
-    VkInstance instance;
+    const VkInstance   instance;
+    const char** const active_extensions;
+
 } uVulkanInfo;
 uVulkanInfo vulkan_info;
 
@@ -55,6 +61,14 @@ uQueryVulkanLayers(_mut_ s8**                  _mut_       restrict layer_names,
 
 
     // Set Layer Names
+//
+#if __UE_VK_VERBOSE__
+//
+    puts("[ vulkan ] Searching for validation layers...");
+//
+#endif // __UE_VK_VERBOSE__
+//
+
     u32 num_added_layers = 0;
     layer_names = (s8**)malloc(num_available_layers * sizeof(s8**));
     for (u8 available_layer_idx = 0;
@@ -65,6 +79,15 @@ uQueryVulkanLayers(_mut_ s8**                  _mut_       restrict layer_names,
              user_layer_idx < num_user_layers;
              user_layer_idx++)
         {
+//
+#if __UE_VK_VERBOSE__
+//
+            printf("[ vulkan ]\tLayer found: %s\n", layer_properties[available_layer_idx].layerName);
+            fflush(stdout);
+//
+#endif // __UE_VK_VERBOSE__
+//
+
             if (strcmp((const char*)user_validation_layers[user_layer_idx],
                        (const char*)layer_properties[available_layer_idx].layerName) == 0)
             {
@@ -82,9 +105,11 @@ uQueryVulkanLayers(_mut_ s8**                  _mut_       restrict layer_names,
 
 
 __UE_internal__ __UE_call__ void
-uQueryVulkanExtensions(_mut_ s8**                   _mut_ restrict extension_names,
-                       _mut_ VkExtensionProperties* _mut_ restrict extension_properties,
-                       _mut_ VkInstanceCreateInfo*  const restrict instance_create_info)
+uQueryVulkanExtensions(_mut_ s8**                   _mut_       restrict extension_names,
+                       _mut_ VkExtensionProperties* _mut_       restrict extension_properties,
+                       _mut_ VkInstanceCreateInfo*  const       restrict instance_create_info,
+                       const s8**                   const const restrict user_extensions,
+                       const u16                                         num_user_extensions)
 {
     uAssertMsg_v(instance_create_info, "[ vulkan ] Null InstanceCreateInfo ptr provided.\n");
     uAssertMsg_v((extension_names == NULL),
@@ -110,9 +135,24 @@ uQueryVulkanExtensions(_mut_ s8**                   _mut_ restrict extension_nam
 
 
     // Set Extension Names
+//
+#if __UE_VK_VERBOSE__
+//
+    puts("[ vulkan ] Searching for extensions...");
+//
+#endif // __UE_VK_VERBOSE__
+//
     extension_names = (s8**)malloc(instance_create_info->enabledExtensionCount * sizeof(s8**));
     for (u8 ext_idx = 0; ext_idx < instance_create_info->enabledExtensionCount; ext_idx++)
     {
+//
+#if __UE_VK_VERBOSE__
+//
+            printf("[ vulkan ]\tExtension found: %s\n", extension_properties[ext_idx].extensionName);
+            fflush(stdout);
+//
+#endif // __UE_VK_VERBOSE__
+//
         extension_names[ext_idx] = (s8*)extension_properties[ext_idx].extensionName;
     }
     instance_create_info->ppEnabledExtensionNames = (const char**)extension_names;
@@ -122,8 +162,12 @@ uQueryVulkanExtensions(_mut_ s8**                   _mut_ restrict extension_nam
 __UE_internal__ __UE_call__ void
 uCreateVulkanInstance(const VkApplicationInfo* const       restrict application_info,
                       const s8**               const const restrict user_validation_layers,
-                      const u16 num_user_layers)
+                      const u16                                     num_user_layers,
+                      const s8**               const const restrict user_extensions,
+                      const u16                                     num_user_extensions)
+
 {
+    // Note (error checking): It is legal to request no required validation layers and no requried extensions.
     uAssertMsg_v(application_info, "[ vulkan ] Null application info ptr provided.\n");
     VkExtensionProperties* extension_properties = NULL;
     VkLayerProperties*     layer_properties     = NULL;
@@ -135,19 +179,20 @@ uCreateVulkanInstance(const VkApplicationInfo* const       restrict application_
     VkInstanceCreateInfo instance_create_info = { 0 };
     uQueryVulkanExtensions(extension_names,
                            extension_properties,
-                           &instance_create_info);
+                           &instance_create_info,
+                           user_extensions,
+                           num_user_extensions);
     uQueryVulkanLayers(layer_names,
                        layer_properties,
                        &instance_create_info,
                        user_validation_layers,
                        num_user_layers);
 
-
     instance_create_info.sType                = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_create_info.pApplicationInfo     = application_info;
     success = vkCreateInstance(&instance_create_info,
                                NULL,
-                               &vulkan_info.instance);
+                               &(VkInstance)vulkan_info.instance);
     uAssertMsg_v((success == VK_SUCCESS), "[ vulkan ] Unable to create vulkan instance.\n");
 
     if (extension_names)
@@ -181,12 +226,20 @@ uCreateVulkanApplicationInfo(const s8*                const restrict application
 __UE_internal__ __UE_call__ void
 uInitializeVulkan(const s8*  const       restrict application_name,
                   const s8** const const restrict validation_layers,
-                  const u16                       num_layers)
+                  const u16                       num_layers,
+                  const s8** const const restrict extensions,
+                  const u16                       num_extensions)
 {
+    // Note (error checking): It is legal to request no required validation layers and no requried extensions.
+    uAssertMsg_v(application_name,  "[ vulkan ] Null application name ptr provided.\n");
     VkApplicationInfo application_info = { 0 };
 
     uCreateVulkanApplicationInfo(application_name, &application_info);
-    uCreateVulkanInstance(&application_info, validation_layers, num_layers);
+    uCreateVulkanInstance(&application_info,
+                          validation_layers,
+                          num_layers,
+                          extensions,
+                          num_extensions);
 }
 
 
