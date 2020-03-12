@@ -18,15 +18,17 @@
 
 
 
-
+//
+// Global Members
+//
 bool RUNNING = true;
 
+uVulkanInfo main_vulkan;
 
 char* required_validation_layers[] =
 {
     "VK_LAYER_KHRONOS_validation"
 };
-
 
 char* required_extensions[] =
 {
@@ -130,7 +132,8 @@ int main(int argc, char** argv)
     uInitializeWindows();
 
     // [ cfarvin::TODO ] App name
-    uInitializeVulkan("Understone",
+    uInitializeVulkan(&main_vulkan,
+                      "Understone",
                       required_validation_layers,
                       sizeof(required_validation_layers)/sizeof(char*),
                       required_extensions,
@@ -141,7 +144,7 @@ int main(int argc, char** argv)
         uRefreshInputState();
     }
 
-    uDestroyVulkan(&vulkan_info);
+    uDestroyVulkan(&main_vulkan);
     uDestroyEngine();
     uDebugPrint("[ SUCCESS ]\n");
     return 0;
