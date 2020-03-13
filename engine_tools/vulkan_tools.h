@@ -32,9 +32,9 @@ typedef struct
     const VkInstance instance;
 } uVulkanInfo;
 
-VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger       = { 0 };
-VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
-VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger_info  = { 0 };
+__UE_internal__ VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger       = { 0 };
+__UE_internal__ VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
+__UE_internal__ VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger_info  = { 0 };
 
 
 // Note: no function/argument decorations to conform w/ Vulkan spec.
@@ -91,18 +91,18 @@ uCreateVulkanDebugMessenger(const uVulkanInfo* const restrict v_info,
     uAssertMsg_v(debug_message_create_info,
                  "[ vulkan ] Null VkDebugUtilsMessengerCreateInfoEXT ptr provided.\n");
 
-    PFN_vkCreateDebugUtilsMessengerEXT pvkCreateDebugUtilsMessengerEXT =
+    PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT =
         (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(v_info->instance,
                                                                   "vkCreateDebugUtilsMessengerEXT");
 
-    if (pvkCreateDebugUtilsMessengerEXT)
+    if (vkCreateDebugUtilsMessengerEXT)
     {
         uCreateVulkanDebugMessengerInfo((VkDebugUtilsMessengerCreateInfoEXT*)debug_message_create_info);
         VkResult success =
-            pvkCreateDebugUtilsMessengerEXT(v_info->instance,
-                                            (VkDebugUtilsMessengerCreateInfoEXT*)debug_message_create_info,
-                                            NULL,
-                                            (VkDebugUtilsMessengerEXT*)&debug_messenger);
+            vkCreateDebugUtilsMessengerEXT(v_info->instance,
+                                           (VkDebugUtilsMessengerCreateInfoEXT*)debug_message_create_info,
+                                           NULL,
+                                           (VkDebugUtilsMessengerEXT*)&debug_messenger);
         uAssertMsg_v(((success == VK_SUCCESS) && debug_messenger),
                      "[ vulkan ] Failed to create debug messenger callback.\n");
     }
@@ -277,6 +277,10 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
                                 (VkDebugUtilsMessengerCreateInfoEXT*)&vulkan_main_debug_messenger_info,
                                 (VkDebugUtilsMessengerEXT*)&vulkan_main_debug_messenger);
 
+    //
+    // [ cfarvin::TODO ] [ cfarvin::FINDME ] Pointer degradation means these are always null, which
+    //                                       means this is a memory leak.
+    //
     if (extension_names)
     {
         free(extension_names);
@@ -335,15 +339,17 @@ uDestroyVulkan(const uVulkanInfo* const restrict v_info)
 
     if (v_info && v_info->instance)
     {
-        PFN_vkDestroyDebugUtilsMessengerEXT pvkDestroyDebugUtilsMessengerEXT =
+        PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT =
             (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(v_info->instance,
                                                                        "vkDestroyDebugUtilsMessengerEXT");
 
-        uAssertMsg_v(pvkDestroyDebugUtilsMessengerEXT,
-                     "[ vulkan ] Unable to acquire ptr to function: pvkDestroyDebugUtilsMessengerEXT().\n");
-        if (pvkDestroyDebugUtilsMessengerEXT)
+        uAssertMsg_v(vkDestroyDebugUtilsMessengerEXT,
+                     "[ vulkan ] Unable to acquire ptr to function: vkDestroyDebugUtilsMessengerEXT().\n");
+        if (vkDestroyDebugUtilsMessengerEXT)
         {
-            pvkDestroyDebugUtilsMessengerEXT(v_info->instance, vulkan_main_debug_messenger, NULL);
+            vkDestroyDebugUtilsMessengerEXT(v_info->instance,
+                                            vulkan_main_debug_messenger,
+                                            NULL);
         }
     }
 

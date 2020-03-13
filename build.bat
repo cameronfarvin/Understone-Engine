@@ -73,6 +73,6 @@ xcopy /y engine.exe ..\ >null
 popd >null
 
 IF %ERRORLEVEL% NEQ 0 GOTO :exit
-engine.exe
+rem engine.exe
 
 :exit
