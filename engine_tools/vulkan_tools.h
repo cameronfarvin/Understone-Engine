@@ -16,10 +16,10 @@ char _message_buffer[MAX_VKVERBOSE_LEN];
              "[ vulkan ] %s",                                   \
              _message_buffer);                                  \
     fputs(_vkverbose_buffer, stdout);                           \
-    fflush(stdout)
+    fflush(stdout);
 #else
 #define uVkVerbose(...) /* uVKVerbose() REMOVED */
-#endif
+#endif // __UE_VK_VERBOSE__
 
 #include <vulkan/vulkan.h>
 #include <engine_tools/memory_tools.h>
@@ -29,11 +29,12 @@ char _message_buffer[MAX_VKVERBOSE_LEN];
 
 typedef struct
 {
-    const VkInstance               instance;
-    const VkDebugUtilsMessengerEXT debug_messenger;
+    const VkInstance instance;
 } uVulkanInfo;
-VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger;
-VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger;
+
+VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger       = { 0 };
+VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
+VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger_info  = { 0 };
 
 
 // Note: no function/argument decorations to conform w/ Vulkan spec.
@@ -49,7 +50,7 @@ uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bi
     if (message_severity_bits >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ||
         message_type_bits     >= VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
     {
-        printf("[ vulkan ] [ validation ] %s", callback_data->pMessage);
+        printf("[ vulkan ] [ validation ] %s\n", callback_data->pMessage);
         fflush(stdout);
     }
 
@@ -58,15 +59,10 @@ uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bi
 
 
 __UE_internal__ __UE_call__ void
-uCreateVulkanDebugMessengerInfo(const uVulkanInfo*                        const restrict v_info,
-                                _mut_ VkDebugUtilsMessengerCreateInfoEXT* const restrict debug_message_create_info)
+uCreateVulkanDebugMessengerInfo(_mut_ VkDebugUtilsMessengerCreateInfoEXT* const restrict debug_message_create_info)
 {
-    uAssertMsg_v(v_info, "[ vulkan ] Null uVulkanInfo ptr provided.\n");
-    uAssertMsg_v(v_info->instance,
-                 "[ vulkan ] Null uVulkanInfo->instance ptr provided.\n");
     uAssertMsg_v(debug_message_create_info,
                  "[ vulkan ] Null VkDebugUtilsMessengerCreateInfoEXT ptr provided.\n");
-
 
     debug_message_create_info->messageSeverity =
         VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
@@ -86,7 +82,8 @@ uCreateVulkanDebugMessengerInfo(const uVulkanInfo*                        const 
 
 __UE_internal__ __UE_call__ void
 uCreateVulkanDebugMessenger(const uVulkanInfo* const restrict v_info,
-                            _mut_ VkDebugUtilsMessengerCreateInfoEXT* const restrict debug_message_create_info)
+                            _mut_ VkDebugUtilsMessengerCreateInfoEXT* const restrict debug_message_create_info,
+                            _mut_ VkDebugUtilsMessengerEXT*           const restrict debug_messenger)
 {
     uAssertMsg_v(v_info, "[ vulkan ] Null uVulkanInfo ptr provided.\n");
     uAssertMsg_v(v_info->instance,
@@ -94,20 +91,19 @@ uCreateVulkanDebugMessenger(const uVulkanInfo* const restrict v_info,
     uAssertMsg_v(debug_message_create_info,
                  "[ vulkan ] Null VkDebugUtilsMessengerCreateInfoEXT ptr provided.\n");
 
-
-    uCreateVulkanDebugMessengerInfo(v_info, debug_message_create_info);
     PFN_vkCreateDebugUtilsMessengerEXT pvkCreateDebugUtilsMessengerEXT =
         (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(v_info->instance,
                                                                   "vkCreateDebugUtilsMessengerEXT");
 
     if (pvkCreateDebugUtilsMessengerEXT)
     {
+        uCreateVulkanDebugMessengerInfo((VkDebugUtilsMessengerCreateInfoEXT*)debug_message_create_info);
         VkResult success =
             pvkCreateDebugUtilsMessengerEXT(v_info->instance,
-                                            (VkDebugUtilsMessengerCreateInfoEXT*)&debug_message_create_info,
+                                            (VkDebugUtilsMessengerCreateInfoEXT*)debug_message_create_info,
                                             NULL,
-                                            (VkDebugUtilsMessengerEXT*)debug_message_create_info);
-        uAssertMsg_v(((success == VK_SUCCESS) && v_info->debug_messenger),
+                                            (VkDebugUtilsMessengerEXT*)&debug_messenger);
+        uAssertMsg_v(((success == VK_SUCCESS) && debug_messenger),
                      "[ vulkan ] Failed to create debug messenger callback.\n");
     }
 }
@@ -254,6 +250,7 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
     s8**                   extension_names      = NULL;
     s8**                   layer_names          = NULL;
 
+    uCreateVulkanDebugMessengerInfo((VkDebugUtilsMessengerCreateInfoEXT*)&vulkan_setup_debug_messenger_info);
 
     VkResult success = VK_SUCCESS;
     VkInstanceCreateInfo instance_create_info = { 0 };
@@ -268,13 +265,17 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
                        user_validation_layers,
                        num_user_layers);
 
-    instance_create_info.sType                = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instance_create_info.pApplicationInfo     = application_info;
-    instance_create_info.pNext                = (VkDebugUtilsMessengerCreateInfoEXT*)&vulkan_setup_debug_messenger;
+    instance_create_info.sType            = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instance_create_info.pApplicationInfo = application_info;
+    instance_create_info.pNext            = &vulkan_setup_debug_messenger_info;
     success = vkCreateInstance(&instance_create_info,
                                NULL,
                                (VkInstance*)&v_info->instance);
     uAssertMsg_v((success == VK_SUCCESS), "[ vulkan ] Unable to create vulkan instance.\n");
+
+    uCreateVulkanDebugMessenger(v_info,
+                                (VkDebugUtilsMessengerCreateInfoEXT*)&vulkan_main_debug_messenger_info,
+                                (VkDebugUtilsMessengerEXT*)&vulkan_main_debug_messenger);
 
     if (extension_names)
     {
@@ -323,7 +324,6 @@ uInitializeVulkan(const uVulkanInfo* const       restrict v_info,
                           num_layers,
                           extensions,
                           num_extensions);
-    uCreateVulkanDebugMessenger(v_info, &vulkan_main_debug_messenger);
 }
 
 
@@ -333,14 +333,17 @@ uDestroyVulkan(const uVulkanInfo* const restrict v_info)
     uAssertMsg_v(v_info,           "Null uVulkanInfo ptr provided.\n");
     uAssertMsg_v(v_info->instance, "Null instance ptr provided.\n");
 
-    if (v_info && v_info->instance && v_info->debug_messenger)
+    if (v_info && v_info->instance)
     {
         PFN_vkDestroyDebugUtilsMessengerEXT pvkDestroyDebugUtilsMessengerEXT =
-        (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(v_info->instance,
-                                                                   "vkDestroyDebugUtilsMessengerEXT");
+            (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(v_info->instance,
+                                                                       "vkDestroyDebugUtilsMessengerEXT");
+
+        uAssertMsg_v(pvkDestroyDebugUtilsMessengerEXT,
+                     "[ vulkan ] Unable to acquire ptr to function: pvkDestroyDebugUtilsMessengerEXT().\n");
         if (pvkDestroyDebugUtilsMessengerEXT)
         {
-            pvkDestroyDebugUtilsMessengerEXT(v_info->instance, v_info->debug_messenger, NULL);
+            pvkDestroyDebugUtilsMessengerEXT(v_info->instance, vulkan_main_debug_messenger, NULL);
         }
     }
 

@@ -17,12 +17,12 @@ uSystemEvent win32_sys_event;
 POINT win32_mouse_coords;
 typedef struct
 {
-    HINSTANCE instance;
-    int       command_show;
-    HWND      window;
-    HDC       device_context;
-    HGLRC     gl_context;
-    LPCSTR   class_name;
+    HINSTANCE   instance;
+    int         command_show;
+    HWND        window;
+    HDC         device_context;
+    HGLRC       gl_context;
+    const char* class_name;
 } uWIN32_INFO;
 uWIN32_INFO win32;
 
@@ -148,13 +148,13 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 void
 uWin32CreateWindow()
 {
-    win32.class_name = (const LPCSTR) "UE Window Class";
+    win32.class_name = "UE Window Class";
 
     WNDCLASSEX window_class = { 0 };
     window_class.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     window_class.lpfnWndProc = uEngineWindowProc;
     window_class.hInstance = win32.instance;
-    window_class.lpszClassName = (const LPCSTR) win32.class_name;
+    window_class.lpszClassName = win32.class_name;
     window_class.cbSize = sizeof(WNDCLASSEX);
     /* window_class.hIcon = NULL; */
     /* window_class.hCursor = NULL; */
@@ -169,7 +169,7 @@ uWin32CreateWindow()
 
     win32.window = CreateWindowEx(0,
                                   window_class.lpszClassName,
-                                  (const LPCSTR)"UE",
+                                  "UE",
                                   WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                                   CW_USEDEFAULT,
                                   CW_USEDEFAULT,
