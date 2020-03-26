@@ -112,14 +112,14 @@ uCreateVulkanDebugMessenger(const uVulkanInfo* const restrict v_info,
 
 
 __UE_internal__ __UE_call__ void
-uQueryVulkanLayers(_mut_ s8**                  _mut_       restrict layer_names,
+uQueryVulkanLayers(_mut_ s8***                 _mut_ const restrict layer_names,
                    _mut_ VkLayerProperties*    _mut_       restrict layer_properties,
                    _mut_ VkInstanceCreateInfo* const       restrict instance_create_info,
                    const s8**                  const const restrict user_validation_layers,
                    const u32 num_user_layers)
 {
     uAssertMsg_v(instance_create_info, "[ vulkan ] Null InstanceCreateInfo ptr provided.\n");
-    uAssertMsg_v((layer_names == NULL),
+    uAssertMsg_v((*layer_names == NULL),
                  "[ vulkan ] Layer names ptr ptr must be null; will be overwritten.\n");
     uAssertMsg_v((layer_properties == NULL),
                  "[ vulkan ] VkLayerProperties ptr must be null; will be overwritten.\n");
@@ -154,12 +154,12 @@ uQueryVulkanLayers(_mut_ s8**                  _mut_       restrict layer_names,
     // Set Layer Names
     uVkVerbose("Searching for validation layers...\n");
     u32 num_added_layers = 0;
-    layer_names = (s8**)malloc(num_available_layers * sizeof(s8**));
-    for (u8 available_layer_idx = 0;
+    *layer_names = (s8**)malloc(num_available_layers * sizeof(s8**));
+    for (u32 available_layer_idx = 0;
          available_layer_idx < num_available_layers;
          available_layer_idx++)
     {
-        for (u8 user_layer_idx = 0;
+        for (u32 user_layer_idx = 0;
              user_layer_idx < num_user_layers;
              user_layer_idx++)
         {
@@ -167,7 +167,7 @@ uQueryVulkanLayers(_mut_ s8**                  _mut_       restrict layer_names,
             if (strcmp((const char*)user_validation_layers[user_layer_idx],
                        (const char*)layer_properties[available_layer_idx].layerName) == 0)
             {
-                layer_names[num_added_layers] = (s8*)layer_properties[available_layer_idx].layerName;
+                (*layer_names)[num_added_layers] = (s8*)layer_properties[available_layer_idx].layerName;
                 num_added_layers++;
             }
         }
@@ -175,13 +175,13 @@ uQueryVulkanLayers(_mut_ s8**                  _mut_       restrict layer_names,
 
     uAssertMsg_v((num_added_layers == num_user_layers), "[ vulkan ] Unable to load all requested layers.\n");
     instance_create_info->enabledLayerCount   = num_added_layers;
-    instance_create_info->ppEnabledLayerNames = (const char**)layer_names;
+    instance_create_info->ppEnabledLayerNames = *layer_names;
 }
 
 
 
 __UE_internal__ __UE_call__ void
-uQueryVulkanExtensions(_mut_ s8**                   _mut_       restrict extension_names,
+uQueryVulkanExtensions(_mut_ s8***                  _mut_       restrict extension_names,
                        _mut_ VkExtensionProperties* _mut_       restrict extension_properties,
                        _mut_ VkInstanceCreateInfo*  const       restrict instance_create_info,
                        const s8**                   const const restrict user_extensions,
@@ -189,7 +189,7 @@ uQueryVulkanExtensions(_mut_ s8**                   _mut_       restrict extensi
 {
     // Note (error checking): It is legal to request no required validation layers and no requried extensions.
     uAssertMsg_v(instance_create_info, "[ vulkan ] Null InstanceCreateInfo ptr provided.\n");
-    uAssertMsg_v((extension_names == NULL),
+    uAssertMsg_v((*extension_names == NULL),
                  "[ vulkan ] Extension names ptr ptr must be null; will be overwritten.\n");
     uAssertMsg_v((extension_properties == NULL),
                  "[ vulkan ] VkExtensionProperties ptr must be null; will be overwritten.\n");
@@ -214,25 +214,26 @@ uQueryVulkanExtensions(_mut_ s8**                   _mut_       restrict extensi
     // Set Extension Names
     uVkVerbose("Searching for extensions...\n");
     u32 num_added_extensions = 0;
-    extension_names = (s8**)malloc(instance_create_info->enabledExtensionCount * sizeof(s8**));
-    for (u8 ext_idx = 0; ext_idx < instance_create_info->enabledExtensionCount; ext_idx++)
+    *extension_names = (s8**)malloc(instance_create_info->enabledExtensionCount * sizeof(s8**));
+    for (u32 ext_idx = 0; ext_idx < instance_create_info->enabledExtensionCount; ext_idx++)
     {
         uVkVerbose("\tExtension found: %s\n", extension_properties[ext_idx].extensionName);
-        for (u8 user_ext_idx = 0;
+        for (u32 user_ext_idx = 0;
              user_ext_idx < num_user_extensions;
              user_ext_idx++)
         {
             if (strcmp((const char*)user_extensions[user_ext_idx],
                        (const char*)extension_properties[ext_idx].extensionName) == 0)
             {
-                extension_names[num_added_extensions] = (s8*)extension_properties[ext_idx].extensionName;
+                (*extension_names)[num_added_extensions] = (s8*)extension_properties[ext_idx].extensionName;
                 num_added_extensions++;
             }
         }
     }
+
     uAssertMsg_v((num_added_extensions == num_user_extensions), "[ vulkan ] Unable to load all requested extensions.\n");
     instance_create_info->enabledExtensionCount   = num_added_extensions;
-    instance_create_info->ppEnabledExtensionNames = (const char**)extension_names;
+    instance_create_info->ppEnabledExtensionNames = *extension_names;
 }
 
 
@@ -257,13 +258,13 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
     VkResult success = VK_SUCCESS;
     VkInstanceCreateInfo instance_create_info = { 0 };
 
-    uQueryVulkanExtensions(extension_names,
+    uQueryVulkanExtensions(&extension_names,
                            extension_properties,
                            &instance_create_info,
                            user_extensions,
                            num_user_extensions);
 
-    uQueryVulkanLayers(layer_names,
+    uQueryVulkanLayers(&layer_names,
                        layer_properties,
                        &instance_create_info,
                        user_validation_layers,
@@ -281,18 +282,14 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
                                 (VkDebugUtilsMessengerCreateInfoEXT*)&vulkan_main_debug_messenger_info,
                                 (VkDebugUtilsMessengerEXT*)&vulkan_main_debug_messenger);
 
-    //
-    // [ cfarvin::TODO ] [ cfarvin::FINDME ] Pointer degradation means these are always null, which
-    //                                       means this is a memory leak.
-    //
     if (extension_names)
     {
         free(extension_names);
     }
 
-    if (extension_properties)
+    if (layer_names)
     {
-        free(extension_properties);
+        free(layer_names);
     }
 
 }
