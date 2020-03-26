@@ -1,4 +1,4 @@
-// Set __uDEBUG_SYSTEM__ == 0 in debug_tools.h to disable system debugging functionality,
+// Set __uDEBUG_SYSTEM__ == 0 in debug_tools.h to disable system debugging functionality
 #include <engine_tools/debug_tools.h>
 #include <engine_tools/type_tools.h>
 #include <engine_tools/memory_tools.h>
