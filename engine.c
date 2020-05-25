@@ -1,4 +1,5 @@
-// Set __uDEBUG_SYSTEM__ == 0 in debug_tools.h to disable system debugging functionality
+// Set __uDEBUG_SYSTEM__ == 0 in debug_tools.h to disable system
+// debugging functionality
 #include <engine_tools/debug_tools.h>
 #include <engine_tools/type_tools.h>
 #include <engine_tools/memory_tools.h>
@@ -23,7 +24,7 @@
 //
 bool RUNNING = true;
 
-uVulkanInfo main_vulkan;
+uVulkanInfo main_vulkan = { 0 };
 
 char* required_validation_layers[] =
 {
@@ -40,7 +41,9 @@ void
 uHandleWindowResize()
 {
     uDebugPrint("TODO: Handle Window Resize\n");
-    uDebugPrint("viewport.width: %ld\nviewport.height: %ld\n", viewport.width, viewport.height);
+    uDebugPrint("viewport.width: %ld\nviewport.height: %ld\n",
+                viewport.width,
+                viewport.height);
 }
 
 // Query the mouse and keyboard state
