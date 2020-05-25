@@ -29,12 +29,62 @@ char _message_buffer[MAX_VKVERBOSE_LEN];
 
 typedef struct
 {
-    const VkInstance instance;
+    const VkInstance       instance;
+    const VkPhysicalDevice physical_device;
 } uVulkanInfo;
 
 VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger;
 VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger_info  = { 0 };
 VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
+
+
+__UE_internal__ __UE_call__ void
+uSelectVulkanPhysicalDevice(const VkPhysicalDevice** const const restrict physical_device_list,
+                            const VkPhysicalDevice*  _mut_       restrict return_device,
+                            const u32                                     num_physical_devices)
+{
+    uAssertMsg_v(physical_device_list,  "[ vulkan ] Null vulkan device list pointer provided.\n");
+    uAssertMsg_v(return_device == NULL, "[ vulkan ] Return device ptr must be NULL; will be overwritten\n");
+    uAssertMsg_v(num_physical_devices,  "[ vulkan ] A minimum of one physical device is required.\n");
+
+    // Use the first suitable device in the device list.
+    for (u32 device_idx = 0; device_idx < num_physical_devices; device_idx++)
+    {
+        VkPhysicalDeviceFeatures device_features;
+        vkGetPhysicalDeviceFeatures(*physical_device_list[device_idx],
+            &device_features);
+
+        VkPhysicalDeviceProperties device_properties;
+        vkGetPhysicalDeviceProperties(*physical_device_list[device_idx],
+            &device_properties);
+    }
+}
+
+
+__UE_internal__ __UE_call__ void
+uAcqurieVulkanPysicalDevice(const uVulkanInfo* const v_info)
+{
+    uAssertMsg_v(v_info, "[ vulkan ] Null vulkan info ptr provided.\n");
+
+    u32 num_physical_devices = 0;
+    vkEnumeratePhysicalDevices(v_info->instance, &num_physical_devices, NULL);
+
+    uAssertMsg_v(num_physical_devices, "[ vulkan ] No physical devices found.\n");
+    if (!num_physical_devices)
+    {
+        return;
+    }
+
+    VkPhysicalDevice* physical_device_list =
+        (VkPhysicalDevice*) malloc(num_physical_devices * sizeof(VkPhysicalDevice));
+    uAssertMsg_v(physical_device_list, "[ vulkan ] Unable to allocate physical device list.\n");
+
+    vkEnumeratePhysicalDevices(v_info->instance, &num_physical_devices, physical_device_list);
+    uVkVerbose("Found %d physical devices.\n", num_physical_devices);
+
+    VkPhysicalDevice* candidate_device = NULL;
+    uSelectVulkanPhysicalDevice(&physical_device_list, candidate_device, num_physical_devices);
+}
 
 
 // Note: no function/argument decorations to conform w/ Vulkan spec.
@@ -329,6 +379,8 @@ uInitializeVulkan(const uVulkanInfo* const       restrict v_info,
                           num_layers,
                           extensions,
                           num_extensions);
+
+    uAcqurieVulkanPysicalDevice(v_info);
 }
 
 

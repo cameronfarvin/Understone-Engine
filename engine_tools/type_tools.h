@@ -1,5 +1,5 @@
-#ifndef __UI_TYPE_TOOLS__
-#define __UI_TYPE_TOOLS__
+#ifndef __UE_TYPE_TOOLS__
+#define __UE_TYPE_TOOLS__
 
 #include <stdint.h>
 #include <stddef.h>
@@ -8,7 +8,6 @@
 
 // vppc = void pointer pointer const
 #define VPPC_STR_LITERAL(vppc) (vppc)
-
 
 
 //

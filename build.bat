@@ -13,13 +13,13 @@
 rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall" %APP_ARCH% >nul
 
 :: VS 2017 Professional Edition
-IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall" %APP_ARCH% >nul
+rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall" %APP_ARCH% >nul
 
 :: VS 2017 Enterprise Edition
 rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall" %APP_ARCH% >nul
 
 :: VS 2019 Community Edition
-rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %APP_ARCH% >nul
+IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %APP_ARCH% >nul
 
 :: VS 2019 Enterprise Edition
 rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" %APP_ARCH% >nul
@@ -58,7 +58,6 @@ cl %SCRIPT_DIR%\\%APP_NAME%.c /Oi /Qpar /Ot /W4 /WX /Ob2 /O2 /GL /MD /EHsc /nolo
 /I%cd%\..\tests ^
 /I%cd%\..\practice ^
 /I%VULKAN_SDK_PATH%\Include ^
-/Z7 /GL /GS /MD /EHsc /nologo ^
 /link /SUBSYSTEM:CONSOLE /NXCOMPAT /MACHINE:x64 /NODEFAULTLIB:MSVCRTD ^
 /LIBPATH:%VULKAN_SDK_PATH%\Lib\ ^
 OpenGL32.lib ^

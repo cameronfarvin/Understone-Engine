@@ -581,6 +581,19 @@ runMathsTests()
     XorShift32State = PrevXorState;
 }
 
+void
+runStringTests()
+{
+    puts("\tRunning uString tests...");
+
+    uString* str = uStringInit("Testing 1, 2, 3");
+    uStringVerify(str);
+    uAssertMsg_v(str->length == 15, "Failed uString->length test.");
+    uAssertMsg_v(str->bytes  == 16, "Failed uString->bytes test.");
+    uAssertMsg_v((str->data)[str->length] == '\0',
+                 "Failed null terminator position test.");
+    uStringDestroy(str);
+}
 
 void
 runAllTests()
@@ -590,6 +603,7 @@ runAllTests()
     runDynamicArrayTests();
     runMemoryArenaTests();
     runMathsTests();
+    runStringTests();
     puts("[ TESTING::SUCCESS ]");
     fflush(stdout);
 }
