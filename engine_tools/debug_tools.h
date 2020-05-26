@@ -31,20 +31,23 @@
 /*
  * Understone Error Reporting
  *
- * Error reporting:
- *    1. `uError_v` (Verbose): Print a formatted error with file
+ * Error reporting: (always on)
+ *    2. `uFatal` (Alaways verbose): Print a formatted error with file
+ *        and line information to stderr and exit the process with
+ *        code 666.
+ *    2. `uError_v` (Verbose): Print a formatted error with file
  *        and line information to stderr (does not halt).
- *    2. `uError`: Print a formatted error without file and line
+ *    3. `uError`: Print a formatted error without file and line
  *        information to stderr (does not halt).
  *
- * Debug printing:
+ * Debug printing: (debug only)
  *    1. `uDebugPrint_v` (Verbose): Print a formatted debug string
  *        with file and line information to stderr. (does not
  *        halt).
  *    2. `uDebugPrint`: Print a formatted debug string without
  *        file and line information to stderr. (does not halt).
  *
- * Debug assertions:
+ * Debug assertions: (debug only)
  *    1. `uAssert_v` (Verbose): If the condition is false,
  *        print a message with file and line information to
  *        stderr and exit the process with code 666.
@@ -56,10 +59,25 @@
  * `MAX_ERROR_LEN` macro set in the lines below.
  *
  */
-#if __UE_DEBUG__
-#define MAX_ERROR_LEN 256
+
+
+
+#define MAX_ERROR_LEN 512
 char _error_buffer[MAX_ERROR_LEN];
 char _message_buffer[MAX_ERROR_LEN];
+
+// uFatal()
+#define uFatal(...)                                             \
+    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);      \
+    snprintf(_error_buffer,                                     \
+             MAX_ERROR_LEN,                                     \
+             "[ fatal ] [ %s::%d ] %s\n",                       \
+             __FILE__,                                          \
+             __LINE__,                                          \
+             _message_buffer);                                  \
+    fputs(_error_buffer, stderr);                               \
+    fflush(stderr);                                             \
+    exit(666)
 
 // uError_v()
 #define uError_v(...)                                           \
@@ -83,6 +101,7 @@ char _message_buffer[MAX_ERROR_LEN];
     fputs(_error_buffer, stderr)
 
 
+#if __UE_DEBUG__
 // uDebugPrint_v()
 #define uDebugPrint_v(...)                                      \
     snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);      \

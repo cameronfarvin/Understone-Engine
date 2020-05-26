@@ -85,58 +85,22 @@ uRefreshInputState()
 
 
 void
-uInitializeWindows()
-{
-#if __linux__
-    uNixCreateWindow();
-#endif // __linux__
-
-#if _WIN32
-    uWin32CreateWindow();
-#endif // _WIN32
-}
-
-
-static inline void
-uSwapBuffers()
-{
-
-#if __linux__
-    // [ cfarvin::TODO ] Weyland swap buffers
-#elif _WIN32
-    SwapBuffers(win32.device_context);
-#endif
-}
-
-
-void
 uDestroyEngine()
 {
-    uDebugPrint("[ DESTROY ENGINE ]\n");
-#if __linux__
-    uNixDestroyWindow();
-#endif // __linux__
-    // [ cfarvin::TODO ] destroy eingine functionality for win32
+    // Note: Vulkan tears down platform surfaces/windows
+    uDestroyVulkan(&main_vulkan);
 }
 
 
 int main(int argc, char** argv)
 {
 
-#if _WIN32
-    win32.instance = GetModuleHandle(NULL);
-    win32.command_show = 10;
-    win32.class_name  = (const LPCSTR) "UE Window Class";
-#endif // _WIN32
-
+// See tests/tests.h to disable
 #if __uTESTS_ENABLED__
-    // See tests/tests.h to disable
     runAllTests();
 #endif
 
     if (argc && argv) {}
-
-    uInitializeWindows();
 
     // [ cfarvin::TODO ] App name
     uInitializeVulkan(&main_vulkan,
@@ -151,9 +115,7 @@ int main(int argc, char** argv)
         uRefreshInputState();
     }
 
-    uDestroyVulkan(&main_vulkan);
     uDestroyEngine();
-    uDebugPrint("[ SUCCESS ]\n");
     return 0;
 }
 

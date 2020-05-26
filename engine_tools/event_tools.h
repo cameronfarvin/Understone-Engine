@@ -14,6 +14,7 @@ typedef enum
     uEventResize,
 } uSystemEvent;
 
+
 // Center of the screen is (0, 0, 0)
 typedef struct
 {
@@ -21,6 +22,7 @@ typedef struct
     u16 y;
 } uMousePos;
 uMousePos  mouse_pos;
+
 
 int64_t input_state;
 #define uKEY_A             (1ULL << 0)
@@ -71,17 +73,20 @@ int64_t input_state;
 #define uMouse_left        (1ULL << 45)
 #define uMouse_middle      (1ULL << 46)
 
+
 __UE_internal__ __UE_inline__ void
 uSetInputPressed(const uint64_t key)
 {
     input_state |= key;
 }
 
+
 __UE_internal__ __UE_inline__ void
 uSetInputReleased(const uint64_t key)
 {
     input_state &= ~key;
 }
+
 
 __UE_internal__ __UE_inline__ uint64_t
 uGetInputPressed(const  uint64_t key)

@@ -8,13 +8,13 @@
 #if __UE_VK_VERBOSE__
 #define MAX_VKVERBOSE_LEN 256
 char _vkverbose_buffer[MAX_VKVERBOSE_LEN];
-char _message_buffer[MAX_VKVERBOSE_LEN];
+char _vkMessage_buffer[MAX_VKVERBOSE_LEN];
 #define uVkVerbose(...)                                         \
-    snprintf(_message_buffer, MAX_VKVERBOSE_LEN, __VA_ARGS__);  \
+    snprintf(_vkMessage_buffer, MAX_VKVERBOSE_LEN, __VA_ARGS__);  \
     snprintf(_vkverbose_buffer,                                 \
              MAX_VKVERBOSE_LEN,                                 \
              "[ vulkan ] %s",                                   \
-             _message_buffer);                                  \
+             _vkMessage_buffer);                                  \
     fputs(_vkverbose_buffer, stdout);                           \
     fflush(stdout);
 #else
@@ -31,7 +31,6 @@ char _message_buffer[MAX_VKVERBOSE_LEN];
 #include <data_structures/data_structures.h>
 
 
-
 typedef struct
 {
     u32 graphics_index;
@@ -46,6 +45,11 @@ typedef struct
     const VkQueue          graphics_queue;
     const VkSurfaceKHR     surface;
 } uVulkanInfo;
+
+
+// Forward decls
+__UE_internal__ __UE_call__ void
+uDestroyVulkan(const uVulkanInfo* const restrict v_info);
 
 
 VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger;
@@ -85,11 +89,12 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*               const restrict v_inf
                                                       NULL,
                                                       (VkDevice*)&v_info->logical_device);
 
-    uAssertMsg_v(device_creation_success == VK_SUCCESS, "[ vulkan ] Unable to create logical device.\n");
+    const char* device_create_fail_msg = "[ vulkan ] Unable to create logical device.\n";
+    uAssertMsg_v(device_creation_success == VK_SUCCESS, device_create_fail_msg);
     if (device_creation_success != VK_SUCCESS)
     {
-        VkDevice* non_const_logical_device = (VkDevice*) &(v_info->logical_device);
-        *non_const_logical_device = NULL;
+        uDestroyVulkan(v_info);
+        uFatal(device_create_fail_msg);
     }
 
     // Get queue handles
@@ -297,49 +302,68 @@ uCreateVulkanDebugMessenger(const uVulkanInfo*                        const rest
     {
         uCreateVulkanDebugMessengerInfo((VkDebugUtilsMessengerCreateInfoEXT*)debug_message_create_info);
 
+        const char* debug_create_fail_msg = "[ vulkan ] Failed to create debug messenger callback.\n";
         VkResult success =
             vkCreateDebugUtilsMessengerEXT(v_info->instance,
                                            debug_message_create_info,
                                            NULL,
                                            debug_messenger);
-        uAssertMsg_v(((success == VK_SUCCESS) && debug_messenger),
-                     "[ vulkan ] Failed to create debug messenger callback.\n");
+        uAssertMsg_v(((success == VK_SUCCESS) && debug_messenger), debug_create_fail_msg);
+        if (success != VK_SUCCESS)
+        {
+            uDestroyVulkan(v_info);
+            uFatal(debug_create_fail_msg);
+        }
     }
 }
 
 
 #if _WIN32
 __UE_internal__ __UE_call__ void
-uCreateWin32Surface(const uVulkanInfo*                 const restrict v_info,
-                    _mut_ VkWin32SurfaceCreateInfoKHR* const restrict win32_surface)
+uCreateWin32Surface(_mut_ uVulkanInfo* const restrict v_info)
 {
     uAssertMsg_v(v_info,           "[ vulkan ] Null uVulkanInfo ptr provided.\n");
     uAssertMsg_v(v_info->instance, "[ vulkan ] Null uVulkanInfo->instance ptr provided.\n");
-    uAssertMsg_v(win32_surface,    "[ vulkan ] Null win32_surface ptr provided.\n");
 
+    uWin32Info* win32_info = uWin32CreateWindow("Understone Engine");
+    uAssertMsg_v(win32_info, "[ vulkan ] [ win32 surface ] Unable to create Win32 surface.\n");
+    if (!win32_info)
+    {
+        return;
+    }
 
-    win32_surface->sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    VkWin32SurfaceCreateInfoKHR win32_surface_info = { 0 };
+    win32_surface_info.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    win32_surface_info.hwnd      = win32_info->window;
+    win32_surface_info.hinstance = GetModuleHandle(NULL);
 
-    // [ cfarvin::TODO ]
-    // The win32.window handle is likely not working. Check in on this.
-    win32_surface->hwnd      = win32.window;
-    win32_surface->hinstance = GetModuleHandle(NULL);
+    VkResult win32_surface_result = vkCreateWin32SurfaceKHR(v_info->instance,
+                                                            &win32_surface_info,
+                                                            NULL,
+                                                            (VkSurfaceKHR*)&v_info->surface);
+
+    if (win32_surface_result != VK_SUCCESS)
+    {
+        uDestroyVulkan(v_info);
+        uFatal("[ vulkan ] Failed to create Win32Surface.\n");
+    }
+
+    // [ cfarvin::REMOVE ] [ cfarvin::NOTE ]
+    // May want to revisit deleing should this info be necessary.
+    uDestroyWin32(win32_info);
 }
 #endif // _WIN32
 
 
 __UE_internal__ __UE_call__ void
-uCreateVulkanSurface(const uVulkanInfo* const restrict v_info)
+uCreateVulkanSurface(_mut_ uVulkanInfo* const restrict v_info)
 {
     uAssertMsg_v(v_info,           "[ vulkan ] Null uVulkanInfo ptr provided.\n");
     uAssertMsg_v(v_info->instance, "[ vulkan ] Null uVulkanInfo->instance ptr provided.\n");
 
-
 #if _WIN32
-    VkWin32SurfaceCreateInfoKHR win32_surface = { 0 };
-    uCreateWin32Surface(v_info, &win32_surface);
+    uCreateWin32Surface(v_info);
 #endif // _WIN32
-
 }
 
 
@@ -364,13 +388,19 @@ uQueryVulkanLayers(_mut_ s8***                 _mut_ const restrict layer_names,
     // Query Layer Count
     VkResult success = VK_SUCCESS;
     size_t num_available_layers = 0;
-    success = vkEnumerateInstanceLayerProperties(&(u32)num_available_layers,
-                                                 NULL);
-    uAssertMsg_v((success == VK_SUCCESS), "[ vulkan ] Unable to enumerate layers.\n");
+    success = vkEnumerateInstanceLayerProperties(&((u32)num_available_layers), NULL);
+
+    const char* enumerate_layers_fail_msg = "[ vulkan ] Unable to enumerate layers.\n";
+    uAssertMsg_v((success == VK_SUCCESS), enumerate_layers_fail_msg);
     uAssertMsg_v((num_available_layers >= num_user_layers),
                  "[ vulkan ] Number of requested validation layers [ %d ] exceeds total avaialbe count [ %zd ].\n",
                  num_user_layers,
                  num_available_layers);
+
+    if (success != VK_SUCCESS)
+    {
+        uFatal(enumerate_layers_fail_msg);
+    }
 
 
     layer_properties =
@@ -379,7 +409,11 @@ uQueryVulkanLayers(_mut_ s8***                 _mut_ const restrict layer_names,
     // Query Layer Names
     success = vkEnumerateInstanceLayerProperties(&(u32)num_available_layers,
                                                  layer_properties);
-    uAssertMsg_v((success == VK_SUCCESS), "[ vulkan ] Unable to enumerate layers.\n");
+    uAssertMsg_v((success == VK_SUCCESS), enumerate_layers_fail_msg);
+    if (success != VK_SUCCESS)
+    {
+        uFatal(enumerate_layers_fail_msg);
+    }
 
 
     // Set Layer Names
@@ -404,7 +438,13 @@ uQueryVulkanLayers(_mut_ s8***                 _mut_ const restrict layer_names,
         }
     }
 
-    uAssertMsg_v((num_added_layers == num_user_layers), "[ vulkan ] Unable to load all requested layers.\n");
+    const char* layer_load_fail_msg = "[ vulkan ] Unable to load all requested layers.\n";
+    uAssertMsg_v((num_added_layers == num_user_layers), layer_load_fail_msg);
+    if (num_added_layers != num_user_layers)
+    {
+        uFatal(layer_load_fail_msg);
+    }
+
     instance_create_info->enabledLayerCount   = num_added_layers;
     instance_create_info->ppEnabledLayerNames = *layer_names;
 }
@@ -429,7 +469,13 @@ uQueryVulkanExtensions(_mut_ s8***                  _mut_       restrict extensi
     success = vkEnumerateInstanceExtensionProperties(NULL,
                                                      &instance_create_info->enabledExtensionCount,
                                                      NULL);
-    uAssertMsg_v((success == VK_SUCCESS), "[ vulkan ] Unable to enumerate extensions.\n");
+
+    const char* enumerate_properties_fail_msg = "[ vulkan ] Unable to enumerate layer properties.\n";
+    uAssertMsg_v((success == VK_SUCCESS), enumerate_properties_fail_msg);
+    if (success != VK_SUCCESS)
+    {
+        uFatal(enumerate_properties_fail_msg);
+    }
 
     extension_properties =
         (VkExtensionProperties*)malloc(instance_create_info->enabledExtensionCount * sizeof(VkExtensionProperties));
@@ -438,7 +484,12 @@ uQueryVulkanExtensions(_mut_ s8***                  _mut_       restrict extensi
     success = vkEnumerateInstanceExtensionProperties(NULL,
                                                      &instance_create_info->enabledExtensionCount,
                                                      extension_properties);
-    uAssertMsg_v((success == VK_SUCCESS), "[ vulkan ] Unable to enumerate extensions.\n");
+
+    uAssertMsg_v((success == VK_SUCCESS), enumerate_properties_fail_msg);
+    if (success != VK_SUCCESS)
+    {
+        uFatal(enumerate_properties_fail_msg);
+    }
 
 
     // Set Extension Names
@@ -461,7 +512,13 @@ uQueryVulkanExtensions(_mut_ s8***                  _mut_       restrict extensi
         }
     }
 
-    uAssertMsg_v((num_added_extensions == num_user_extensions), "[ vulkan ] Unable to load all requested extensions.\n");
+    const char* load_extensions_fail_msg = "[ vulkan ] Unable to load all requested extensions.\n";
+    uAssertMsg_v((num_added_extensions == num_user_extensions), load_extensions_fail_msg);
+    if (num_added_extensions != num_user_extensions)
+    {
+        uFatal(load_extensions_fail_msg);
+    }
+
     instance_create_info->enabledExtensionCount   = num_added_extensions;
     instance_create_info->ppEnabledExtensionNames = *extension_names;
 }
@@ -508,7 +565,14 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
                                NULL,
                                (VkInstance*)&v_info->instance);
 
-    uAssertMsg_v((success == VK_SUCCESS), "[ vulkan ] Unable to create vulkan instance.\n");
+    const char* instance_create_fail_msg = "[ vulkan ] Unable to create vulkan instance.\n";
+    uAssertMsg_v((success == VK_SUCCESS), instance_create_fail_msg);
+    if (success != VK_SUCCESS)
+    {
+        uDestroyVulkan(v_info);
+        uFatal(instance_create_fail_msg);
+    }
+
     uCreateVulkanDebugMessenger(v_info,
                                 (VkDebugUtilsMessengerCreateInfoEXT*)&vulkan_main_debug_messenger_info,
                                 (VkDebugUtilsMessengerEXT*)&vulkan_main_debug_messenger);
@@ -568,7 +632,6 @@ uInitializeVulkan(_mut_ uVulkanInfo* const       restrict v_info,
                           num_extensions);
 
     uCreateVulkanSurface(v_info);
-
     uVulkanQueueFamilyIndices queue_family_indices = { 0 };
     uCreateVulkanPysicalDevice(v_info, &queue_family_indices);
     uCreateVulkanLogicalDevice(v_info, &queue_family_indices);
@@ -584,19 +647,21 @@ uDestroyVulkan(const uVulkanInfo* const restrict v_info)
 
     if (v_info && v_info->instance)
     {
+        // Destroy debug messenger
         PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT =
             (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(v_info->instance,
                                                                        "vkDestroyDebugUtilsMessengerEXT");
-
         uAssertMsg_v(vkDestroyDebugUtilsMessengerEXT,
-                     "[ vulkan ] Unable to acquire ptr to function: vkDestroyDebugUtilsMessengerEXT().\n");
-
+                     "[ vulkan ] Unable to acquire fnptr: vkDestroyDebugUtilsMessengerEXT().\n");
         if (vkDestroyDebugUtilsMessengerEXT && vulkan_main_debug_messenger)
         {
             vkDestroyDebugUtilsMessengerEXT(v_info->instance,
                                             vulkan_main_debug_messenger,
                                             NULL);
         }
+
+        // Destroy surface khr
+        vkDestroySurfaceKHR(v_info->instance, v_info->surface, NULL);
     }
 
     if (v_info && v_info->logical_device)
