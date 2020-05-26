@@ -21,6 +21,11 @@ char _message_buffer[MAX_VKVERBOSE_LEN];
 #define uVkVerbose(...) /* uVKVerbose() REMOVED */
 #endif // __UE_VK_VERBOSE__
 
+#if _WIN32
+#define VK_USE_PLATFORM_WIN32_KHR
+#include <win/win_platform.h>
+#endif // _WIN32
+
 #include <vulkan/vulkan.h>
 #include <engine_tools/memory_tools.h>
 #include <data_structures/data_structures.h>
@@ -39,6 +44,7 @@ typedef struct
     const VkPhysicalDevice physical_device;
     const VkDevice         logical_device;
     const VkQueue          graphics_queue;
+    const VkSurfaceKHR     surface;
 } uVulkanInfo;
 
 
@@ -270,7 +276,7 @@ uCreateVulkanDebugMessengerInfo(_mut_ VkDebugUtilsMessengerCreateInfoEXT* const 
 
 
 __UE_internal__ __UE_call__ void
-uCreateVulkanDebugMessenger(const uVulkanInfo* const restrict v_info,
+uCreateVulkanDebugMessenger(const uVulkanInfo*                        const restrict v_info,
                             _mut_ VkDebugUtilsMessengerCreateInfoEXT* const restrict debug_message_create_info,
                             _mut_ VkDebugUtilsMessengerEXT*           const restrict debug_messenger)
 {
@@ -299,6 +305,41 @@ uCreateVulkanDebugMessenger(const uVulkanInfo* const restrict v_info,
         uAssertMsg_v(((success == VK_SUCCESS) && debug_messenger),
                      "[ vulkan ] Failed to create debug messenger callback.\n");
     }
+}
+
+
+#if _WIN32
+__UE_internal__ __UE_call__ void
+uCreateWin32Surface(const uVulkanInfo*                 const restrict v_info,
+                    _mut_ VkWin32SurfaceCreateInfoKHR* const restrict win32_surface)
+{
+    uAssertMsg_v(v_info,           "[ vulkan ] Null uVulkanInfo ptr provided.\n");
+    uAssertMsg_v(v_info->instance, "[ vulkan ] Null uVulkanInfo->instance ptr provided.\n");
+    uAssertMsg_v(win32_surface,    "[ vulkan ] Null win32_surface ptr provided.\n");
+
+
+    win32_surface->sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+
+    // [ cfarvin::TODO ]
+    // The win32.window handle is likely not working. Check in on this.
+    win32_surface->hwnd      = win32.window;
+    win32_surface->hinstance = GetModuleHandle(NULL);
+}
+#endif // _WIN32
+
+
+__UE_internal__ __UE_call__ void
+uCreateVulkanSurface(const uVulkanInfo* const restrict v_info)
+{
+    uAssertMsg_v(v_info,           "[ vulkan ] Null uVulkanInfo ptr provided.\n");
+    uAssertMsg_v(v_info->instance, "[ vulkan ] Null uVulkanInfo->instance ptr provided.\n");
+
+
+#if _WIN32
+    VkWin32SurfaceCreateInfoKHR win32_surface = { 0 };
+    uCreateWin32Surface(v_info, &win32_surface);
+#endif // _WIN32
+
 }
 
 
@@ -525,6 +566,8 @@ uInitializeVulkan(_mut_ uVulkanInfo* const       restrict v_info,
                           num_layers,
                           extensions,
                           num_extensions);
+
+    uCreateVulkanSurface(v_info);
 
     uVulkanQueueFamilyIndices queue_family_indices = { 0 };
     uCreateVulkanPysicalDevice(v_info, &queue_family_indices);

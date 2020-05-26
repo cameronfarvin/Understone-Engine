@@ -33,7 +33,11 @@ char* required_validation_layers[] =
 
 char* required_extensions[] =
 {
-    VK_EXT_DEBUG_UTILS_EXTENSION_NAME
+    VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+    "VK_KHR_surface",
+#if _WIN32
+    "VK_KHR_win32_surface"
+#endif // _WIN32
 };
 
 
