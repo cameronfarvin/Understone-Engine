@@ -31,13 +31,15 @@
 /*
  * Understone Error Reporting
  *
- * Error reporting: (always on)
- *    2. `uFatal` (Alaways verbose): Print a formatted error with file
- *        and line information to stderr and exit the process with
- *        code 666.
+ * Error & Warning reporting: (always on)
+ *    2. `uFatal` (Alaways verbose): Print a formatted fatal error
+ *        with file and line information to stderr and exit the
+ *        process with code 666.
  *    2. `uError_v` (Verbose): Print a formatted error with file
  *        and line information to stderr (does not halt).
  *    3. `uError`: Print a formatted error without file and line
+ *        information to stderr (does not halt).
+ *    4. `uWarning`:Print a formatted error without file and line
  *        information to stderr (does not halt).
  *
  * Debug printing: (debug only)
@@ -66,6 +68,11 @@
 char _error_buffer[MAX_ERROR_LEN];
 char _message_buffer[MAX_ERROR_LEN];
 
+
+
+//
+// Always on
+//
 // uFatal()
 #define uFatal(...)                                             \
     snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);      \
@@ -100,7 +107,20 @@ char _message_buffer[MAX_ERROR_LEN];
              _message_buffer);                                  \
     fputs(_error_buffer, stderr)
 
+// uWarning()
+#define uWarning(...)                                           \
+    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);      \
+    snprintf(_error_buffer,                                     \
+             MAX_ERROR_LEN,                                     \
+             "[ warning ] %s",                                  \
+             _message_buffer);                                  \
+    fputs(_error_buffer, stderr)
 
+
+
+//
+// Debug only
+//
 #if __UE_DEBUG__
 // uDebugPrint_v()
 #define uDebugPrint_v(...)                                      \

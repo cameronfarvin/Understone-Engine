@@ -9,13 +9,13 @@
 #define MAX_VKVERBOSE_LEN 256
 char _vkverbose_buffer[MAX_VKVERBOSE_LEN];
 char _vkMessage_buffer[MAX_VKVERBOSE_LEN];
-#define uVkVerbose(...)                                         \
-    snprintf(_vkMessage_buffer, MAX_VKVERBOSE_LEN, __VA_ARGS__);  \
-    snprintf(_vkverbose_buffer,                                 \
-             MAX_VKVERBOSE_LEN,                                 \
-             "[ vulkan ] %s",                                   \
-             _vkMessage_buffer);                                  \
-    fputs(_vkverbose_buffer, stdout);                           \
+#define uVkVerbose(...)                                                 \
+    snprintf(_vkMessage_buffer, MAX_VKVERBOSE_LEN, __VA_ARGS__);        \
+    snprintf(_vkverbose_buffer,                                         \
+             MAX_VKVERBOSE_LEN,                                         \
+             "[ vulkan ] %s",                                           \
+             _vkMessage_buffer);                                        \
+    fputs(_vkverbose_buffer, stdout);                                   \
     fflush(stdout);
 #else
 #define uVkVerbose(...) /* uVKVerbose() REMOVED */
@@ -34,15 +34,19 @@ char _vkMessage_buffer[MAX_VKVERBOSE_LEN];
 typedef struct
 {
     u32 graphics_index;
-} uVulkanQueueFamilyIndices;
+    u32 present_index;
+} uVulkanQueueInfo;
 
-
+#define uVULKAN_NUM_QUEUES           2
+#define uVULKAN_GRAPHICS_QUEUE_INDEX 0
+#define uVULKAN_PRESENT_QUEUE_INDEX  1
 typedef struct
 {
     const VkInstance       instance;
     const VkPhysicalDevice physical_device;
     const VkDevice         logical_device;
-    const VkQueue          graphics_queue;
+    const VkQueue          queues[uVULKAN_NUM_QUEUES];
+    const int          t[uVULKAN_NUM_QUEUES];
     const VkSurfaceKHR     surface;
 } uVulkanInfo;
 
@@ -58,29 +62,46 @@ VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
 
 
 __UE_internal__ __UE_call__ void
-uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*               const restrict v_info,
-                           const uVulkanQueueFamilyIndices* const restrict queue_family_indices)
+uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const restrict v_info,
+                           const uVulkanQueueInfo* const restrict queue_info)
 {
     uAssertMsg_v(v_info,                  "[ vulkan ] Null vulkan info ptr provided.\n");
     uAssertMsg_v(v_info->physical_device, "[ vulkan ] Physical device must be non null.\n");
     uAssertMsg_v(!v_info->logical_device, "[ vulkan ] Logical device must be null; will be overwritten.\n");
-    uAssertMsg_v(queue_family_indices,    "[ vulkan ] Queue family indices ptr must be non null\n");
+    uAssertMsg_v(v_info->queues,          "[ vulkan ] Queue array must be non null.\n");
+    uAssertMsg_v(queue_info,              "[ vulkan ] Queue indices ptr must be non null\n");
 
 
-    VkDeviceQueueCreateInfo device_queue_create_info = { 0 };
-    r32 device_queue_priorities = 1.0f;
-    device_queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    device_queue_create_info.queueFamilyIndex = queue_family_indices->graphics_index;
-    device_queue_create_info.queueCount = 1;
-    device_queue_create_info.pQueuePriorities = &device_queue_priorities;
+    // [ cfarvin::PERF ] Find number of unique values of uVulkanQueueInfo members only allocate
+    //                   that many VkDeviceQueueCreateInfos, and only call vkGetDeviceQueue
+    //                   that many times. Will need to temporarily store information from
+    //                   uSelectVulkanPhysicalDevice: { QueueIndex, QueueType }
+    const char* device_create_fail_msg = "[ vulkan ] Unable to create logical device.\n";
+    VkDeviceQueueCreateInfo* device_queue_create_infos =
+        (VkDeviceQueueCreateInfo*) calloc(uVULKAN_NUM_QUEUES, sizeof(VkDeviceQueueCreateInfo));
+    uAssertMsg_v(device_queue_create_infos, device_create_fail_msg);
+    if (!device_queue_create_infos)
+    {
+        uDestroyVulkan(v_info);
+        uFatal(device_create_fail_msg);
+    }
+
+    for (u32 queue_family_idx = 0; queue_family_idx < uVULKAN_NUM_QUEUES; queue_family_idx++)
+    {
+        r32 device_queue_priorities = 1.0f;
+        device_queue_create_infos[queue_family_idx].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        device_queue_create_infos[queue_family_idx].queueFamilyIndex = queue_family_idx;
+        device_queue_create_infos[queue_family_idx].queueCount = 1;
+        device_queue_create_infos[queue_family_idx].pQueuePriorities = &device_queue_priorities;
+    }
 
     // [ cfarvin::TODO ] When modified, don't forget to add checks to uSelectVulkanPhysicalDevice();
     VkPhysicalDeviceFeatures physical_device_features = { 0 };
 
     VkDeviceCreateInfo logical_device_create_info = { 0 };
     logical_device_create_info.sType                = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    logical_device_create_info.pQueueCreateInfos    = &device_queue_create_info;
-    logical_device_create_info.queueCreateInfoCount = 1;
+    logical_device_create_info.pQueueCreateInfos    = device_queue_create_infos;
+    logical_device_create_info.queueCreateInfoCount = uVULKAN_NUM_QUEUES;
     logical_device_create_info.pEnabledFeatures     = &physical_device_features;
 
     // Note: modern Vulkan implementations no longer separate instance and device layers.
@@ -89,7 +110,6 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*               const restrict v_inf
                                                       NULL,
                                                       (VkDevice*)&v_info->logical_device);
 
-    const char* device_create_fail_msg = "[ vulkan ] Unable to create logical device.\n";
     uAssertMsg_v(device_creation_success == VK_SUCCESS, device_create_fail_msg);
     if (device_creation_success != VK_SUCCESS)
     {
@@ -97,33 +117,51 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*               const restrict v_inf
         uFatal(device_create_fail_msg);
     }
 
+    // [ cfarvin::REVISIT ]
     // Get queue handles
     vkGetDeviceQueue(v_info->logical_device,
-                     queue_family_indices->graphics_index,
+                     queue_info->graphics_index,
                      0,
-                     (VkQueue*)(&v_info->graphics_queue));
+                     (VkQueue*)(&(v_info->queues)[uVULKAN_GRAPHICS_QUEUE_INDEX]));
+
+    vkGetDeviceQueue(v_info->logical_device,
+                     queue_info->present_index,
+                     0,
+                     (VkQueue*)(&(v_info->queues)[uVULKAN_PRESENT_QUEUE_INDEX]));
+
+    if (device_queue_create_infos)
+    {
+        free(device_queue_create_infos);
+    }
+
 }
 
 
 __UE_internal__ __UE_call__ void
-uSelectVulkanPhysicalDevice(const VkPhysicalDevice**         const const restrict physical_device_list,
-                            _mut_ VkPhysicalDevice*          _mut_       restrict return_device,
-                            _mut_ uVulkanQueueFamilyIndices* const       restrict queue_family_indices,
-                            const u32                                             num_physical_devices)
+uSelectVulkanPhysicalDevice(const VkPhysicalDevice** const const restrict physical_device_list,
+                            _mut_ VkPhysicalDevice*  const       restrict return_device,
+                            _mut_ uVulkanQueueInfo*  const       restrict queue_info,
+                            const u32                                     num_physical_devices,
+                            const VkSurfaceKHR*      const       restrict surface)
 {
     uAssertMsg_v(physical_device_list, "[ vulkan ] Null vulkan device list pointer provided.\n");
-    uAssertMsg_v(!(*return_device)   , "[ vulkan ] Return device ptr must be NULL; will be overwritten\n");
-    uAssertMsg_v(queue_family_indices, "[ vulkan ] Queue family indices ptr must be non null\n");
+    uAssertMsg_v(!(*return_device),    "[ vulkan ] Return device ptr must be null; will be overwritten\n");
+    uAssertMsg_v(queue_info,           "[ vulkan ] Queue family indices ptr must be non null\n");
     uAssertMsg_v(num_physical_devices, "[ vulkan ] A minimum of one physical devices is required.\n");
+    uAssertMsg_v(surface,              "[ vulkan ] Surface must be non null.\n");
     for (u32 device_idx = 0; device_idx < num_physical_devices; device_idx++)
     {
         uAssertMsg_v(physical_device_list[device_idx],
                      "[ vulkan ] Indices of physical_device_list must be non-null.\n");
     }
 
+
+    bool selection_complete = false;
     for (u32 device_idx = 0; device_idx < num_physical_devices; device_idx++)
     {
+        // Physical device
         VkPhysicalDevice physical_device = *physical_device_list[device_idx];
+
         if (!physical_device)
         {
             continue;
@@ -141,7 +179,7 @@ uSelectVulkanPhysicalDevice(const VkPhysicalDevice**         const const restric
         /* vkGetPhysicalDeviceProperties(physical_device, */
         /*                               &device_properties); */
 
-        // Inspect physical device queue families
+        // Get queue family count
         u32 queue_family_count = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, NULL);
         if (!queue_family_count)
@@ -149,59 +187,119 @@ uSelectVulkanPhysicalDevice(const VkPhysicalDevice**         const const restric
             continue;
         }
 
-        VkQueueFamilyProperties* queue_family_props = (VkQueueFamilyProperties*) calloc(queue_family_count,
-                                                                                        sizeof(VkQueueFamilyProperties));
+        // Get queue families
+        VkQueueFamilyProperties* queue_family_props = (VkQueueFamilyProperties*)calloc(queue_family_count,
+                                                                                       sizeof(VkQueueFamilyProperties));
+        const char* queue_family_alloc_err_msg = "[ vulkan ] Unable to allocate queue family property array.\n";
+        uAssertMsg_v(queue_family_props, queue_family_alloc_err_msg);
+        if (!queue_family_props)
+        {
+            uFatal(queue_family_alloc_err_msg);
+        }
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_family_props);
 
-        // Note: add more as necessary, don't forget to add to break condition.
         typedef struct
         {
             u32  index;
             bool validated;
-        } queue_family_pair;
+        } uQueueFamilyPair;
+        u32 num_queues = 0;
 
-        bool queue_family_validated = false;
-        queue_family_pair graphics_pair = { 0 };
+        // Require graphics family
+        uQueueFamilyPair graphics_pair = { 0 };
+        num_queues++;
+
+        // Require present family
+        uQueueFamilyPair present_pair  = { 0 };
+        num_queues++;
+
         for (u32 queue_idx = 0; queue_idx < queue_family_count; queue_idx++)
         {
-            // Require graphics bit
+            // Check grahpics family
             if (queue_family_props[queue_idx].queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
                 graphics_pair.index = queue_idx;
                 graphics_pair.validated = true;
             }
 
-            // Break when all conditions are met
-            if (graphics_pair.validated)
+            // Check present family
+            VkBool32 present_capability = false;
+            vkGetPhysicalDeviceSurfaceSupportKHR(physical_device,
+                                                 queue_idx,
+                                                 *surface,
+                                                 &present_capability);
+            if (present_capability)
             {
-                queue_family_validated = true;
+                present_pair.index = queue_idx;
+                present_pair.validated = true;
+            }
+
+            // Break when all conditions are met
+            if (graphics_pair.validated &&
+                present_pair.validated)
+            {
+                // Helper data for uCreateVulkanLogicalDevice()
+                queue_info->graphics_index = graphics_pair.index;
+                queue_info->present_index  = present_pair.index;
+
+                // Set the physical device;
+                *return_device = physical_device;
+
+                // Issue perf warning for different graphics/presentation queue
+                if (graphics_pair.index != present_pair.index)
+                {
+                    uWarning("[ vulkan ] [ perf ] Different graphics and prsent queue families chosen.\n");
+                }
+
+                selection_complete = true;
                 break;
             }
         }
 
-        if (!queue_family_validated)
+        if (queue_family_props)
         {
-            continue;
+            free(queue_family_props);
         }
 
-        //
-        // Device is deemed suitable
-        //
-        queue_family_indices->graphics_index = graphics_pair.index;
-        *return_device = physical_device;
-        break;
+        // [ cfarvin::PERF ] If one VkQueue can do all we need, we are needlessly
+        // passing around more in a commonly referenced structure (uVulkanInfo->queues).
+        // We must update uVULKAN_NUM_QUEUES as we check for more queue capabilities.
+        const char* queue_count_error_msg =
+            "[ vulkan ] uVulkanInfo.queues length: %d. %d queues were checked during physical device creation.\n";
+        uAssertMsg_v(uVULKAN_NUM_QUEUES == num_queues,
+                     queue_count_error_msg,
+                     uVULKAN_NUM_QUEUES,
+                     num_queues);
+        if (uVULKAN_NUM_QUEUES != num_queues)
+        {
+            uFatal(queue_count_error_msg,
+                   uVULKAN_NUM_QUEUES,
+                   num_queues);
+        }
+
+        if (selection_complete)
+        {
+            break;
+        }
+    }
+
+    const char* no_selection_error_msg = "[ vulkan ] Unable to verify all queue family requirements.\n";
+    uAssertMsg_v(selection_complete, no_selection_error_msg);
+    if (!selection_complete)
+    {
+        uFatal(no_selection_error_msg);
     }
 }
 
 
 __UE_internal__ __UE_call__ void
-uCreateVulkanPysicalDevice(_mut_ uVulkanInfo*               const restrict v_info,
-                           _mut_ uVulkanQueueFamilyIndices* const restrict queue_family_indices)
+uCreateVulkanPysicalDevice(_mut_ uVulkanInfo*       const restrict v_info,
+                           _mut_ uVulkanQueueInfo*  const restrict queue_info)
 {
     uAssertMsg_v(v_info,                   "[ vulkan ] Null vulkan info ptr provided.\n");
     uAssertMsg_v(!v_info->physical_device, "[ vulkan ] Physical device must be null; will be overwritten.\n");
     uAssertMsg_v(!v_info->logical_device,  "[ vulkan ] Logical device must be null; will be overwritten.\n");
-    uAssertMsg_v(queue_family_indices,     "[ vulkan ] Queue family indices ptr must be non null.\n");
+    uAssertMsg_v(queue_info,               "[ vulkan ] Queue family indices ptr must be non null.\n");
 
 
     u32 num_physical_devices = 0;
@@ -220,14 +318,17 @@ uCreateVulkanPysicalDevice(_mut_ uVulkanInfo*               const restrict v_inf
     vkEnumeratePhysicalDevices(v_info->instance, &num_physical_devices, physical_device_list);
     uVkVerbose("Found %d physical devices.\n", num_physical_devices);
 
-    VkPhysicalDevice          candidate_device = NULL;
+    VkPhysicalDevice candidate_device = NULL;
     uSelectVulkanPhysicalDevice(&physical_device_list,
                                 &candidate_device,
-                                queue_family_indices,
-                                num_physical_devices);
+                                queue_info,
+                                num_physical_devices,
+                                (VkSurfaceKHR*)&v_info->surface);
     uAssertMsg_v(candidate_device != NULL, "[ vulkan ] Unable to select candidate device.\n");
     if (!candidate_device)
     {
+        uDestroyVulkan(v_info);
+        uFatal("[ vulkan ] Unable to find suitable device.\n");
         return;
     }
 
@@ -342,13 +443,15 @@ uCreateWin32Surface(_mut_ uVulkanInfo* const restrict v_info)
                                                             NULL,
                                                             (VkSurfaceKHR*)&v_info->surface);
 
+    const char* win32_surface_err_msg = "[ vulkan ] Failed to create Win32Surface.\n";
+    uAssertMsg_v(win32_surface_result == VK_SUCCESS, win32_surface_err_msg)
     if (win32_surface_result != VK_SUCCESS)
     {
         uDestroyVulkan(v_info);
-        uFatal("[ vulkan ] Failed to create Win32Surface.\n");
+        uFatal(win32_surface_err_msg);
     }
 
-    // [ cfarvin::REMOVE ] [ cfarvin::NOTE ]
+    // [ cfarvin::NOTE ]
     // May want to revisit deleing should this info be necessary.
     uDestroyWin32(win32_info);
 }
@@ -396,7 +499,6 @@ uQueryVulkanLayers(_mut_ s8***                 _mut_ const restrict layer_names,
                  "[ vulkan ] Number of requested validation layers [ %d ] exceeds total avaialbe count [ %zd ].\n",
                  num_user_layers,
                  num_available_layers);
-
     if (success != VK_SUCCESS)
     {
         uFatal(enumerate_layers_fail_msg);
@@ -632,9 +734,9 @@ uInitializeVulkan(_mut_ uVulkanInfo* const       restrict v_info,
                           num_extensions);
 
     uCreateVulkanSurface(v_info);
-    uVulkanQueueFamilyIndices queue_family_indices = { 0 };
-    uCreateVulkanPysicalDevice(v_info, &queue_family_indices);
-    uCreateVulkanLogicalDevice(v_info, &queue_family_indices);
+    uVulkanQueueInfo queue_info = { 0 };
+    uCreateVulkanPysicalDevice(v_info, &queue_info); // queue_info built
+    uCreateVulkanLogicalDevice(v_info, &queue_info); // queue_info consumed
 }
 
 
