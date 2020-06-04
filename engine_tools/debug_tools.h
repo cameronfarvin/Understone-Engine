@@ -174,6 +174,12 @@ char _message_buffer[MAX_ERROR_LEN];
 #define uAssert(cond)                           \
     if (!((long long) (cond))) { exit(666); }   \
 
+#if _WIN32
+#define _CRTDBG_MAP_ALLOC  
+#include <stdlib.h>  
+#include <crtdbg.h> 
+#endif // _WIN32
+
 
 #else // __UE_DEBUG__
 #define uError_v(...)        /* System debugging is disabled */

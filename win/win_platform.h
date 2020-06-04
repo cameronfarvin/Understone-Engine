@@ -124,7 +124,7 @@ uWin32CreateWindow(const char* const restrict window_class_name)
 
     win32_info->window = CreateWindowEx(0,
                                        window_class.lpszClassName,
-                                       "UE",
+                                       window_class_name,
                                        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                                        CW_USEDEFAULT,
                                        CW_USEDEFAULT,

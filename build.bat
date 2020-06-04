@@ -50,7 +50,10 @@ IF %ERRORLEVEL% NEQ 0 GOTO :exit
 mkdir msvc_landfill >nul 2>nul
 pushd msvc_landfill >nul
 
-cl %SCRIPT_DIR%\\%APP_NAME%.c /Oi /Qpar /Ot /W4 /WX /Ob2 /O2 /GL /MD /EHsc /nologo ^
+rem cl %SCRIPT_DIR%\\%APP_NAME%.c /Oi /MT /O2 /Ot /Qpar /Ot /W4 /WX /Ob2 /GL /EHsc /nologo ^ :: release
+rem cl %SCRIPT_DIR%\\%APP_NAME%.c /Oi /Od /MTd /Qpar /Ot /W4 /WX /GL /EHsc /nologo ^         :: debug
+
+cl %SCRIPT_DIR%\\%APP_NAME%.c /Oi /Od /MTd /Qpar /Ot /W4 /WX /GL /EHsc /nologo ^
 /I%cd%\.. ^
 /I%cd%\..\engine_tools ^
 /I%cd%\..\win ^
@@ -72,6 +75,6 @@ xcopy /y engine.exe ..\ >null
 popd >null
 
 IF %ERRORLEVEL% NEQ 0 GOTO :exit
-rem engine.exe
+rem engine.exe :: auto-run after build
 
 :exit

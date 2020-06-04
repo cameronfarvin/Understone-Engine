@@ -26,18 +26,23 @@ bool RUNNING = true;
 
 uVulkanInfo main_vulkan = { 0 };
 
-char* required_validation_layers[] =
+char* required_instance_validation_layers[] =
 {
     "VK_LAYER_KHRONOS_validation"
 };
 
-char* required_extensions[] =
+char* required_instance_extensions[] =
 {
     VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
     "VK_KHR_surface",
 #if _WIN32
     "VK_KHR_win32_surface"
 #endif // _WIN32
+};
+
+char* required_device_extensions[] =
+{
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
 
@@ -100,15 +105,30 @@ int main(int argc, char** argv)
     runAllTests();
 #endif
 
+#if __UE_DEBUG__
+#ifdef _WIN32
+    // Enable _CRT Allocation Analysis
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+    _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDOUT);
+    _CrtSetReportMode(_CRT_ERROR,  _CRTDBG_MODE_FILE);
+    _CrtSetReportFile(_CRT_ERROR,  _CRTDBG_FILE_STDOUT);
+    _CrtSetReportMode(_CRT_WARN,   _CRTDBG_MODE_FILE);
+    _CrtSetReportFile(_CRT_WARN,   _CRTDBG_FILE_STDOUT);
+#endif // _WIN32
+#endif // __UE_DEBUG__
+
     if (argc && argv) {}
 
     // [ cfarvin::TODO ] App name
     uInitializeVulkan(&main_vulkan,
                       "Understone",
-                      required_validation_layers,
-                      sizeof(required_validation_layers)/sizeof(char*),
-                      required_extensions,
-                      sizeof(required_extensions)/sizeof(char*));
+                      required_instance_validation_layers,
+                      sizeof(required_instance_validation_layers)/sizeof(char*),
+                      required_instance_extensions,
+                      sizeof(required_instance_extensions)/sizeof(char*),
+                      required_device_extensions,
+                      sizeof(required_device_extensions)/sizeof(char*));
 
     while(RUNNING)
     {
