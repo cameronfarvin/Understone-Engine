@@ -2,7 +2,8 @@
 @SET SCRIPT_DIR=%cd%
 @SET APP_NAME="Understone"
 @SET APP_ARCH=x64
-@SET "VULKAN_SDK_PATH=C:\VulkanSDK\1.1.126.0\"
+rem @SET "VULKAN_SDK_PATH=C:\VulkanSDK\1.1.126.0\"
+@SET "VULKAN_SDK_PATH=C:\VulkanSDK\1.2.141.2\"
 
 
 ::
