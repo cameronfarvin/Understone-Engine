@@ -1,0 +1,56 @@
+==============================================================================
+= This file is generated on compilation. Content changes will be overwritten =
+==============================================================================
+
+There are 26 items of type TODO:
+````````````````````````````````
+  [ TODO ] (Understone.c, 122): App name
+  [ TODO ] (entity_tools.h, 245): Will presently only work with spheres.
+  [ TODO ] (entity_tools.h, 254): Will presently only work with spheres.
+  [ TODO ] (entity_tools.h, 333): Will presently only work with spheres.
+  [ TODO ] (entity_tools.h, 358): Will presently only work with spheres.
+  [ TODO ] (entity_tools.h, 359): Future: C99+ _Generic for entity types.
+  [ TODO ] (entity_tools.h, 431): Will presently only work with spheres.
+  [ TODO ] (font_tools.h, 4): Need to outline basic texture system before fonts
+  [ TODO ] (image_tools.h, 76): 
+  [ TODO ] (image_tools.h, 332): This is as temporary as it is bad.
+  [ TODO ] (material_tools.h, 72): (return_color->channel.R)
+  [ TODO ] (maths_tools.h, 557): Measure & improve
+  [ TODO ] (maths_tools.h, 619): Measure & improve
+  [ TODO ] (memory_tools.h, 12): This file needs _Generic
+  [ TODO ] (memory_tools.h, 72): Difficult to store lvalue of all types w/o using  void*.
+  [ TODO ] (memory_tools.h, 143): Was printing during tests in which
+  [ TODO ] (type_tools.h, 28): Relocate
+  [ TODO ] (uDynamicArray.h, 76): Properly check for failure on realloc
+  [ TODO ] (uString.h, 160): implement uString substring
+  [ TODO ] (vulkan_tools.h, 66): const VkSwapchainKHR   swap_chain;   clean up in uDestroyVulkan();
+  [ TODO ] (vulkan_tools.h, 236): Silences compiler warning
+  [ TODO ] (vulkan_tools.h, 251): Silences compiler warning
+  [ TODO ] (vulkan_tools.h, 425): Pull out into uWin32GetWindowSize(), and uGetWindowSize();
+  [ TODO ] (vulkan_tools.h, 434): Double check that extent subtractions are correct for win32
+  [ TODO ] (win_platform.h, 73): scaling/ortho
+  [ TODO ] (win_platform.h, 97): fail gracefully
+
+
+There are 1 items of type REMOVE:
+`````````````````````````````````
+  [ REMOVE ] (event_tools.h, 7): remove stdio
+
+
+There are 3 items of type REVISIT:
+``````````````````````````````````
+  [ REVISIT ] (entity_tools.h, 66): intersection materials
+  [ REVISIT ] (uString.h, 125): Strlen correctness, use throughout uString
+  [ REVISIT ] (vulkan_tools.h, 856): Rrevisit deleting should this info be necessary.
+
+
+There are 1 items of type RESTORE:
+``````````````````````````````````
+  [ RESTORE ] (maths_tools.h, 297): uAssert(false);
+
+
+There are 2 items of type STEP_INTO:
+````````````````````````````````````
+  [ STEP_INTO ] (vulkan_tools.h, 413): Debug to ensure that this is correctly set
+  [ STEP_INTO ] (vulkan_tools.h, 419): Is this called in the common use-case?
+

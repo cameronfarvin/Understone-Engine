@@ -15,7 +15,7 @@ uMemoryArena* imageArena;
 #define imagePushArray(new_data, type, num_bytes) uMAPushArray(imageArena, new_data, type, num_bytes)
 /* #define imageAlloc(type, num_bytes) uMAAllocate(imageArena, type, num_bytes) */
 
-// [ cfarvin::NOTE ] used in ms bitmap
+// Note: used in ms bitmap
 #define uBI_RGB        0x0000
 #define uBI_RLE8       0x0001
 #define uBI_RLE4       0x0002
@@ -49,10 +49,7 @@ uReadNextByte(const restrict uImage* const img)
     }
 
     uError_v("uReadNextByte(): Out of bounds.\n");
-
-    // [ cfarvin::DEBUG ]
-    assert(false);
-    return 0; // [ cfarvin::NOTE ] silence msvc
+    return 0;
 }
 
 
@@ -201,11 +198,6 @@ RGB32ToHSV32(const Color32_RGB* restrict const rgb_source,
     hsv_result->H = hue;
     hsv_result->S = saturation;
     hsv_result->V = value;
-
-    // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ]
-    __UE_ASSERT__(hsv_result->H == hue);
-    __UE_ASSERT__(hsv_result->S == saturation);
-    __UE_ASSERT__(hsv_result->V == value);
 }
 
 
@@ -337,8 +329,7 @@ WritePPM32(const restrict Color32_RGB* const pixel_array,
                   (success < MAX_PPM_HEADER_SIZE));
     fwrite(ppm_header, success, 1, ppm_file);
 
-    // [ cfarvin::TODO ] [ cfarvin::DEBUG ]
-    // This is as temporary as it is bad.
+    // [ cfarvin::TODO ] This is as temporary as it is bad.
     char rgb_tripplet[MAX_PPM_TRIPPLET_SIZE];
     size_t pix_idx = 0;
     for (size_t y = 0; y < image_height; y++)

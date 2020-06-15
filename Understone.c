@@ -99,7 +99,6 @@ uDestroyEngine()
 
 int main(int argc, char** argv)
 {
-
 // See tests/tests.h to disable
 #if __uTESTS_ENABLED__
     runAllTests();

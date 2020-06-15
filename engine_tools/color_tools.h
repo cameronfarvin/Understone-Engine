@@ -125,11 +125,6 @@ RGB32ToHSV32(const Color32_RGB* restrict const rgb_source,
     hsv_result->H = hue;
     hsv_result->S = saturation;
     hsv_result->V = value;
-
-    // [ cfarvin::DEBUG ] [ cfarvin::REMOVE ]
-    __UE_ASSERT__(hsv_result->H == hue);
-    __UE_ASSERT__(hsv_result->S == saturation);
-    __UE_ASSERT__(hsv_result->V == value);
 }
 
 

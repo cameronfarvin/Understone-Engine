@@ -136,7 +136,7 @@ runMemoryArenaTests()
     // Test allocation fail on zero size
     uMemoryArena* memory_arena_zero_alloc_test = uMAInit(allocation_size);
     uAssertMsg_v((memory_arena_zero_alloc_test == NULL), memoryArenaTestFailMessage);
-    // [ cfarvin::NOTE ] We *want* this uMADestroy to fail
+    // Note: We *want* this uMADestroy to fail
     uAssertMsg_v(!(uMADestroy(memory_arena_zero_alloc_test)),
                  "Failed to return false from uMADestroy on zero size allocation");
 

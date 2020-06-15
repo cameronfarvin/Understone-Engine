@@ -36,6 +36,15 @@ char _vkMessage_buffer[MAX_VKVERBOSE_LEN];
 
 
 
+typedef struct
+{
+    const VkSurfaceCapabilitiesKHR surface_capabilities;
+    const VkSurfaceFormatKHR*      surface_formats;
+    const u32                      num_surface_formats;
+    const VkPresentModeKHR*        present_modes;
+    const u32                      num_present_modes;
+} uVulkanSwapChainInfo;
+
 // Note: as queue indices are added, ensure that unique value extraction
 //       in uCreateVulkanLogicalDevice() is updated as well.
 typedef struct
@@ -54,11 +63,17 @@ typedef struct
     const VkDevice         logical_device;
     const VkQueue          queues[uVULKAN_NUM_QUEUES];
     const VkSurfaceKHR     surface;
+    const VkSwapchainKHR   swap_chain; // [ cfarvin::TODO ] clean up in uDestroyVulkan();
 } uVulkanInfo;
 
 VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger;
 VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger_info  = { 0 };
 VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
+
+#if _WIN32
+uWin32Info* win32_info = { 0 };
+#endif // _WIN32
+
 
 
 
@@ -68,11 +83,22 @@ uDestroyVulkan(const uVulkanInfo* const restrict v_info);
 
 __UE_internal__ __UE_call__ void
 uQueryVulkanDeviceExtensions(const VkPhysicalDevice* restrict physical_device,
-    const s8** const const restrict user_device_extension_names,
-    const u16                                    num_user_device_extension_names,
-    _mut_ u16* const                num_verified_extension_names);
+                             const s8** const const restrict user_device_extension_names,
+                             const u16                                    num_user_device_extension_names,
+                             _mut_ u16* const                num_verified_extension_names);
 
 
+
+
+__UE_internal__ __UE_call__ void
+uCreateVulkanSwapChain(_mut_ uVulkanInfo*          const restrict v_info,
+                       const uVulkanSwapChainInfo* const swap_chain_info)
+{
+    uAssertMsg_v(v_info,          "[ vulkan ] uVulkanInfo ptr must be non null.\n");
+    uAssertMsg_v(swap_chain_info, "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
+
+
+}
 
 
 __UE_internal__ __UE_call__ void
@@ -83,11 +109,11 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
                            const s8**              const const restrict user_device_extension_names,
                            const u16                                    num_user_device_extension_names)
 {
-    uAssertMsg_v(v_info,                  "[ vulkan ] Null vulkan info ptr provided.\n");
-    uAssertMsg_v(v_info->physical_device, "[ vulkan ] Physical device must be non null.\n");
-    uAssertMsg_v(!v_info->logical_device, "[ vulkan ] Logical device must be null; will be overwritten.\n");
-    uAssertMsg_v(v_info->queues,          "[ vulkan ] Queue array must be non null.\n");
-    uAssertMsg_v(queue_info,              "[ vulkan ] Queue indices ptr must be non null\n");
+    uAssertMsg_v(v_info,                   "[ vulkan ] Null vulkan info ptr provided.\n");
+    uAssertMsg_v(v_info->physical_device,  "[ vulkan ] Physical device must be non null.\n");
+    uAssertMsg_v(!v_info->logical_device,  "[ vulkan ] Logical device must be null; will be overwritten.\n");
+    uAssertMsg_v(v_info->queues,           "[ vulkan ] Queue array must be non null.\n");
+    uAssertMsg_v(queue_info,               "[ vulkan ] Queue indices ptr must be non null\n");
     if (num_instance_validation_layer_names)
     {
         uAssertMsg_v(instance_validation_layer_names && *instance_validation_layer_names,
@@ -204,20 +230,395 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
 }
 
 
-__UE_internal__ __UE_call__ void
-uSelectVulkanPhysicalDevice(const VkPhysicalDevice** const const restrict physical_device_list,
-                            _mut_ VkPhysicalDevice*  const       restrict return_device,
-                            _mut_ uVulkanQueueInfo*  const       restrict queue_info,
-                            const u32                                     num_physical_devices,
-                            const VkSurfaceKHR*      const       restrict surface,
-                            const s8**               const const restrict user_device_extension_names,
-                            const u16                                     num_user_device_extension_names)
+__UE_internal__ __UE_call__ bool
+uValidateVulkanDeviceFeaturesReqruirement(const VkPhysicalDevice physical_device)
 {
-    uAssertMsg_v(physical_device_list, "[ vulkan ] Null vulkan device list pointer provided.\n");
-    uAssertMsg_v(!(*return_device),    "[ vulkan ] Return device must be null; will be overwritten\n");
-    uAssertMsg_v(queue_info,           "[ vulkan ] Queue family indices ptr must be non null\n");
-    uAssertMsg_v(num_physical_devices, "[ vulkan ] A minimum of one physical devices is required.\n");
-    uAssertMsg_v(surface,              "[ vulkan ] Surface must be non null.\n");
+    // [ cfarvin::TODO ] Silences compiler warning
+    if (physical_device) {}
+
+    // Aquire physical device features
+    /* VkPhysicalDeviceFeatures device_features; */
+    /* vkGetPhysicalDeviceFeatures(physical_device, */
+    /*                             &device_features); */
+
+    return true;
+}
+
+
+__UE_internal__ __UE_call__ bool
+uValidateVulkanDevicePropertiesReqruirement(const VkPhysicalDevice physical_device)
+{
+    // [ cfarvin::TODO ] Silences compiler warning
+    if (physical_device) {}
+
+    // Aquire physical device properties
+    /* VkPhysicalDeviceProperties device_properties; */
+    /* vkGetPhysicalDeviceProperties(physical_device, */
+    /*                               &device_properties); */
+
+    return true;
+}
+
+
+__UE_internal__ __UE_call__ bool
+uValidateVulkanDeviceExtensionsReqruirement(const VkPhysicalDevice                      physical_device,
+                                            const s8**             const const restrict user_device_extension_names,
+                                            const u16                                   num_user_device_extension_names)
+{
+    if (user_device_extension_names)
+    {
+        uAssertMsg_v(user_device_extension_names && *user_device_extension_names,
+                     "[ vulkan ] If the device extension quanitity is non zero, the names ptr must be non null\n");
+    }
+
+
+    u16 num_validated_extension_names = 0;
+    uQueryVulkanDeviceExtensions(&physical_device,
+                                 user_device_extension_names,
+                                 num_user_device_extension_names,
+                                 &num_validated_extension_names);
+
+    const char* extension_name_err_msg = "[ vulkan ] Unable to verify user extension names.\n";
+    uAssertMsg_v(num_validated_extension_names == num_user_device_extension_names, extension_name_err_msg);
+    if (num_validated_extension_names != num_user_device_extension_names)
+    {
+        uVkVerbose(extension_name_err_msg);
+        return false;
+    }
+
+    return true;
+}
+
+
+__UE_internal__ __UE_call__ bool
+uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice                 physical_device,
+                                      const VkSurfaceKHR*     const restrict surface,
+                                      _mut_ uVulkanQueueInfo* const restrict queue_info)
+{
+    uAssertMsg_v(surface,    "[ vulkan ] The VKSurfaceKHR ptr must be non null.\n");
+    uAssertMsg_v(queue_info, "[ vulkan ] The uVulkanQueueInfo ptr must be non null.\n");
+
+
+    typedef struct
+    {
+        u32  index;
+        bool validated;
+    } uQueueFamilyPair;
+    u32 num_queues = 0;
+
+    // Get queue family count
+    u32 queue_family_count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, NULL);
+    if (!queue_family_count)
+    {
+        return false;
+    }
+
+    // Get queue families
+    VkQueueFamilyProperties* queue_family_props = (VkQueueFamilyProperties*)calloc(queue_family_count,
+                                                                                   sizeof(VkQueueFamilyProperties));
+    if (!queue_family_props)
+    {
+        return false;
+    }
+
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_family_props);
+
+    // Require graphics family
+    uQueueFamilyPair graphics_pair = { 0 };
+    num_queues++;
+
+    // Require present family
+    uQueueFamilyPair present_pair  = { 0 };
+    num_queues++;
+
+    bool queues_satisfied = false;
+    for (u32 queue_idx = 0; queue_idx < queue_family_count; queue_idx++)
+    {
+        // Check grahpics capability for this family
+        if (queue_family_props[queue_idx].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        {
+            graphics_pair.index = queue_idx;
+            graphics_pair.validated = true;
+        }
+
+        // Check present capability for this family
+        VkBool32 present_capability = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(physical_device,
+                                             queue_idx,
+                                             *surface,
+                                             &present_capability);
+
+        if (present_capability)
+        {
+            present_pair.index = queue_idx;
+            present_pair.validated = true;
+        }
+
+        // Break when all conditions are met
+        if (graphics_pair.validated &&
+            present_pair.validated)
+        {
+            // Store family indices for each required queue.
+            queue_info->graphics_index = graphics_pair.index;
+            queue_info->present_index  = present_pair.index;
+
+            // Issue perf warning for different graphics/presentation queue
+            if (graphics_pair.index != present_pair.index)
+            {
+                uWarning("[ vulkan ] [ perf ] Different graphics and prsent queue families chosen.\n");
+            }
+
+            queues_satisfied = true;
+            break;
+        }
+    }
+
+    if (queue_family_props)
+    {
+        free(queue_family_props);
+    }
+
+    // Issue engine level warning to update uVULKAN_NUM_QUEUES
+    const char* queue_count_error_msg =
+        "[ engine ][ vulkan ] uVulkanInfo.queues length: %d. %d queues were checked during physical device creation.\n";
+    uAssertMsg_v(uVULKAN_NUM_QUEUES == num_queues,
+                 queue_count_error_msg,
+                 uVULKAN_NUM_QUEUES,
+                 num_queues);
+    if (uVULKAN_NUM_QUEUES != num_queues)
+    {
+        uFatal(queue_count_error_msg,
+               uVULKAN_NUM_QUEUES,
+               num_queues);
+    }
+
+    return queues_satisfied;
+}
+
+
+__UE_internal__ __UE_inline__ void
+uSelectVulkanSwapChainExtent(const uVulkanSwapChainInfo* const restrict swap_chain_info,
+                             _mut_ VkExtent2D*           const restrict designated_extent)
+{
+    uAssertMsg_v(swap_chain_info,   "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
+    uAssertMsg_v(designated_extent, "[ vulkan ] VkExtent2D ptr must be non null.\n");
+#if _WIN32
+    uAssertMsg_v(win32_info,         "[ win32 ] [ vulkan ] uWin32Info must be non null.\n");
+    uAssertMsg_v(win32_info->window, "[ win32 ] [ vulkan ] uWin32Info window must be non null.\n");
+#endif // _WIN32
+
+    VkSurfaceCapabilitiesKHR surface_capabilities = swap_chain_info->surface_capabilities;
+
+    // [ cfarvin::STEP_INTO ] Debug to ensure that this is correctly set
+    u32 u32_MAX = ~(u32)0;
+    // Note: Some window managers use u32_MAX as a magic value which indicates that the extent
+    // must be manually set up.
+    if (surface_capabilities.currentExtent.width != u32_MAX)
+    {
+        // [ cfarvin::STEP_INTO ] Is this called in the common use-case?
+        designated_extent->width  = surface_capabilities.currentExtent.width;
+        designated_extent->height = surface_capabilities.currentExtent.height;
+    }
+    else
+    {
+// [ cfarvin::TODO ] Pull out into uWin32GetWindowSize(), and uGetWindowSize();
+#if _WIN32
+        LPRECT window_rect = { 0 };
+        BOOL win32_rect_success = GetWindowRect(win32_info->window, window_rect);
+        if (!win32_rect_success)
+        {
+            uFatal("[ win32 ] [ vulkan ] Unable to determine window rect.\n");
+        }
+
+        // [ cfarvin::TODO ] Double check that extent subtractions are correct for win32
+        designated_extent->width  = window_rect->right - window_rect->left;
+        designated_extent->height = window_rect->bottom - window_rect->top;
+
+        uAssert(designated_extent->width);
+        uAssert(designated_extent->height);
+#endif // _WIN32
+    }
+}
+
+
+__UE_internal__ __UE_call__ bool
+uSelectVulkanSwapChain(const uVulkanSwapChainInfo*     const restrict swap_chain_info,
+                       const VkSwapchainCreateInfoKHR* const restrict return_swap_chain_create_info)
+{
+    uAssertMsg_v(swap_chain_info,                "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
+    uAssertMsg_v(!return_swap_chain_create_info, "[ vulkan ] VkSwapchainCreateInfoKHR ptr must be null; will be overwritten.\n");
+    if (swap_chain_info->num_surface_formats)
+    {
+        uAssertMsg_v(swap_chain_info->surface_formats, "[ vulkan ] VkSurfaceFormatKHR ptr must be non null.\n");
+    }
+    if (swap_chain_info->num_present_modes)
+    {
+        uAssertMsg_v(swap_chain_info->present_modes,"[ vulkan ] VkPresentModeKHR ptr must be non null.\n");
+    }
+
+
+    // Determine best available surface format
+    bool optimal_format_found = false;
+    u16  designated_format_index = 0;
+    for (u16 format_idx = 0; format_idx < swap_chain_info->num_surface_formats; format_idx++)
+    {
+        if (swap_chain_info->surface_formats[swap_chain_info->num_surface_formats].format == VK_FORMAT_B8G8R8A8_SRGB &&
+            swap_chain_info->surface_formats[swap_chain_info->num_surface_formats].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+        {
+            designated_format_index = format_idx;
+            optimal_format_found = true;
+            break;
+        }
+    }
+
+    if (!optimal_format_found)
+    {
+        // Issue perf warning
+        uWarning("[ vulkan ] [ perf ] 8bpp sRGB swap chain format unavailble. Defaulting to first format.\n");
+    }
+
+    // Determine best available presentation mode
+    bool optimal_present_found = false;
+    u16  designated_present_index = 0;
+    u16  fifo_present_index    = 0;
+    for (u16 present_idx = 0; present_idx < swap_chain_info->num_present_modes; present_idx++)
+    {
+        if (swap_chain_info->present_modes[present_idx] == VK_PRESENT_MODE_FIFO_KHR)
+        {
+            fifo_present_index = present_idx;
+        }
+
+        if (swap_chain_info->present_modes[present_idx] == VK_PRESENT_MODE_MAILBOX_KHR)
+        {
+            designated_present_index = present_idx;
+            optimal_present_found = true;
+            break;
+        }
+    }
+
+    if (!optimal_present_found)
+    {
+        // Issue perf warning
+        uWarning("[ vulkan ] [ perf ] Tripple buffering present mode unavailble. Defaulting to FIFO.\n");
+        designated_present_index = fifo_present_index;
+    }
+
+    // Determine best avialable swap extent
+    VkExtent2D designated_extent = { 0 };
+    uSelectVulkanSwapChainExtent(swap_chain_info, &designated_extent);
+}
+
+
+__UE_internal__ __UE_call__ bool
+uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice                     physical_device,
+                                                const VkSurfaceKHR*         const restrict surface,
+                                                _mut_ uVulkanSwapChainInfo* const restrict return_swap_chain_info)
+{
+    uAssertMsg_v(surface,                "[ vulkan ] The VKSurfaceKHR ptr must be non null.\n");
+    uAssertMsg_v(return_swap_chain_info, "[ vulkan ] The uVulkanSwapChainInfo ptr must be non null.\n");
+
+
+    // Get surface capabilities
+    VkSurfaceCapabilitiesKHR* surface_capabilities = (VkSurfaceCapabilitiesKHR*)&(return_swap_chain_info->surface_capabilities);
+    VkResult success = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device,
+                                                                 *surface,
+                                                                 surface_capabilities);
+
+    uAssert(success == VK_SUCCESS);
+    if (success != VK_SUCCESS)
+    {
+        uVkVerbose("Could not attain surface capabilities.\n");
+        return false;
+    }
+
+    // Get surface formats
+    success = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device,
+                                                   *surface,
+                                                   (u32*)&(return_swap_chain_info->num_surface_formats),
+                                                   NULL);
+
+    uAssert(success == VK_SUCCESS);
+    if (success != VK_SUCCESS)
+    {
+        uVkVerbose("Could not attain surface format quantity.\n");
+        return false;
+    }
+
+
+    if (return_swap_chain_info->num_surface_formats)
+    {
+        // Note: does not free in this scope.
+        return_swap_chain_info->surface_formats = (VkSurfaceFormatKHR*)malloc(return_swap_chain_info->num_surface_formats *
+                                                                              sizeof(VkSurfaceFormatKHR));
+        success = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device,
+                                                       *surface,
+                                                       (u32*)&(return_swap_chain_info->num_surface_formats),
+                                                       (VkSurfaceFormatKHR*)return_swap_chain_info->surface_formats);
+
+        uAssert(success == VK_SUCCESS);
+        if (success != VK_SUCCESS)
+        {
+            uVkVerbose("Could not attain surface formats.\n");
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    // Get surface present modes
+    success = vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device,
+                                                        *surface,
+                                                        (u32*)&(return_swap_chain_info->num_present_modes),
+                                                        NULL);
+    uAssert(success == VK_SUCCESS);
+    if (success != VK_SUCCESS)
+    {
+        uVkVerbose("Could not attain present mode quantity.\n");
+        return false;
+    }
+
+    if (return_swap_chain_info->num_present_modes)
+    {
+        // Note: does not free in this scope.
+        return_swap_chain_info->present_modes = (VkPresentModeKHR*)malloc(return_swap_chain_info->num_present_modes *
+                                                                          sizeof(VkPresentModeKHR));
+
+        success = vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device,
+                                                            *surface,
+                                                            (u32*)&(return_swap_chain_info->num_present_modes),
+                                                            NULL);
+        uAssert(success == VK_SUCCESS);
+        if (success != VK_SUCCESS)
+        {
+            uVkVerbose("Could not attain present modes.\n");
+            return false;
+        }
+    }
+
+    return (return_swap_chain_info->num_surface_formats &&
+            return_swap_chain_info->num_present_modes);
+}
+
+
+__UE_internal__ __UE_call__ void
+uSelectVulkanPhysicalDevice(const VkPhysicalDevice**    const const restrict physical_device_list,
+                            _mut_ VkPhysicalDevice*     const       restrict return_device,
+                            _mut_ uVulkanQueueInfo*     const       restrict queue_info,
+                            const u32                                        num_physical_devices,
+                            const VkSurfaceKHR*         const       restrict surface,
+                            const s8**                  const const restrict user_device_extension_names,
+                            const u16                                        num_user_device_extension_names,
+                            _mut_ uVulkanSwapChainInfo* const       restrict return_swap_chain_info)
+{
+    uAssertMsg_v(physical_device_list,   "[ vulkan ] Null vulkan device list pointer provided.\n");
+    uAssertMsg_v(!(*return_device),      "[ vulkan ] Return device must be null; will be overwritten\n");
+    uAssertMsg_v(queue_info,             "[ vulkan ] Queue family indices ptr must be non null\n");
+    uAssertMsg_v(num_physical_devices,   "[ vulkan ] A minimum of one physical devices is required.\n");
+    uAssertMsg_v(surface,                "[ vulkan ] Surface must be non null.\n");
+    uAssertMsg_v(return_swap_chain_info, "[ vulkan ] Swap chain info ptr must be non null.\n");
     for (u32 device_idx = 0; device_idx < num_physical_devices; device_idx++)
     {
         uAssertMsg_v(physical_device_list[device_idx],
@@ -233,144 +634,35 @@ uSelectVulkanPhysicalDevice(const VkPhysicalDevice** const const restrict physic
     bool selection_complete = false;
     for (u32 device_idx = 0; device_idx < num_physical_devices; device_idx++)
     {
-        // Physical device
         const VkPhysicalDevice physical_device = *physical_device_list[device_idx];
-
         if (!physical_device)
         {
             continue;
         }
 
-        // [ cfarvin::TODO ]
-        // Aquire physical device features
-        /* VkPhysicalDeviceFeatures device_features; */
-        /* vkGetPhysicalDeviceFeatures(physical_device, */
-        /*                             &device_features); */
+        selection_complete =
+            uValidateVulkanDeviceFeaturesReqruirement(physical_device) &&
+            uValidateVulkanDevicePropertiesReqruirement(physical_device) &&
+            uValidateVulkanDeviceQueueRequirement(physical_device,
+                                                  surface,
+                                                  queue_info) &&
+            uValidateVulkanDeviceExtensionsReqruirement(physical_device,
+                                                        user_device_extension_names,
+                                                        num_user_device_extension_names) &&
+            // Must query for surface and extension support before swap chains support.
+            uValidateVulkanSwapChainAndSurfaceCompatibility(physical_device,
+                                                            surface,
+                                                            return_swap_chain_info);
 
-        // [ cfarvin::TODO ]
-        // Aquire physical device properties
-        /* VkPhysicalDeviceProperties device_properties; */
-        /* vkGetPhysicalDeviceProperties(physical_device, */
-        /*                               &device_properties); */
-
-        // Check for extension support
-        u16 num_validated_extension_names = 0;
-        uQueryVulkanDeviceExtensions(&physical_device,
-                                     user_device_extension_names,
-                                     num_user_device_extension_names,
-                                     &num_validated_extension_names);
-
-        const char* extension_name_err_msg = "[ vulkan ] Unable to verify user extension names.\n";
-        uAssertMsg_v(num_validated_extension_names == num_user_device_extension_names, extension_name_err_msg);
-        if (num_validated_extension_names != num_user_device_extension_names)
-        {
-            uFatal(extension_name_err_msg);
-            return;
-        }
-
-        // Get queue family count
-        u32 queue_family_count = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, NULL);
-        if (!queue_family_count)
-        {
-            continue;
-        }
-
-        // Get queue families
-        VkQueueFamilyProperties* queue_family_props = (VkQueueFamilyProperties*)calloc(queue_family_count,
-                                                                                       sizeof(VkQueueFamilyProperties));
-        const char* queue_family_alloc_err_msg = "[ vulkan ] Unable to allocate queue family property array.\n";
-        uAssertMsg_v(queue_family_props, queue_family_alloc_err_msg);
-        if (!queue_family_props)
-        {
-            uFatal(queue_family_alloc_err_msg);
-        }
-        vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_family_props);
-
-        typedef struct
-        {
-            u32  index;
-            bool validated;
-        } uQueueFamilyPair;
-        u32 num_queues = 0;
-
-        // Require graphics family
-        uQueueFamilyPair graphics_pair = { 0 };
-        num_queues++;
-
-        // Require present family
-        uQueueFamilyPair present_pair  = { 0 };
-        num_queues++;
-
-        for (u32 queue_idx = 0; queue_idx < queue_family_count; queue_idx++)
-        {
-            // Check grahpics capability for this family
-            if (queue_family_props[queue_idx].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-            {
-                graphics_pair.index = queue_idx;
-                graphics_pair.validated = true;
-            }
-
-            // Check present capability for this family
-            VkBool32 present_capability = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(physical_device,
-                                                 queue_idx,
-                                                 *surface,
-                                                 &present_capability);
-
-            if (present_capability)
-            {
-                present_pair.index = queue_idx;
-                present_pair.validated = true;
-            }
-
-            // Break when all conditions are met
-            if (graphics_pair.validated &&
-                present_pair.validated)
-            {
-                // Store family indices for each required queue.
-                queue_info->graphics_index = graphics_pair.index;
-                queue_info->present_index  = present_pair.index;
-
-                // Set the physical device;
-                *return_device = physical_device;
-
-                // Issue perf warning for different graphics/presentation queue
-                if (graphics_pair.index != present_pair.index)
-                {
-                    uWarning("[ vulkan ] [ perf ] Different graphics and prsent queue families chosen.\n");
-                }
-
-                selection_complete = true;
-                break;
-            }
-        }
-
-        if (queue_family_props)
-        {
-            free(queue_family_props);
-        }
-
-        const char* queue_count_error_msg =
-            "[ vulkan ] uVulkanInfo.queues length: %d. %d queues were checked during physical device creation.\n";
-        uAssertMsg_v(uVULKAN_NUM_QUEUES == num_queues,
-                     queue_count_error_msg,
-                     uVULKAN_NUM_QUEUES,
-                     num_queues);
-        if (uVULKAN_NUM_QUEUES != num_queues)
-        {
-            uFatal(queue_count_error_msg,
-                   uVULKAN_NUM_QUEUES,
-                   num_queues);
-        }
-
+        // Set the physical device
         if (selection_complete)
         {
+            *return_device = physical_device;
             break;
         }
     }
 
-    const char* no_selection_error_msg = "[ vulkan ] Unable to verify all queue family requirements.\n";
+    const char* no_selection_error_msg = "[ vulkan ] Unable to select a suitable physical device.\n";
     uAssertMsg_v(selection_complete, no_selection_error_msg);
     if (!selection_complete)
     {
@@ -380,15 +672,18 @@ uSelectVulkanPhysicalDevice(const VkPhysicalDevice** const const restrict physic
 
 
 __UE_internal__ __UE_call__ void
-uCreateVulkanPhysicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
-                            _mut_ uVulkanQueueInfo* const       restrict queue_info,
-                            const s8**              const const restrict user_device_extension_names,
-                            const u16                                    num_user_device_extension_names)
+uCreateVulkanPhysicalDevice(_mut_ uVulkanInfo*          const       restrict v_info,
+                            _mut_ uVulkanQueueInfo*     const       restrict queue_info,
+                            const s8**                  const const restrict user_device_extension_names,
+                            const u16                                        num_user_device_extension_names,
+                            _mut_ uVulkanSwapChainInfo* const       restrict return_swap_chain_info)
 {
     uAssertMsg_v(v_info,                   "[ vulkan ] Null vulkan info ptr provided.\n");
     uAssertMsg_v(!v_info->physical_device, "[ vulkan ] Physical device must be null; will be overwritten.\n");
     uAssertMsg_v(!v_info->logical_device,  "[ vulkan ] Logical device must be null; will be overwritten.\n");
     uAssertMsg_v(queue_info,               "[ vulkan ] Queue family indices ptr must be non null.\n");
+    uAssertMsg_v(return_swap_chain_info,   "[ vulkan ] Swap chain info ptr must be non null.\n");
+
     if (num_user_device_extension_names)
     {
         uAssertMsg_v(user_device_extension_names && *user_device_extension_names,
@@ -419,7 +714,8 @@ uCreateVulkanPhysicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
                                 num_physical_devices,
                                 (VkSurfaceKHR*)&v_info->surface,
                                 user_device_extension_names,
-                                num_user_device_extension_names);
+                                num_user_device_extension_names,
+                                return_swap_chain_info);
 
     uAssertMsg_v(candidate_device != NULL, "[ vulkan ] Unable to select candidate device.\n");
     if (!candidate_device)
@@ -528,9 +824,11 @@ __UE_internal__ __UE_call__ void
 uCreateWin32Surface(_mut_ uVulkanInfo* const restrict v_info)
 {
     uAssertMsg_v(v_info,           "[ vulkan ] Null uVulkanInfo ptr provided.\n");
+    uAssertMsg_v(v_info,           "[ vulkan ] Null uVulkanInfo ptr provided.\n");
     uAssertMsg_v(v_info->instance, "[ vulkan ] Null uVulkanInfo->instance ptr provided.\n");
 
-    uWin32Info* win32_info = uWin32CreateWindow("Understone Engine");
+
+    win32_info = uWin32CreateWindow("Understone Engine");
     uAssertMsg_v(win32_info, "[ vulkan ] [ win32 surface ] Unable to create Win32 surface.\n");
     if (!win32_info)
     {
@@ -555,8 +853,7 @@ uCreateWin32Surface(_mut_ uVulkanInfo* const restrict v_info)
             uFatal(win32_surface_err_msg);
         }
 
-    // [ cfarvin::REVISIT ]
-    // May want to revisit deleting should this info be necessary.
+    // [ cfarvin::REVISIT ] Rrevisit deleting should this info be necessary.
     uDestroyWin32(win32_info);
 }
 #endif // _WIN32
@@ -639,7 +936,7 @@ uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physic
              user_device_extension_name_idx++)
         {
             if (strcmp((device_extension_properties[device_extension_name_idx]).extensionName,
-                    user_device_extension_names[user_device_extension_name_idx]) == 0)
+                       user_device_extension_names[user_device_extension_name_idx]) == 0)
             {
                 (*num_verified_extension_names)++;
             }
@@ -980,13 +1277,16 @@ uInitializeVulkan(_mut_ uVulkanInfo* const       restrict v_info,
                           num_user_instance_extension_names);
 
     uCreateVulkanSurface(v_info);
-    uVulkanQueueInfo queue_info = { 0 };
+    uVulkanQueueInfo     queue_info      = { 0 };
+    uVulkanSwapChainInfo swap_chain_info = { 0 };
 
     // queue_info built
+    // swap_chain_info_built
     uCreateVulkanPhysicalDevice(v_info,
                                 &queue_info,
                                 user_device_extension_names,
-                                num_user_device_extension_names);
+                                num_user_device_extension_names,
+                                &swap_chain_info);
 
     // queue_info consumed
     uCreateVulkanLogicalDevice(v_info,
@@ -995,6 +1295,10 @@ uInitializeVulkan(_mut_ uVulkanInfo* const       restrict v_info,
                                num_user_instance_validation_layer_names,
                                user_device_extension_names,
                                num_user_device_extension_names);
+
+    // swap_chain_info consumed
+    uCreateVulkanSwapChain(v_info,
+                           &swap_chain_info);
 }
 
 

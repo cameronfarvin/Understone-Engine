@@ -63,7 +63,7 @@ typedef struct
     r32  magnitude;
     bool does_intersect;
 
-    // [ cfarvin::REVISIT ]
+    // [ cfarvin::REVISIT ] intersection materials
     Material intersection_material;
 } RayIntersection;
 
@@ -298,7 +298,7 @@ IntersectEntity(const Ray*             restrict const ray,
         r32 magnitude = ((b * -1.0f) - (r32)sqrt(discriminant))
             / (2.0f * a);
 
-        // [ cfarvin::NOTE ] Bounces may be in any direction
+        // Note: Bounces may be in any direction
         //__UE_ASSERT__(magnitude >= 0);
 
         intersection->magnitude = magnitude;
@@ -316,7 +316,7 @@ IntersectEntity(const Ray*             restrict const ray,
 
         v3Norm(&intersection->normal_vector);
 
-        // [ cfarvin::REVSIT ]
+        // [ cfarvin::REVSIT ] intersection materials
         // Set intersection material
         intersection->intersection_material.max_generated_rays =
             entity->material.max_generated_rays;
@@ -356,7 +356,7 @@ TraceEntity(const Ray*             restrict const ray,
 
 
 // [ cfarvin::TODO ] Will presently only work with spheres.
-//                   Future: C99+ _Generic for entity types.
+// [ cfarvin::TODO ] Future: C99+ _Generic for entity types.
 __UE_internal__ __UE_inline__ void
 TraceEntityArray(const Ray*             restrict const ray,
                  _mut_ RayIntersection* restrict const intersection,

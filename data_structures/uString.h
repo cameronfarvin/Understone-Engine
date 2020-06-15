@@ -122,10 +122,7 @@ uStringVerify(const uString* const uStr)
 __UE_internal__ __UE_inline__ uString*
 uStringInit(const char* str)
 {
-    // [ cfarvin::TODO ] [ cfarvin::FINDME ]
-    // Take a close look at this. You got tired and decided to take a nap.
-    // Things are probably wrong somewhere. You were the going to impl strlen
-    // and continue with the uStringVerify() function above.
+    // [ cfarvin::REVISIT ] Strlen correctness, use throughout uString
     if (str)
     {
         uString* uStr = (uString*) calloc(1, sizeof(uString));
@@ -160,7 +157,7 @@ uStringDestroy(uString* const uStr)
     return false;
 }
 
-// [ cfarvin::TODO ]
+// [ cfarvin::TODO ] implement uString substring
 /* static inline uDynamicArray* */
 /* uStringSubstringIndices(uStringArray* const uSA, const char* sub_string) */
 /* {} */

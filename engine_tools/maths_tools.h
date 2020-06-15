@@ -294,7 +294,7 @@ v3Norm(v3* restrict const a)
     }
     else
     {
-        /* uAssert(false); */ // [ cfarvin::UNDO ]
+        // [ cfarvin::RESTORE ] uAssert(false);
         v3Set(a, 0.0f, 0.0f, 0.0f);
     }
 }

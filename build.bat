@@ -1,6 +1,6 @@
 @echo off
 @SET SCRIPT_DIR=%cd%
-@SET APP_NAME="engine"
+@SET APP_NAME="Understone"
 @SET APP_ARCH=x64
 @SET "VULKAN_SDK_PATH=C:\VulkanSDK\1.1.126.0\"
 
@@ -9,20 +9,11 @@
 :: Initialize cl.exe for correct environment.
 ::
 @where cl >nul 2>nul
-:: VS 2017 Community Edition
-rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall" %APP_ARCH% >nul
-
 :: VS 2017 Professional Edition
 rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall" %APP_ARCH% >nul
 
-:: VS 2017 Enterprise Edition
-rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall" %APP_ARCH% >nul
-
 :: VS 2019 Community Edition
 IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %APP_ARCH% >nul
-
-:: VS 2019 Enterprise Edition
-rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" %APP_ARCH% >nul
 
 
 ::
@@ -50,18 +41,30 @@ IF %ERRORLEVEL% NEQ 0 GOTO :exit
 mkdir msvc_landfill >nul 2>nul
 pushd msvc_landfill >nul
 
-rem cl %SCRIPT_DIR%\\%APP_NAME%.c /Oi /MT /O2 /Ot /Qpar /Ot /W4 /WX /Ob2 /GL /EHsc /nologo ^ :: release
-rem cl %SCRIPT_DIR%\\%APP_NAME%.c /Oi /Od /MTd /Qpar /Ot /W4 /WX /GL /EHsc /nologo ^         :: debug
 
-cl %SCRIPT_DIR%\\%APP_NAME%.c /Oi /Od /MTd /Qpar /Ot /W4 /WX /GL /EHsc /nologo ^
-/I%cd%\.. ^
+:: General Parameters
+SET GeneralParameters=/Oi /Qpar /EHsc /GL /nologo /Ot
+
+:: Debug Paramters
+SET DebugParameters=/Od /MTd /W4 /WX
+
+:: Release Parameters
+SET ReleaseParameters=/MT /O2 /W4 /WX /Ob2
+
+:: Include Parameters
+SET IncludeParameters=/I%cd%\.. ^
 /I%cd%\..\engine_tools ^
 /I%cd%\..\win ^
 /I%cd%\..\data_structures ^
 /I%cd%\..\tests ^
 /I%cd%\..\practice ^
-/I%VULKAN_SDK_PATH%\Include ^
-/link /SUBSYSTEM:CONSOLE /NXCOMPAT /MACHINE:x64 /NODEFAULTLIB:MSVCRTD ^
+/I%VULKAN_SDK_PATH%\Include
+
+:: Link Parameters
+SET LinkParameters=/SUBSYSTEM:CONSOLE ^
+/NXCOMPAT ^
+/MACHINE:x64 ^
+/NODEFAULTLIB:MSVCRTD ^
 /LIBPATH:%VULKAN_SDK_PATH%\Lib\ ^
 OpenGL32.lib ^
 user32.lib ^
@@ -70,11 +73,22 @@ shell32.lib ^
 odbccp32.lib ^
 vulkan-1.lib
 
+::
+:: Compiler Invocation
+::
+cl %SCRIPT_DIR%\\%APP_NAME%.c ^
+%GeneralParameters% %DebugParameters% %IncludeParameters% /link %LinkParameters%
+
 IF %ERRORLEVEL% NEQ 0 GOTO :exit
-xcopy /y engine.exe ..\ >null
+xcopy /y Understone.exe ..\ >null
 popd >null
 
 IF %ERRORLEVEL% NEQ 0 GOTO :exit
 rem engine.exe :: auto-run after build
+
+::
+:: Tag Analysis
+::
+python TagAnalysis.py --emacs
 
 :exit

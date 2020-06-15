@@ -69,8 +69,7 @@ BlendColorByMaterial(const Material*    restrict const material,
     __UE_ASSERT__(input_color);
     __UE_ASSERT__(return_color);
 
-    // [ cfarvin::TODO ] [ cfarvin::FINDME ]
-    /* *(return_color->channel.R) = */
+    // [ cfarvin::TODO ] (return_color->channel.R)
 
     return;
 }

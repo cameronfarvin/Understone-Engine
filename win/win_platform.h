@@ -71,7 +71,7 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
     {
         // [ cfarvin::TODO ] scaling/ortho
-        viewport.width = (u16) LOWORD(lParam);
+        viewport.width  = (u16) LOWORD(lParam);
         viewport.height = (u16) HIWORD(lParam);
         win32_sys_event = uEventResize;
         break;
@@ -82,7 +82,7 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         GetCursorPos(&win32_mouse_coords);
         ScreenToClient(hwnd, &win32_mouse_coords);
 
-        // [ cfarvin::NOTE ] uMousePos has origin @ lower left == (0, 0, 0)
+        // Note: uMousePos has origin @ lower left == (0, 0, 0)
         mouse_pos.x = (u16) win32_mouse_coords.x;
         mouse_pos.y = (u16) (viewport.height - win32_mouse_coords.y);
         break;
