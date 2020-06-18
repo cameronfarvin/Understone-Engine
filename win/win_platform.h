@@ -158,18 +158,17 @@ uWin32CreateWin32Info()
     }
 
     const char* window_class_name = uGetEngineName();
-    uWin32Info* win32_info = *(uWin32Info**)&uAPI_PRIME_WIN32_INFO;
 
-    win32_info = (uWin32Info*)calloc(1, sizeof(uWin32Info));
-    win32_info->class_name   = window_class_name;
-    win32_info->instance     = GetModuleHandle(NULL);
-    win32_info->command_show = 10;
+    *(uWin32Info**)&uAPI_PRIME_WIN32_INFO = (uWin32Info*)calloc(1, sizeof(uWin32Info));
+    (*(uWin32Info**)&uAPI_PRIME_WIN32_INFO)->class_name    = window_class_name;
+    (*(uWin32Info**)&uAPI_PRIME_WIN32_INFO)->instance      = GetModuleHandle(NULL);
+    (*(uWin32Info**)&uAPI_PRIME_WIN32_INFO)->command_show  = 10;
 
     WNDCLASSEX window_class    = { 0 };
     window_class.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     window_class.lpfnWndProc   = uEngineWindowProc;
-    window_class.hInstance     = win32_info->instance;
-    window_class.lpszClassName = win32_info->class_name;
+    window_class.hInstance     = uAPI_PRIME_WIN32_INFO->instance;
+    window_class.lpszClassName = uAPI_PRIME_WIN32_INFO->class_name;
     window_class.cbSize        = sizeof(WNDCLASSEX);
     /*
       window_class.hIcon = NULL;
@@ -181,37 +180,37 @@ uWin32CreateWin32Info()
 
     if (!RegisterClassEx(&window_class))
     {
-        free(win32_info);
-        uFatal("Could not register window class\n");
+        free(*(uWin32Info**)&uAPI_PRIME_WIN32_INFO);
+        uFatal("[ win32 ] Could not register window class; last error code: %d\n", GetLastError());
     }
 
-    win32_info->window = CreateWindowEx(0,
-                                       window_class.lpszClassName,
-                                       window_class_name,
-                                       WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                                       CW_USEDEFAULT,
-                                       CW_USEDEFAULT,
-                                       CW_USEDEFAULT,
-                                       CW_USEDEFAULT,
-                                       0,
-                                       0,
-                                       win32_info->instance,
-                                       0);
+    (*(uWin32Info**)&uAPI_PRIME_WIN32_INFO)->window = CreateWindowEx(0,
+                                                                     window_class.lpszClassName,
+                                                                     window_class_name,
+                                                                     WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                                                                     CW_USEDEFAULT,
+                                                                     CW_USEDEFAULT,
+                                                                     CW_USEDEFAULT,
+                                                                     CW_USEDEFAULT,
+                                                                     0,
+                                                                     0,
+                                                                     uAPI_PRIME_WIN32_INFO->instance,
+                                                                     0);
 
-    if (win32_info->window == NULL)
+    if (uAPI_PRIME_WIN32_INFO->window == NULL)
     {
-        free(win32_info);
+        free(*(uWin32Info**)&uAPI_PRIME_WIN32_INFO);
         uFatal("Windows returned null handle to client window.\n");
     }
 
-    if (!IsWindow(win32_info->window))
+    if (!IsWindow(uAPI_PRIME_WIN32_INFO->window))
     {
-        free(win32_info);
-        uFatal("Windows reports that win32_info->window is invalid.\n");
+        free(*(uWin32Info**)&uAPI_PRIME_WIN32_INFO);
+        uFatal("Windows reports that uAPI_PRIME_WIN32_INFO->window is invalid.\n");
     }
 
-    ShowWindow(win32_info->window, win32_info->command_show);
-    return win32_info;
+    ShowWindow(uAPI_PRIME_WIN32_INFO->window, uAPI_PRIME_WIN32_INFO->command_show);
+    return uAPI_PRIME_WIN32_INFO;
 }
 
 

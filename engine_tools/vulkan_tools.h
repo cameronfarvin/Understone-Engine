@@ -544,6 +544,32 @@ uSelectVulkanSwapChainExtent(_mut_ uVulkanSwapChainInfo* const restrict swap_cha
     {
         uGetWindowSize(&non_const_extent->width, (u32*)&non_const_extent->height);
     }
+
+    // Ensure we do not exceed maximums
+    if (non_const_extent->width > surface_capabilities.maxImageExtent.width)
+    {
+        uVkVerbose("[ vulkan ] Calculated extent width exceeded surface capabiility; capped.\n");
+        non_const_extent->width = surface_capabilities.maxImageExtent.width;
+    }
+
+    if (non_const_extent->height > surface_capabilities.maxImageExtent.height)
+    {
+        uVkVerbose("[ vulkan ] Calculated extent height exceeded surface capabiility; capped.\n");
+        non_const_extent->height = surface_capabilities.maxImageExtent.height;
+    }
+
+    // Ensure we do not fall below minimums
+    if (non_const_extent->width < surface_capabilities.minImageExtent.width)
+    {
+        uVkVerbose("[ vulkan ] Calculated extent width fell below surface capabiility; capped.\n");
+        non_const_extent->width = surface_capabilities.minImageExtent.width;
+    }
+
+    if (non_const_extent->height < surface_capabilities.minImageExtent.height)
+    {
+        uVkVerbose("[ vulkan ] Calculated extent height fell below surface capabiility; capped.\n");
+        non_const_extent->height = surface_capabilities.minImageExtent.height;
+    }
 }
 
 
