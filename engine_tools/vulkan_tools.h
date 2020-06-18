@@ -22,8 +22,6 @@ char _vkMessage_buffer[MAX_VKVERBOSE_LEN];
 #endif // __UE_VK_VERBOSE__
 
 
-
-
 #if _WIN32
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <win/win_platform.h>
@@ -31,9 +29,8 @@ char _vkMessage_buffer[MAX_VKVERBOSE_LEN];
 
 #include <vulkan/vulkan.h>
 #include <engine_tools/memory_tools.h>
+#include <engine_tools/window_tools.h>
 #include <data_structures/data_structures.h>
-
-
 
 
 typedef struct
@@ -41,8 +38,11 @@ typedef struct
     const VkSurfaceCapabilitiesKHR surface_capabilities;
     const VkSurfaceFormatKHR*      surface_formats;
     const u32                      num_surface_formats;
+    const u32                      designated_format_index;
     const VkPresentModeKHR*        present_modes;
+    const u32                      designated_present_index;
     const u32                      num_present_modes;
+    const VkExtent2D               swap_extent;
 } uVulkanSwapChainInfo;
 
 // Note: as queue indices are added, ensure that unique value extraction
@@ -63,7 +63,7 @@ typedef struct
     const VkDevice         logical_device;
     const VkQueue          queues[uVULKAN_NUM_QUEUES];
     const VkSurfaceKHR     surface;
-    const VkSwapchainKHR   swap_chain; // [ cfarvin::TODO ] clean up in uDestroyVulkan();
+    const VkSwapchainKHR   swap_chain;
 } uVulkanInfo;
 
 VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger;
@@ -71,7 +71,7 @@ VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger_info  = { 0 };
 VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
 
 #if _WIN32
-uWin32Info* win32_info = { 0 };
+const uWin32Info* win32_info = NULL;
 #endif // _WIN32
 
 
@@ -83,21 +83,172 @@ uDestroyVulkan(const uVulkanInfo* const restrict v_info);
 
 __UE_internal__ __UE_call__ void
 uQueryVulkanDeviceExtensions(const VkPhysicalDevice* restrict physical_device,
-                             const s8** const const restrict user_device_extension_names,
-                             const u16                                    num_user_device_extension_names,
-                             _mut_ u16* const                num_verified_extension_names);
+                             const s8** const const restrict  user_device_extension_names,
+                             const u16                        num_user_device_extension_names,
+                             _mut_ u16* const                 num_verified_extension_names);
+
+__UE_internal__ __UE_call__ bool
+uSelectVulkanSwapChain(_mut_ uVulkanSwapChainInfo* const restrict swap_chain_info);
 
 
 
 
 __UE_internal__ __UE_call__ void
-uCreateVulkanSwapChain(_mut_ uVulkanInfo*          const restrict v_info,
-                       const uVulkanSwapChainInfo* const swap_chain_info)
+uVulkanExtractUniqueQueueFamilies(const uVulkanQueueInfo* const restrict queue_info,
+                                  _mut_ u32*              const restrict unique_queue_array,
+                                  const u8                               num_possible_queues,
+                                  _mut_ u8*               const restrict unique_queues_found)
 {
-    uAssertMsg_v(v_info,          "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(swap_chain_info, "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
+    uAssertMsg_v(queue_info,          "[ vulkan ] The uVulkanQueueInfo ptr must be non null.\n");
+    uAssertMsg_v(unique_queue_array,  "[ vulkan ] The 'unique_queue_array' ptr must be non null.\n");
+    uAssertMsg_v(num_possible_queues, "[ vulkan ] The number of possible queues must be non zero.\n");
+    uAssertMsg_v(unique_queues_found, "[ vulkan ] The 'num_queues_found' ptr must be non null.\n");
+
+    if (num_possible_queues)
+    {
+        for (u8 unchecked_queue_idx = 0; unchecked_queue_idx < num_possible_queues; unchecked_queue_idx++)
+        {
+            // Create graphics queue as unique by default.
+            if (unchecked_queue_idx == 0)
+            {
+                unique_queue_array[(*unique_queues_found)] = queue_info->graphics_index;
+                (*unique_queues_found)++;
+            }
+            else
+            {
+                bool is_unique = true;
+
+                // Check present queue uniqueness
+                for (u8 unique_queue_idx = 0;
+                     unique_queue_idx < (*unique_queues_found);
+                     unique_queue_idx++)
+                {
+                    if (queue_info->present_index == unique_queue_array[unique_queue_idx])
+                    {
+                        is_unique = false;
+                        break;
+                    }
+                }
+
+                if (is_unique)
+                {
+                    unique_queue_array[(*unique_queues_found)] = queue_info->present_index;
+                    (*unique_queues_found)++;
+                }
+            }
+        }
+    }
+}
 
 
+__UE_internal__ __UE_inline__ void
+uCreateVulkanSwapChain(_mut_ uVulkanInfo*          const restrict v_info,
+                       _mut_ uVulkanSwapChainInfo* const restrict swap_chain_info,
+                       const uVulkanQueueInfo*     const restrict queue_info)
+{
+    uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
+    uAssertMsg_v(v_info->surface,        "[ vulkan ] VkSurfaceKHR ptr must be non null.\n");
+    uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkLogicalDevice must be non zero.\n");
+    uAssertMsg_v(!v_info->swap_chain,    "[ vulkan ] VkSwapChainKHR must be zero; will be overwritten.\n");
+    uAssertMsg_v(swap_chain_info,        "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
+    uAssertMsg_v(queue_info,             "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n");
+    uAssertMsg_v(swap_chain_info->surface_formats,
+                 "[ vulkan ] VkSurfaceFormatKHR ptr must be non null.\n");
+    uAssertMsg_v(swap_chain_info->present_modes,
+                 "[ vulkan ] VkPresentModeKHR ptr must be non null.\n");
+
+
+    // Select a suitable swapchain
+    bool swap_chain_selected = uSelectVulkanSwapChain(swap_chain_info);
+    const char* swap_chain_select_err_msg = "[ vulkan ] Unable to select a suitable swap chain.\n";
+    uAssertMsg_v(swap_chain_selected, swap_chain_select_err_msg);
+    if (!swap_chain_selected)
+    {
+        uDestroyVulkan(v_info);
+        uFatal(swap_chain_select_err_msg);
+    }
+
+    // Determine swap chain image capacity
+    u32 min_image_count = swap_chain_info->surface_capabilities.minImageCount;
+    u32 max_image_count = swap_chain_info->surface_capabilities.maxImageCount;
+
+    // Request an additional image
+    u32 designated_image_count = min_image_count + 1;
+
+    // Ensure designated count is within bounds
+    bool image_count_unlimited = (max_image_count == 0);
+    if (!image_count_unlimited && (designated_image_count > max_image_count))
+    {
+        designated_image_count = max_image_count;
+    }
+
+    // Determine if queues are unique
+    u32 unique_queue_array[uVULKAN_NUM_QUEUES] = { 0 };
+    u8  unique_queues_found = 0;
+    uVulkanExtractUniqueQueueFamilies(queue_info,
+                                      &(unique_queue_array[0]),
+                                      uVULKAN_NUM_QUEUES,
+                                      &unique_queues_found);
+
+    const char* unique_queues_err_msg = "[ vulkan ] Was unable to find any queues.\n";
+    uAssertMsg_v(unique_queues_found, unique_queues_err_msg);
+    if (!unique_queues_found)
+    {
+        uDestroyVulkan(v_info);
+        uFatal(unique_queues_err_msg);
+    }
+
+    const VkSurfaceFormatKHR* surface_formats = swap_chain_info->surface_formats;
+    const VkPresentModeKHR*   present_modes = swap_chain_info->present_modes;
+
+    // File create info
+    VkSwapchainCreateInfoKHR swap_chain_create_info = { 0 };
+    swap_chain_create_info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    swap_chain_create_info.surface          = v_info->surface;
+    swap_chain_create_info.minImageCount    = designated_image_count;
+    swap_chain_create_info.imageFormat      = surface_formats[swap_chain_info->designated_format_index].format;
+    swap_chain_create_info.imageColorSpace  = surface_formats[swap_chain_info->designated_format_index].colorSpace;
+    swap_chain_create_info.imageExtent      = swap_chain_info->swap_extent;
+    swap_chain_create_info.imageArrayLayers = 1;
+    swap_chain_create_info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // Render directly to images
+    swap_chain_create_info.preTransform     = swap_chain_info->surface_capabilities.currentTransform;
+    swap_chain_create_info.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // Ignore alpha channel
+    swap_chain_create_info.presentMode      = present_modes[swap_chain_info->designated_present_index];
+    swap_chain_create_info.clipped          = VK_TRUE;
+    swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE; // [ cfarvin::TODO ] handle differently on window resize
+    if (unique_queues_found == 1)
+    {
+        // Queues were unique/identical
+        swap_chain_create_info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
+        swap_chain_create_info.queueFamilyIndexCount = 0;
+        swap_chain_create_info.pQueueFamilyIndices   = NULL;
+    }
+    else
+    {
+        // Queues were not unique/identical
+        swap_chain_create_info.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
+        swap_chain_create_info.queueFamilyIndexCount = unique_queues_found;
+        swap_chain_create_info.pQueueFamilyIndices   = &(unique_queue_array[0]);
+    }
+
+    // Create swap chain
+    VkResult result = vkCreateSwapchainKHR(v_info->logical_device,
+                                           &swap_chain_create_info,
+                                           NULL,
+                                           (VkSwapchainKHR*)&(v_info->swap_chain));
+
+    const char* create_swap_chain_err_msg = "[ vulkan ] Unable to create swap chain.\n";
+    uAssertMsg_v((result == VK_SUCCESS), create_swap_chain_err_msg);
+    if (result != VK_SUCCESS)
+    {
+        free((VkSurfaceFormatKHR*)swap_chain_info->surface_formats);
+        free((VkPresentModeKHR*)swap_chain_info->present_modes);
+        uDestroyVulkan(v_info);
+        uFatal(create_swap_chain_err_msg);
+    }
+
+    free((VkSurfaceFormatKHR*)swap_chain_info->surface_formats);
+    free((VkPresentModeKHR*)swap_chain_info->present_modes);
 }
 
 
@@ -129,37 +280,10 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
     // Extract unique queue family index values from uVulkanQueueInfo
     u8  num_unique_queues = 0;
     u32 unique_queues[uVULKAN_NUM_QUEUES] = { 0 };
-    for (u8 unchecked_queue_idx = 0; unchecked_queue_idx < uVULKAN_NUM_QUEUES; unchecked_queue_idx++)
-    {
-        // Create graphics queue as unique by default.
-        if (unchecked_queue_idx == 0)
-        {
-            unique_queues[num_unique_queues] = queue_info->graphics_index;
-            num_unique_queues++;
-        }
-        else
-        {
-            bool is_unique = true;
-
-            // Check present queue uniqueness
-            for (u8 unique_queue_idx = 0;
-                 unique_queue_idx < num_unique_queues;
-                 unique_queue_idx++)
-            {
-                if (queue_info->present_index == unique_queues[unique_queue_idx])
-                {
-                    is_unique = false;
-                    break;
-                }
-            }
-
-            if (is_unique)
-            {
-                unique_queues[num_unique_queues] = queue_info->present_index;
-                num_unique_queues++;
-            }
-        }
-    }
+    uVulkanExtractUniqueQueueFamilies(queue_info,
+                                      &(unique_queues[0]),
+                                      uVULKAN_NUM_QUEUES,
+                                      &num_unique_queues);
 
     // Create logical device create info structure(s)
     const char* device_create_fail_msg = "[ vulkan ] Unable to create logical device.\n";
@@ -233,7 +357,6 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
 __UE_internal__ __UE_call__ bool
 uValidateVulkanDeviceFeaturesReqruirement(const VkPhysicalDevice physical_device)
 {
-    // [ cfarvin::TODO ] Silences compiler warning
     if (physical_device) {}
 
     // Aquire physical device features
@@ -248,7 +371,6 @@ uValidateVulkanDeviceFeaturesReqruirement(const VkPhysicalDevice physical_device
 __UE_internal__ __UE_call__ bool
 uValidateVulkanDevicePropertiesReqruirement(const VkPhysicalDevice physical_device)
 {
-    // [ cfarvin::TODO ] Silences compiler warning
     if (physical_device) {}
 
     // Aquire physical device properties
@@ -398,56 +520,37 @@ uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice                 phy
 
 
 __UE_internal__ __UE_inline__ void
-uSelectVulkanSwapChainExtent(const uVulkanSwapChainInfo* const restrict swap_chain_info,
-                             _mut_ VkExtent2D*           const restrict designated_extent)
+uSelectVulkanSwapChainExtent(_mut_ uVulkanSwapChainInfo* const restrict swap_chain_info)
 {
-    uAssertMsg_v(swap_chain_info,   "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
-    uAssertMsg_v(designated_extent, "[ vulkan ] VkExtent2D ptr must be non null.\n");
+    uAssertMsg_v(swap_chain_info,               "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
 #if _WIN32
     uAssertMsg_v(win32_info,         "[ win32 ] [ vulkan ] uWin32Info must be non null.\n");
     uAssertMsg_v(win32_info->window, "[ win32 ] [ vulkan ] uWin32Info window must be non null.\n");
 #endif // _WIN32
 
     VkSurfaceCapabilitiesKHR surface_capabilities = swap_chain_info->surface_capabilities;
+    VkExtent2D* non_const_extent = (VkExtent2D*)&(swap_chain_info->swap_extent);
 
-    // [ cfarvin::STEP_INTO ] Debug to ensure that this is correctly set
-    u32 u32_MAX = ~(u32)0;
     // Note: Some window managers use u32_MAX as a magic value which indicates that the extent
     // must be manually set up.
+    u32 u32_MAX = ~(u32)0;
     if (surface_capabilities.currentExtent.width != u32_MAX)
     {
-        // [ cfarvin::STEP_INTO ] Is this called in the common use-case?
-        designated_extent->width  = surface_capabilities.currentExtent.width;
-        designated_extent->height = surface_capabilities.currentExtent.height;
+
+        non_const_extent->width  = surface_capabilities.currentExtent.width;
+        non_const_extent->height = surface_capabilities.currentExtent.height;
     }
     else
     {
-// [ cfarvin::TODO ] Pull out into uWin32GetWindowSize(), and uGetWindowSize();
-#if _WIN32
-        LPRECT window_rect = { 0 };
-        BOOL win32_rect_success = GetWindowRect(win32_info->window, window_rect);
-        if (!win32_rect_success)
-        {
-            uFatal("[ win32 ] [ vulkan ] Unable to determine window rect.\n");
-        }
-
-        // [ cfarvin::TODO ] Double check that extent subtractions are correct for win32
-        designated_extent->width  = window_rect->right - window_rect->left;
-        designated_extent->height = window_rect->bottom - window_rect->top;
-
-        uAssert(designated_extent->width);
-        uAssert(designated_extent->height);
-#endif // _WIN32
+        uGetWindowSize(&non_const_extent->width, (u32*)&non_const_extent->height);
     }
 }
 
 
 __UE_internal__ __UE_call__ bool
-uSelectVulkanSwapChain(const uVulkanSwapChainInfo*     const restrict swap_chain_info,
-                       const VkSwapchainCreateInfoKHR* const restrict return_swap_chain_create_info)
+uSelectVulkanSwapChain(_mut_ uVulkanSwapChainInfo* const restrict swap_chain_info)
 {
     uAssertMsg_v(swap_chain_info,                "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
-    uAssertMsg_v(!return_swap_chain_create_info, "[ vulkan ] VkSwapchainCreateInfoKHR ptr must be null; will be overwritten.\n");
     if (swap_chain_info->num_surface_formats)
     {
         uAssertMsg_v(swap_chain_info->surface_formats, "[ vulkan ] VkSurfaceFormatKHR ptr must be non null.\n");
@@ -457,17 +560,16 @@ uSelectVulkanSwapChain(const uVulkanSwapChainInfo*     const restrict swap_chain
         uAssertMsg_v(swap_chain_info->present_modes,"[ vulkan ] VkPresentModeKHR ptr must be non null.\n");
     }
 
-
     // Determine best available surface format
+    u32*  non_const_designated_format_index = (u32*)&(swap_chain_info->designated_format_index);
     bool optimal_format_found = false;
-    u16  designated_format_index = 0;
     for (u16 format_idx = 0; format_idx < swap_chain_info->num_surface_formats; format_idx++)
     {
-        if (swap_chain_info->surface_formats[swap_chain_info->num_surface_formats].format == VK_FORMAT_B8G8R8A8_SRGB &&
-            swap_chain_info->surface_formats[swap_chain_info->num_surface_formats].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+        if (swap_chain_info->surface_formats[format_idx].format == VK_FORMAT_B8G8R8A8_SRGB &&
+            swap_chain_info->surface_formats[format_idx].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
         {
-            designated_format_index = format_idx;
-            optimal_format_found = true;
+            *non_const_designated_format_index = format_idx;
+            optimal_format_found    = true;
             break;
         }
     }
@@ -475,38 +577,50 @@ uSelectVulkanSwapChain(const uVulkanSwapChainInfo*     const restrict swap_chain
     if (!optimal_format_found)
     {
         // Issue perf warning
-        uWarning("[ vulkan ] [ perf ] 8bpp sRGB swap chain format unavailble. Defaulting to first format.\n");
+        uWarning("[ vulkan ] [ perf ] 8bpp sRGB swap chain format unavailble. Defaulting to first format index.\n");
     }
 
     // Determine best available presentation mode
-    bool optimal_present_found = false;
-    u16  designated_present_index = 0;
-    u16  fifo_present_index    = 0;
+    u32* non_const_designated_present_index = (u32*)&(swap_chain_info->designated_present_index);
+    bool suitable_present_found   = false;
+    bool optimal_present_found    = false;
+    u16  fifo_present_index       = 0;
     for (u16 present_idx = 0; present_idx < swap_chain_info->num_present_modes; present_idx++)
     {
-        if (swap_chain_info->present_modes[present_idx] == VK_PRESENT_MODE_FIFO_KHR)
+        VkPresentModeKHR present_mode = swap_chain_info->present_modes[present_idx];
+        if (present_mode == VK_PRESENT_MODE_MAILBOX_KHR)
         {
-            fifo_present_index = present_idx;
-        }
-
-        if (swap_chain_info->present_modes[present_idx] == VK_PRESENT_MODE_MAILBOX_KHR)
-        {
-            designated_present_index = present_idx;
-            optimal_present_found = true;
+            *non_const_designated_present_index = present_idx;
+            optimal_present_found  = true;
+            suitable_present_found = true;
             break;
         }
+        else if (present_mode == VK_PRESENT_MODE_FIFO_KHR)
+        {
+            fifo_present_index     = present_idx;
+            suitable_present_found = true;
+        }
+    }
+
+    const char* suitable_present_idx_err_msg = "[ vulkan ] Unable to find a suitable present mode.\n";
+    uAssertMsg_v(suitable_present_found, suitable_present_idx_err_msg);
+    if (!suitable_present_found)
+    {
+        uFatal(suitable_present_idx_err_msg);
     }
 
     if (!optimal_present_found)
     {
         // Issue perf warning
         uWarning("[ vulkan ] [ perf ] Tripple buffering present mode unavailble. Defaulting to FIFO.\n");
-        designated_present_index = fifo_present_index;
+        *non_const_designated_present_index = fifo_present_index;
     }
 
     // Determine best avialable swap extent
-    VkExtent2D designated_extent = { 0 };
-    uSelectVulkanSwapChainExtent(swap_chain_info, &designated_extent);
+    uSelectVulkanSwapChainExtent(swap_chain_info);
+
+    // Note: require FIFO present mode; accept any format
+    return suitable_present_found;
 }
 
 
@@ -582,14 +696,14 @@ uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice          
 
     if (return_swap_chain_info->num_present_modes)
     {
-        // Note: does not free in this scope.
+        // Note: does not free in this scope
         return_swap_chain_info->present_modes = (VkPresentModeKHR*)malloc(return_swap_chain_info->num_present_modes *
                                                                           sizeof(VkPresentModeKHR));
 
         success = vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device,
                                                             *surface,
                                                             (u32*)&(return_swap_chain_info->num_present_modes),
-                                                            NULL);
+                                                            (VkPresentModeKHR*)return_swap_chain_info->present_modes);
         uAssert(success == VK_SUCCESS);
         if (success != VK_SUCCESS)
         {
@@ -828,8 +942,9 @@ uCreateWin32Surface(_mut_ uVulkanInfo* const restrict v_info)
     uAssertMsg_v(v_info->instance, "[ vulkan ] Null uVulkanInfo->instance ptr provided.\n");
 
 
-    win32_info = uWin32CreateWindow("Understone Engine");
-    uAssertMsg_v(win32_info, "[ vulkan ] [ win32 surface ] Unable to create Win32 surface.\n");
+    uWin32Info** non_const_win32_info = (uWin32Info**)&win32_info;
+    *non_const_win32_info = (uWin32Info*)uWin32CreateWindow();
+    uAssertMsg_v(win32_info, "[ vulkan ] [ win32 ] Unable to create Win32 window.\n");
     if (!win32_info)
     {
         return;
@@ -852,9 +967,6 @@ uCreateWin32Surface(_mut_ uVulkanInfo* const restrict v_info)
             uDestroyVulkan(v_info);
             uFatal(win32_surface_err_msg);
         }
-
-    // [ cfarvin::REVISIT ] Rrevisit deleting should this info be necessary.
-    uDestroyWin32(win32_info);
 }
 #endif // _WIN32
 
@@ -1297,8 +1409,10 @@ uInitializeVulkan(_mut_ uVulkanInfo* const       restrict v_info,
                                num_user_device_extension_names);
 
     // swap_chain_info consumed
+    // queue_info consumed
     uCreateVulkanSwapChain(v_info,
-                           &swap_chain_info);
+                           &swap_chain_info,
+                           &queue_info);
 }
 
 
@@ -1325,6 +1439,9 @@ uDestroyVulkan(const uVulkanInfo* const restrict v_info)
                                             NULL);
         }
 
+        // Destroy swap chain
+        vkDestroySwapchainKHR(v_info->logical_device, v_info->swap_chain, NULL);
+
         // Destroy surface khr
         vkDestroySurfaceKHR(v_info->instance, v_info->surface, NULL);
     }
@@ -1339,6 +1456,8 @@ uDestroyVulkan(const uVulkanInfo* const restrict v_info)
     {
         vkDestroyInstance(v_info->instance, NULL);
     }
+
+    uDestroyWin32((uWin32Info* const)win32_info);
 }
 
 #endif // __UE_VULKAN_TOOLS_H__

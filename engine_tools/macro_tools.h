@@ -19,8 +19,13 @@
 #endif // __UE_internal__
 
 #ifndef __UE_external__
-#define __UE_external__ extern // functions
+#define __UE_external__ extern
 #endif // __UE_external__
+
+#ifndef __UE_global__
+#define __UE_global__ static
+#endif // __UE_global__
+
 
 
 

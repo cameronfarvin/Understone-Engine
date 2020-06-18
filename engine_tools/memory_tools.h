@@ -68,14 +68,6 @@ uMAAllocate_API__(_mut_ uMemoryArena* restrict const memory_arena,
 }
 
 
-//
-// [ cfarvin::TODO ] Difficult to store lvalue of all types w/o using  void*.
-//                   May require user to create an lvalue for targets before pushes,
-//                   otherwise there would not be need for dynamic memory allocation
-//                   in the first place.
-//
-// Was thinking something along the lines of uMAPushRawData().
-//
 #define uMAPushData( arena, new_data, type )                            \
     (type*)uMAPushData_API( arena, (type*)&(new_data), sizeof(type) )
 __UE_internal__ __UE_inline__ void*
@@ -140,9 +132,6 @@ uMADestroy(uMemoryArena* memory_arena)
 {
     if (!(memory_arena && memory_arena->data))
     {
-        // [ cfarvin::TODO ] Was printing during tests in which
-        // this was *supposed* to fail.
-        /* uError("Invlid memory arena free\n"); */
         return false;
     }
 

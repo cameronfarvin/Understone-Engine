@@ -22,11 +22,15 @@ class TagType(enum.Enum):
     RESTORE   = enum.auto()
     STEP_INTO = enum.auto()
 
+
 def IsTagTypeEmacsErrorType(tag_type):
-    if tag_type == TagType.REMOVE or type == TagType.STEP_INTO:
-        return True;
-    else:
-        return False;
+    isEmacsType = False
+    if (tag_type == TagType.REMOVE) or (tag_type == TagType.STEP_INTO):
+        isEmacsType = True
+
+        isEmacsType = True
+
+    return isEmacsType
 
 
 RawTags = set(())
@@ -62,7 +66,7 @@ class Tag:
             if IsTagTypeEmacsErrorType(self.type):
                 serialized_str = serialized_str + 'error: ' + self.message
             else:
-                serialized_str = serialized_str + 'warning ' + self.message
+                serialized_str = serialized_str + 'warning: ' + self.message
 
         return serialized_str
 
@@ -75,7 +79,7 @@ class SOURCE:
         self.absolute_path = os.path.join(_root, _file_name)
         self.line_count    = 0
 
-    def Analyze(self, ):
+    def Analyze(self):
         with open(self.absolute_path) as file:
             for line_index, line_data in enumerate(file):
                 for type in (TagType):

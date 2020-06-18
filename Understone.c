@@ -18,7 +18,6 @@
 #endif // _WIN32
 
 
-
 //
 // Global Members
 //
@@ -46,7 +45,7 @@ char* required_device_extensions[] =
 };
 
 
-void
+__UE_internal__ __UE_inline__ void
 uHandleWindowResize()
 {
     uDebugPrint("TODO: Handle Window Resize\n");
@@ -56,7 +55,7 @@ uHandleWindowResize()
 }
 
 // Query the mouse and keyboard state
-void
+__UE_internal__ __UE_inline__ void
 uRefreshInputState()
 {
     uSystemEvent sys_event = uEventNone;
@@ -89,7 +88,7 @@ uRefreshInputState()
 }
 
 
-void
+__UE_internal__ __UE_call__ void
 uDestroyEngine()
 {
     // Note: Vulkan tears down platform surfaces/windows
@@ -119,7 +118,6 @@ int main(int argc, char** argv)
 
     if (argc && argv) {}
 
-    // [ cfarvin::TODO ] App name
     uInitializeVulkan(&main_vulkan,
                       "Understone",
                       required_instance_validation_layers,

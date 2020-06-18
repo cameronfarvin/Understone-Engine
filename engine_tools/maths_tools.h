@@ -286,6 +286,7 @@ v3Norm(v3* restrict const a)
 {
     uAssert(a);
     r32 magnitude = v3Mag(a);
+    uAssert(magnitude);
     if (magnitude)
     {
         a->x /= magnitude;
@@ -294,7 +295,6 @@ v3Norm(v3* restrict const a)
     }
     else
     {
-        // [ cfarvin::RESTORE ] uAssert(false);
         v3Set(a, 0.0f, 0.0f, 0.0f);
     }
 }

@@ -1,16 +1,19 @@
 #ifndef __win_platform__
 #define __win_platform__ 1
 
+#ifndef WIN32
 #define WIN32
+#endif // WIN32
 #include <windows.h>
 #include <stdio.h>
 #include <stdint.h>
 
-#include <engine_tools/debug_tools.h>
-#include <engine_tools/type_tools.h>
-#include <engine_tools/event_tools.h>
 #include <data_structures/data_structures.h>
-
+#include <engine_tools/macro_tools.h>
+#include <engine_tools/debug_tools.h>
+#include <engine_tools/event_tools.h>
+#include <engine_tools/engine_info.h>
+#include <engine_tools/type_tools.h>
 
 
 uSystemEvent win32_sys_event;
@@ -23,6 +26,58 @@ typedef struct
     HDC         device_context;
     const char* class_name;
 } uWin32Info;
+
+
+// Forward decls
+__UE_internal__ __UE_call__ const uWin32Info* const
+uWin32CreateWin32Info();
+
+
+//
+// PRIME WIN32INFO
+//
+__UE_global__ const uWin32Info* uAPI_PRIME_WIN32_INFO = NULL;
+
+
+__UE_internal__ __UE_inline__ const uWin32Info* const
+uGetWin32Info()
+{
+    if (uAPI_PRIME_WIN32_INFO)
+    {
+        return uAPI_PRIME_WIN32_INFO;
+    }
+
+    *(uWin32Info**)&uAPI_PRIME_WIN32_INFO = (uWin32Info*)uWin32CreateWin32Info();
+    return uAPI_PRIME_WIN32_INFO;
+}
+
+__UE_internal__ __UE_inline__ void
+uWin32GetWindowSize(_mut_ u32* const restrict width,
+                    _mut_ u32* const restrict height)
+{
+    const uWin32Info* win32_info = uGetWin32Info();
+
+    uAssertMsg_v(width,  "[ win32 ] Width ptr must be non null.\n");
+    uAssertMsg_v(height, "[ win32 ] Height ptr must be non null.\n");
+    uAssertMsg_v(IsWindow(win32_info->window),
+                 "[ win32 ] Windows reports that the win32_info->window member is invalid.\n");
+
+    RECT window_rect = { 0 };
+    BOOL win32_rect_success = GetWindowRect(win32_info->window, &window_rect);
+    if (!win32_rect_success)
+    {
+        uFatal("[ win32 ] [ vulkan ] Unable to determine window rect with win32 error: %d.\n", GetLastError());
+    }
+
+    uAssert(window_rect.right > window_rect.left);
+    uAssert(window_rect.bottom > window_rect.top);
+
+    *width  = window_rect.right - window_rect.left;
+    *height = window_rect.bottom - window_rect.top;
+
+    uAssert(*width);
+    uAssert(*height);
+}
 
 
 // Note: no function decorators as to conform with Win32 specification.
@@ -94,14 +149,21 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 
-// [ cfarvin::TODO ] fail gracefully
-__UE_internal__ __UE_call__ uWin32Info*
-uWin32CreateWindow(const char* const restrict window_class_name)
+__UE_internal__ __UE_call__ const uWin32Info* const
+uWin32CreateWin32Info()
 {
-    uWin32Info* win32_info   = (uWin32Info*) calloc(1, sizeof(uWin32Info));
-    win32_info->class_name    = window_class_name;
-    win32_info->instance      = GetModuleHandle(NULL);
-    win32_info->command_show  = 10;
+    if (uAPI_PRIME_WIN32_INFO)
+    {
+        return uAPI_PRIME_WIN32_INFO;
+    }
+
+    const char* window_class_name = uGetEngineName();
+    uWin32Info* win32_info = *(uWin32Info**)&uAPI_PRIME_WIN32_INFO;
+
+    win32_info = (uWin32Info*)calloc(1, sizeof(uWin32Info));
+    win32_info->class_name   = window_class_name;
+    win32_info->instance     = GetModuleHandle(NULL);
+    win32_info->command_show = 10;
 
     WNDCLASSEX window_class    = { 0 };
     window_class.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -119,6 +181,7 @@ uWin32CreateWindow(const char* const restrict window_class_name)
 
     if (!RegisterClassEx(&window_class))
     {
+        free(win32_info);
         uFatal("Could not register window class\n");
     }
 
@@ -137,12 +200,25 @@ uWin32CreateWindow(const char* const restrict window_class_name)
 
     if (win32_info->window == NULL)
     {
+        free(win32_info);
         uFatal("Windows returned null handle to client window.\n");
     }
 
-    ShowWindow(win32_info->window, win32_info->command_show);
+    if (!IsWindow(win32_info->window))
+    {
+        free(win32_info);
+        uFatal("Windows reports that win32_info->window is invalid.\n");
+    }
 
+    ShowWindow(win32_info->window, win32_info->command_show);
     return win32_info;
+}
+
+
+__UE_internal__ __UE_inline__ const uWin32Info* const
+uWin32CreateWindow()
+{
+    return uWin32CreateWin32Info();
 }
 
 
