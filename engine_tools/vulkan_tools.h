@@ -66,6 +66,9 @@ typedef struct
     const VkSwapchainKHR   swap_chain;
 } uVulkanInfo;
 
+// [ cfarvin::DEBUG ] This needs a home later
+_mut_ VkImage* _mut_ swap_chain_images = NULL;
+
 VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger;
 VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger_info  = { 0 };
 VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
@@ -249,6 +252,48 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*          const restrict v_info,
 
     free((VkSurfaceFormatKHR*)swap_chain_info->surface_formats);
     free((VkPresentModeKHR*)swap_chain_info->present_modes);
+
+    // Get handles to swap chain images
+    u32 reported_image_count = designated_image_count;
+    result = vkGetSwapchainImagesKHR(v_info->logical_device,
+                                     v_info->swap_chain,
+                                     &designated_image_count,
+                                     NULL);
+
+    const char* swap_chain_image_count_err_msg =
+        "[ vulkan ] Unable to obtain swap chain image count.\n";
+    uAssertMsg_v((result == VK_SUCCESS), swap_chain_image_count_err_msg);
+    if (result != VK_SUCCESS)
+    {
+        uFatal(swap_chain_image_count_err_msg);
+    }
+
+    const char* swap_chain_image_count_zero_err_msg = "[ vulkan ] Swap chain reports no images.\n";
+    uAssertMsg_v(reported_image_count, swap_chain_image_count_zero_err_msg);
+    if (!reported_image_count)
+    {
+        uFatal(swap_chain_image_count_zero_err_msg);
+    }
+
+    if (designated_image_count != reported_image_count)
+    {
+        uWarning("[ vulkan ] Swap chain images count != designated count.\n");
+        designated_image_count = reported_image_count;
+    }
+
+    swap_chain_images = (VkImage*)calloc(designated_image_count, sizeof(VkImage));
+    result = vkGetSwapchainImagesKHR(v_info->logical_device,
+                                     v_info->swap_chain,
+                                     &designated_image_count,
+                                     swap_chain_images);
+
+    const char* swap_chain_image_count_fail_err_msg =
+        "[ vulkan ] Unable to set swap chain image count handle(s).\n";
+    uAssertMsg_v((result == VK_SUCCESS), swap_chain_image_count_fail_err_msg);
+    if (result != VK_SUCCESS)
+    {
+        uFatal(swap_chain_image_count_fail_err_msg);
+    }
 }
 
 
@@ -1483,6 +1528,12 @@ uDestroyVulkan(const uVulkanInfo* const restrict v_info)
         vkDestroyInstance(v_info->instance, NULL);
     }
 
+    if (swap_chain_images)
+    {
+        free(swap_chain_images);
+    }
+
+    // Clean up windows
     uDestroyWin32((uWin32Info* const)win32_info);
 }
 

@@ -20,8 +20,13 @@ There are 18 items of type TODO:
   [ TODO ] (type_tools.h, 28): Relocate
   [ TODO ] (uDynamicArray.h, 76): Properly check for failure on realloc
   [ TODO ] (uString.h, 160): implement uString substring
-  [ TODO ] (vulkan_tools.h, 218): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
+  [ TODO ] (vulkan_tools.h, 221): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
   [ TODO ] (win_platform.h, 128): scaling/ortho
+
+
+There are 1 items of type DEBUG:
+````````````````````````````````
+  [ DEBUG ] (vulkan_tools.h, 69): This needs a home later
 
 
 There are 1 items of type REMOVE:

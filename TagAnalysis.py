@@ -14,6 +14,7 @@ class Settings():
 class TagType(enum.Enum):
     TODO      = enum.auto()
     NOTE      = enum.auto()
+    TEMP      = enum.auto()
     TEST      = enum.auto()
     DEBUG     = enum.auto()
     REMOVE    = enum.auto()
@@ -26,8 +27,6 @@ class TagType(enum.Enum):
 def IsTagTypeEmacsErrorType(tag_type):
     isEmacsType = False
     if (tag_type == TagType.REMOVE) or (tag_type == TagType.STEP_INTO):
-        isEmacsType = True
-
         isEmacsType = True
 
     return isEmacsType
