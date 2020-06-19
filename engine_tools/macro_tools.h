@@ -26,6 +26,11 @@
 #define __UE_global__ static
 #endif // __UE_global__
 
+#ifndef __UE_singleton__
+#define __UE_singleton__ static const
+#endif // __UE_singleton__
+
+
 
 
 

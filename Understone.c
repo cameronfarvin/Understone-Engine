@@ -19,18 +19,15 @@
 
 
 //
-// Global Members
-//
-bool RUNNING = true;
+// [ begin ] Global members
+__UE_global__ bool RUNNING = true;
 
-uVulkanInfo main_vulkan = { 0 };
-
-char* required_instance_validation_layers[] =
+__UE_global__ char* required_instance_validation_layers[] =
 {
     "VK_LAYER_KHRONOS_validation"
 };
 
-char* required_instance_extensions[] =
+__UE_global__ char* required_instance_extensions[] =
 {
     VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
     "VK_KHR_surface",
@@ -39,10 +36,12 @@ char* required_instance_extensions[] =
 #endif // _WIN32
 };
 
-char* required_device_extensions[] =
+__UE_global__ char* required_device_extensions[] =
 {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
+// [ end ] Global members
+//
 
 
 __UE_internal__ __UE_inline__ void
@@ -53,6 +52,7 @@ uHandleWindowResize()
                 viewport.width,
                 viewport.height);
 }
+
 
 // Query the mouse and keyboard state
 __UE_internal__ __UE_inline__ void
@@ -92,7 +92,7 @@ __UE_internal__ __UE_call__ void
 uDestroyEngine()
 {
     // Note: Vulkan tears down platform surfaces/windows
-    uDestroyVulkan(&main_vulkan);
+    uDestroyVulkan(uGetVulkanInfo());
 }
 
 
@@ -118,9 +118,7 @@ int main(int argc, char** argv)
 
     if (argc && argv) {}
 
-    uInitializeVulkan(&main_vulkan,
-                      "Understone",
-                      required_instance_validation_layers,
+    uInitializeVulkan(required_instance_validation_layers,
                       sizeof(required_instance_validation_layers)/sizeof(char*),
                       required_instance_extensions,
                       sizeof(required_instance_extensions)/sizeof(char*),

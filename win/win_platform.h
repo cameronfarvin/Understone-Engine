@@ -16,8 +16,12 @@
 #include <engine_tools/type_tools.h>
 
 
-uSystemEvent win32_sys_event;
-POINT win32_mouse_coords;
+__UE_global__ uSystemEvent win32_sys_event;
+__UE_global__ POINT win32_mouse_coords;
+
+
+//
+// [ begin ] Prime uWin32Info
 typedef struct
 {
     HINSTANCE   instance;
@@ -27,29 +31,25 @@ typedef struct
     const char* class_name;
 } uWin32Info;
 
-
-// Forward decls
-__UE_internal__ __UE_call__ const uWin32Info* const
+// Forward declare creation method
+__UE_internal__  __UE_call__ const uWin32Info* const
 uWin32CreateWin32Info();
 
-
-//
-// PRIME WIN32INFO
-//
-__UE_global__ const uWin32Info* uAPI_PRIME_WIN32_INFO = NULL;
-
-
+__UE_singleton__ uWin32Info* uAPI_PRIME_WIN32_INFO = NULL;
 __UE_internal__ __UE_inline__ const uWin32Info* const
 uGetWin32Info()
 {
-    if (uAPI_PRIME_WIN32_INFO)
+    if (!uAPI_PRIME_WIN32_INFO)
     {
-        return uAPI_PRIME_WIN32_INFO;
+        *(uWin32Info**)&uAPI_PRIME_WIN32_INFO =
+            (uWin32Info*)uWin32CreateWin32Info();
     }
 
-    *(uWin32Info**)&uAPI_PRIME_WIN32_INFO = (uWin32Info*)uWin32CreateWin32Info();
     return uAPI_PRIME_WIN32_INFO;
 }
+// [ end ] Prime uWin32Info
+//
+
 
 __UE_internal__ __UE_inline__ void
 uWin32GetWindowSize(_mut_ u32* const restrict width,
