@@ -163,6 +163,13 @@ uSelectVulkanSwapChain(_mut_ uVulkanSwapChainInfo* const restrict swap_chain_inf
 
 
 __UE_internal__ __UE_call__ void
+uCreateVulkanGraphicsPipeline()
+{
+
+}
+
+
+__UE_internal__ __UE_call__ void
 uCreateVulkanImageViews(const uVulkanInfo*          const restrict v_info,
                         _mut_ uVulkanImageGroup*    _mut_ restrict image_group,
                         const uVulkanSwapChainInfo* const restrict swap_chain_info)
@@ -693,7 +700,7 @@ uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice                 phy
 __UE_internal__ __UE_inline__ void
 uSelectVulkanSwapChainExtent(_mut_ uVulkanSwapChainInfo* const restrict swap_chain_info)
 {
-    uAssertMsg_v(swap_chain_info,               "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
+    uAssertMsg_v(swap_chain_info,    "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
 #if _WIN32
     uAssertMsg_v(win32_info,         "[ win32 ] [ vulkan ] uWin32Info must be non null.\n");
     uAssertMsg_v(win32_info->window, "[ win32 ] [ vulkan ] uWin32Info window must be non null.\n");
@@ -1538,7 +1545,7 @@ uCreateVulkanApplicationInfo(const s8*                const restrict application
     application_info->sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     application_info->pApplicationName   = application_name;
     application_info->applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    application_info->pEngineName        = "Understone Engine";
+    application_info->pEngineName        = uGetEngineName();
     application_info->apiVersion         = VK_API_VERSION_1_0;
 }
 
@@ -1615,6 +1622,7 @@ uInitializeVulkan(const s8** const const restrict user_instance_validation_layer
                             image_group,
                             swap_chain_info);
 
+    uCreateVulkanGraphicsPipeline();
 }
 
 

@@ -22,6 +22,7 @@ class TagType(enum.Enum):
     REVISIT   = enum.auto()
     RESTORE   = enum.auto()
     STEP_INTO = enum.auto()
+    CLEAN_UP  = enum.auto()
 
 
 def IsTagTypeEmacsErrorType(tag_type):
