@@ -34,6 +34,9 @@ const uWin32Info* win32_info = NULL;
 #include <engine_tools/window_tools.h>
 #include <data_structures/data_structures.h>
 
+// [ cfarvin::REMOVE ] Remove stdio.h
+#include <stdio.h>
+
 //
 // [ begin ] Prime uVulkanSwapChainInfo
 typedef struct
@@ -151,10 +154,10 @@ __UE_internal__ __UE_call__ void
 uDestroyVulkan();
 
 __UE_internal__ __UE_call__ void
-uQueryVulkanDeviceExtensions(const VkPhysicalDevice* restrict physical_device,
-                             const s8** const const restrict  user_device_extension_names,
-                             const u16                        num_user_device_extension_names,
-                             _mut_ u16* const                 num_verified_extension_names);
+uQueryVulkanDeviceExtensions(const VkPhysicalDevice*             restrict physical_device,
+                             const s8**              const const restrict user_device_extension_names,
+                             const u16                                    num_user_device_extension_names,
+                             _mut_ u16*              const       restrict num_verified_extension_names);
 
 __UE_internal__ __UE_call__ bool
 uSelectVulkanSwapChain(_mut_ uVulkanSwapChainInfo* const restrict swap_chain_info);
@@ -163,9 +166,128 @@ uSelectVulkanSwapChain(_mut_ uVulkanSwapChainInfo* const restrict swap_chain_inf
 
 
 __UE_internal__ __UE_call__ void
-uCreateVulkanGraphicsPipeline()
+uCreateVulkanShaderModule(const char*           const restrict spir_v_file_data,
+                          const size_t                         spir_v_file_size,
+                          _mut_ VkShaderModule* const restrict shader_module)
 {
+    const uVulkanInfo* const v_info = uGetVulkanInfo();
 
+    uAssertMsg_v(v_info->logical_device, "[ vulkan ] SPIR-V file data must be non null.\n");
+    uAssertMsg_v(spir_v_file_data,       "[ vulkan ] SPIR-V file data must be non null.\n");
+    uAssertMsg_v(spir_v_file_size,       "[ vulkan ] SPIR-V file size must be non zero.\n");
+    uAssertMsg_v(shader_module,          "[ vulkan ] VkShaderModule ptr must not be null.\n");
+
+
+    VkShaderModuleCreateInfo smodule_create_info = { 0 };
+    smodule_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    smodule_create_info.codeSize = spir_v_file_size;
+    smodule_create_info.pCode    = (const u32*)spir_v_file_data;
+
+    VkResult result = vkCreateShaderModule(v_info->logical_device,
+                                           &smodule_create_info,
+                                           NULL,
+                                           shader_module);
+    if (result != VK_SUCCESS)
+    {
+        free((void*)spir_v_file_data);
+        uDestroyVulkan();
+        uFatal("[ vulkan ] Unable to create shader module.\n");
+    }
+}
+
+__UE_internal__ __UE_call__ void
+uReadSpirvFile(const char*   const       restrict file_name,
+               _mut_ char**  _mut_ const restrict return_file_data,
+               _mut_ size_t*             restrict return_file_size)
+{
+    uAssertMsg_v(file_name,             "[ vulkan ] File name ptr must be non null.\n");
+    uAssertMsg_v(!(*return_file_data),  "[ vulkan ] Return file bytes ptr must be null; will be overwritten.\n");
+    uAssertMsg_v(return_file_size,      "[ vulkan ] Return file size ptr must be non null");
+
+
+    FILE* spir_v_file = NULL;
+    fopen_s(&spir_v_file, file_name, "r");
+    if (!spir_v_file)
+    {
+        uDestroyVulkan();
+        uFatal("[ vulkan ] Unable to open SPIR-V file: %s.\n", file_name);
+    }
+
+    s32 fseek_success = fseek(spir_v_file, 0L, SEEK_END);
+    if (fseek_success) // Success == 0
+    {
+        uDestroyVulkan();
+        uFatal("[ vulkan ] Unable to seek within SPIR-V file: %s.\n", file_name);
+    }
+
+    *return_file_size = (size_t)ftell(spir_v_file);
+    if (!(*return_file_size))
+    {
+        uDestroyVulkan();
+        uFatal("[ vulkan ] SPIR-V file: %s has zero size.\n", file_name);
+    }
+
+    *return_file_data = (char*)calloc(*return_file_size, sizeof(char));
+    if (!(*return_file_data))
+    {
+        uDestroyVulkan();
+        uFatal("[ vulkan ] Unable to allocate host memory for SPIR-V file: %s.\n" , file_name);
+    }
+
+    size_t items_read = fread_s((void*)(*return_file_data), // buffer
+                                (*return_file_size),        // buffer size
+                                1,                          // element size
+                                (*return_file_size),        // element count
+                                spir_v_file);               // FILE*
+
+    if (items_read == 0)
+    {
+        uDestroyVulkan();
+        uFatal("[ vulkan ] Unable to verify reading of SPIR-V file: %s.\n" , file_name);
+    }
+
+    fclose(spir_v_file);
+}
+
+__UE_internal__ __UE_call__ void
+uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict v_info)
+{
+    uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null");
+    uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkPhysical device must be non zero");
+
+
+    // [ cfarvin::TODO ] Modules below are hard coded for now
+    uVkVerbose("[ vulkan ] Loading shader files...\n");
+
+    // Vertex module
+    VkShaderModule vkTriangle_vert_module = NULL;
+    char*          vkTriangle_vert_data   = NULL;
+    size_t         vkTriangle_vert_size   = 0;
+
+    uReadSpirvFile(".\\shaders\\bin\\vkTriangle_vert.spv",
+                   &vkTriangle_vert_data,
+                   &vkTriangle_vert_size);
+
+    uCreateVulkanShaderModule(vkTriangle_vert_data,
+                              vkTriangle_vert_size,
+                              &vkTriangle_vert_module);
+
+    // Fragment module
+    VkShaderModule vkTriangle_frag_module = NULL;
+    char*          vkTriangle_frag_data   = NULL;
+    size_t         vkTriangle_frag_size   = 0;
+
+    uReadSpirvFile(".\\shaders\\bin\\vkTriangle_frag.spv",
+                   &vkTriangle_frag_data,
+                   &vkTriangle_frag_size);
+
+    uCreateVulkanShaderModule(vkTriangle_frag_data,
+                              vkTriangle_frag_size,
+                              &vkTriangle_frag_module);
+
+    // Cleanup
+    vkDestroyShaderModule(v_info->logical_device, vkTriangle_vert_module, NULL);
+    vkDestroyShaderModule(v_info->logical_device, vkTriangle_frag_module, NULL);
 }
 
 
@@ -212,12 +334,10 @@ uCreateVulkanImageViews(const uVulkanInfo*          const restrict v_info,
                                             NULL,
                                             &(image_group->image_views[image_idx]));
 
-        const char* image_view_create_err_msg = "[ vulkan ] Unable to create image view.\n";
-        uAssertMsg_v((result == VK_SUCCESS), image_view_create_err_msg);
         if (result != VK_SUCCESS)
         {
             uDestroyVulkan();
-            uFatal(image_view_create_err_msg);
+            uFatal("[ vulkan ] Unable to create image view.\n");
         }
     }
 }
@@ -291,12 +411,10 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*          const restrict v_info,
 
     // Select a suitable swapchain
     bool swap_chain_selected = uSelectVulkanSwapChain(swap_chain_info);
-    const char* swap_chain_select_err_msg = "[ vulkan ] Unable to select a suitable swap chain.\n";
-    uAssertMsg_v(swap_chain_selected, swap_chain_select_err_msg);
     if (!swap_chain_selected)
     {
         uDestroyVulkan();
-        uFatal(swap_chain_select_err_msg);
+        uFatal("[ vulkan ] Unable to select a suitable swap chain.\n");
     }
 
     // Determine swap chain image capacity
@@ -321,12 +439,10 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*          const restrict v_info,
                                       uVULKAN_NUM_QUEUES,
                                       &unique_queues_found);
 
-    const char* unique_queues_err_msg = "[ vulkan ] Was unable to find any queues.\n";
-    uAssertMsg_v(unique_queues_found, unique_queues_err_msg);
     if (!unique_queues_found)
     {
         uDestroyVulkan();
-        uFatal(unique_queues_err_msg);
+        uFatal("[ vulkan ] Was unable to find any queues.\n");
     }
 
     const VkSurfaceFormatKHR* surface_formats = swap_chain_info->surface_formats;
@@ -368,14 +484,12 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*          const restrict v_info,
                                            NULL,
                                            (VkSwapchainKHR*)&(v_info->swap_chain));
 
-    const char* create_swap_chain_err_msg = "[ vulkan ] Unable to create swap chain.\n";
-    uAssertMsg_v((result == VK_SUCCESS), create_swap_chain_err_msg);
     if (result != VK_SUCCESS)
     {
         free((VkSurfaceFormatKHR*)swap_chain_info->surface_formats);
         free((VkPresentModeKHR*)swap_chain_info->present_modes);
         uDestroyVulkan();
-        uFatal(create_swap_chain_err_msg);
+        uFatal("[ vulkan ] Unable to create swap chain.\n");
     }
 
     // Get handles to swap chain images
@@ -385,21 +499,16 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*          const restrict v_info,
                                      &designated_image_count,
                                      NULL);
 
-    const char* swap_chain_image_count_err_msg =
-        "[ vulkan ] Unable to obtain swap chain image count.\n";
-    uAssertMsg_v((result == VK_SUCCESS), swap_chain_image_count_err_msg);
     if (result != VK_SUCCESS)
     {
         uDestroyVulkan();
-        uFatal(swap_chain_image_count_err_msg);
+        uFatal("[ vulkan ] Unable to obtain swap chain image count.\n");
     }
 
-    const char* swap_chain_image_count_zero_err_msg = "[ vulkan ] Swap chain reports no images.\n";
-    uAssertMsg_v(reported_image_count, swap_chain_image_count_zero_err_msg);
     if (!reported_image_count)
     {
         uDestroyVulkan();
-        uFatal(swap_chain_image_count_zero_err_msg);
+        uFatal("[ vulkan ] Swap chain reports no images.\n");
     }
 
     if (designated_image_count != reported_image_count)
@@ -415,14 +524,11 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*          const restrict v_info,
                                      &designated_image_count,
                                      image_group->images);
 
-    const char* swap_chain_image_count_fail_err_msg =
-        "[ vulkan ] Unable to set swap chain image count handle(s).\n";
-    uAssertMsg_v((result == VK_SUCCESS), swap_chain_image_count_fail_err_msg);
     if (result != VK_SUCCESS)
     {
         uDestroyVulkan();
         free(image_group->images);
-        uFatal(swap_chain_image_count_fail_err_msg);
+        uFatal("[ vulkan ] Unable to set swap chain image count handle(s).\n");
     }
 
     // Set image count
@@ -464,14 +570,12 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
                                       &num_unique_queues);
 
     // Create logical device create info structure(s)
-    const char* device_create_fail_msg = "[ vulkan ] Unable to create logical device.\n";
     VkDeviceQueueCreateInfo* device_queue_create_infos =
         (VkDeviceQueueCreateInfo*) calloc(num_unique_queues, sizeof(VkDeviceQueueCreateInfo));
-    uAssertMsg_v(device_queue_create_infos, device_create_fail_msg);
     if (!device_queue_create_infos)
     {
         uDestroyVulkan();
-        uFatal(device_create_fail_msg);
+        uFatal("[ vulkan ] Unable to create logical device.\n");
     }
 
     for (u32 queue_family_idx = 0; queue_family_idx < num_unique_queues; queue_family_idx++)
@@ -503,7 +607,6 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
                                                       NULL,
                                                       (VkDevice*)&v_info->logical_device);
 
-    uAssertMsg_v(device_creation_success == VK_SUCCESS, device_create_fail_msg);
     if (device_creation_success != VK_SUCCESS)
     {
         if (device_queue_create_infos)
@@ -512,7 +615,7 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
         }
 
         uDestroyVulkan();
-        uFatal(device_create_fail_msg);
+        uFatal("[ vulkan ] Unable to create logical device.\n");
     }
 
     vkGetDeviceQueue(v_info->logical_device,
@@ -680,15 +783,9 @@ uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice                 phy
     }
 
     // Issue engine level warning to update uVULKAN_NUM_QUEUES
-    const char* queue_count_error_msg =
-        "[ engine ][ vulkan ] uVulkanInfo.queues length: %d. %d queues were checked during physical device creation.\n";
-    uAssertMsg_v(uVULKAN_NUM_QUEUES == num_queues,
-                 queue_count_error_msg,
-                 uVULKAN_NUM_QUEUES,
-                 num_queues);
     if (uVULKAN_NUM_QUEUES != num_queues)
     {
-        uFatal(queue_count_error_msg,
+        uFatal("[ engine ][ vulkan ] uVulkanInfo.queues length: %d. %d queues were checked during physical device creation.\n",
                uVULKAN_NUM_QUEUES,
                num_queues);
     }
@@ -806,11 +903,9 @@ uSelectVulkanSwapChain(_mut_ uVulkanSwapChainInfo* const restrict swap_chain_inf
         }
     }
 
-    const char* suitable_present_idx_err_msg = "[ vulkan ] Unable to find a suitable present mode.\n";
-    uAssertMsg_v(suitable_present_found, suitable_present_idx_err_msg);
     if (!suitable_present_found)
     {
-        uFatal(suitable_present_idx_err_msg);
+        uFatal("[ vulkan ] Unable to find a suitable present mode.\n");
     }
 
     if (!optimal_present_found)
@@ -980,11 +1075,9 @@ uSelectVulkanPhysicalDevice(const VkPhysicalDevice**    const const restrict phy
         }
     }
 
-    const char* no_selection_error_msg = "[ vulkan ] Unable to select a suitable physical device.\n";
-    uAssertMsg_v(selection_complete, no_selection_error_msg);
     if (!selection_complete)
     {
-        uFatal(no_selection_error_msg);
+        uFatal("[ vulkan ] Unable to select a suitable physical device.\n");
     }
 }
 
@@ -1035,7 +1128,6 @@ uCreateVulkanPhysicalDevice(_mut_ uVulkanInfo*          const       restrict v_i
                                 num_user_device_extension_names,
                                 return_swap_chain_info);
 
-    uAssertMsg_v(candidate_device != NULL, "[ vulkan ] Unable to select candidate device.\n");
     if (!candidate_device)
     {
         if (physical_device_list)
@@ -1126,12 +1218,10 @@ uCreateVulkanDebugMessenger(const uVulkanInfo*                        const rest
                                                           NULL,
                                                           debug_messenger);
 
-        const char* debug_create_fail_msg = "[ vulkan ] Failed to create debug messenger callback.\n";
-        uAssertMsg_v(((success == VK_SUCCESS) && debug_messenger), debug_create_fail_msg);
         if (success != VK_SUCCESS)
         {
             uDestroyVulkan();
-            uFatal(debug_create_fail_msg);
+            uFatal("[ vulkan ] Failed to create debug messenger callback.\n");
         }
     }
 }
@@ -1146,6 +1236,7 @@ uCreateWin32Surface(_mut_ uVulkanInfo* const restrict v_info)
     uAssertMsg_v(v_info->instance, "[ vulkan ] Null uVulkanInfo->instance ptr provided.\n");
 
 
+    // [ cfarvin::REVISIT ]
     uWin32Info** non_const_win32_info = (uWin32Info**)&win32_info;
     *non_const_win32_info = (uWin32Info*)uWin32CreateWindow();
     uAssertMsg_v(win32_info, "[ vulkan ] [ win32 ] Unable to create Win32 window.\n");
@@ -1164,13 +1255,11 @@ uCreateWin32Surface(_mut_ uVulkanInfo* const restrict v_info)
                                                             NULL,
                                                             (VkSurfaceKHR*)&v_info->surface);
 
-    const char* win32_surface_err_msg = "[ vulkan ] Failed to create Win32Surface.\n";
-    uAssertMsg_v(win32_surface_result == VK_SUCCESS, win32_surface_err_msg)
-        if (win32_surface_result != VK_SUCCESS)
-        {
-            uDestroyVulkan();
-            uFatal(win32_surface_err_msg);
-        }
+    if (win32_surface_result != VK_SUCCESS)
+    {
+        uDestroyVulkan();
+        uFatal("[ vulkan ] Unable to create win32 surface.\n");
+    }
 }
 #endif // _WIN32
 
@@ -1191,7 +1280,7 @@ __UE_internal__ __UE_call__ void
 uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physical_device,
                              const s8**              const const restrict user_device_extension_names,
                              const u16                                    num_user_device_extension_names,
-                             _mut_ u16*              const                num_verified_extension_names)
+                             _mut_ u16*              const       restrict num_verified_extension_names)
 {
     uAssertMsg_v(physical_device,              "[ vulkan ] VkPhysicalDevice ptr must be non null.\n");
     uAssertMsg_v(num_verified_extension_names, "[ vulkan ] Verified extension count ptr must be non null.\n");
@@ -1214,11 +1303,9 @@ uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physic
                                                             &num_available_device_extensions,
                                                             NULL);
 
-    const char* enumerate_properties_fail_msg = "[ vulkan ] Unable to enumerate extension properties.\n";
-    uAssertMsg_v((success == VK_SUCCESS), enumerate_properties_fail_msg);
     if (success != VK_SUCCESS)
     {
-        uFatal(enumerate_properties_fail_msg);
+        uFatal("[ vulkan ] Unable to enumerate extension properties.\n");
     }
 
     VkExtensionProperties* device_extension_properties =
@@ -1230,7 +1317,6 @@ uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physic
                                                    &num_available_device_extensions,
                                                    device_extension_properties);
 
-    uAssertMsg_v((success == VK_SUCCESS), enumerate_properties_fail_msg);
     if (success != VK_SUCCESS)
     {
         if(device_extension_properties)
@@ -1238,7 +1324,7 @@ uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physic
             free(device_extension_properties);
         }
 
-        uFatal(enumerate_properties_fail_msg);
+        uFatal("[ vulkan ] Unable to enumerate extension properties.\n");
     }
 
     // Verify user/device extensions match
@@ -1294,17 +1380,15 @@ uQueryVulkanInstanceLayers(_mut_ s8***                 _mut_ _mut_ const restric
     size_t num_available_layers = 0;
     success = vkEnumerateInstanceLayerProperties(&((u32)num_available_layers), NULL);
 
-    const char* enumerate_layers_fail_msg = "[ vulkan ] Unable to enumerate layers.\n";
-    uAssertMsg_v((success == VK_SUCCESS), enumerate_layers_fail_msg);
+    if (success != VK_SUCCESS)
+    {
+        uFatal("[ vulkan ] Unable to enumerate layers.\n");
+    }
+
     uAssertMsg_v((num_available_layers >= num_user_instance_validation_layer_names),
                  "[ vulkan ] Number of requested validation layers [ %d ] exceeds total avaialbe count [ %zd ].\n",
                  num_user_instance_validation_layer_names,
                  num_available_layers);
-    if (success != VK_SUCCESS)
-    {
-        uFatal(enumerate_layers_fail_msg);
-    }
-
 
     *instance_validation_layer_properties =
         (VkLayerProperties*)malloc(num_available_layers * sizeof(VkLayerProperties));
@@ -1312,10 +1396,9 @@ uQueryVulkanInstanceLayers(_mut_ s8***                 _mut_ _mut_ const restric
     // Query Layer Names
     success = vkEnumerateInstanceLayerProperties(&(u32)num_available_layers,
                                                  *instance_validation_layer_properties);
-    uAssertMsg_v((success == VK_SUCCESS), enumerate_layers_fail_msg);
     if (success != VK_SUCCESS)
     {
-        uFatal(enumerate_layers_fail_msg);
+        uFatal("[ vulkan ] Unable to enumerate layers.\n");
     }
 
 
@@ -1342,11 +1425,9 @@ uQueryVulkanInstanceLayers(_mut_ s8***                 _mut_ _mut_ const restric
         }
     }
 
-    const char* layer_load_fail_msg = "[ vulkan ] Unable to load all requested layers.\n";
-    uAssertMsg_v((num_added_layers == num_user_instance_validation_layer_names), layer_load_fail_msg);
     if (num_added_layers != num_user_instance_validation_layer_names)
     {
-        uFatal(layer_load_fail_msg);
+        uFatal("[ vulkan ] Unable to load all requested layers.\n");
     }
 
     instance_create_info->enabledLayerCount   = num_added_layers;
@@ -1382,11 +1463,9 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
                                                      &instance_create_info->enabledExtensionCount,
                                                      NULL);
 
-    const char* enumerate_properties_fail_msg = "[ vulkan ] Unable to enumerate layer properties.\n";
-    uAssertMsg_v((success == VK_SUCCESS), enumerate_properties_fail_msg);
     if (success != VK_SUCCESS)
     {
-        uFatal(enumerate_properties_fail_msg);
+        uFatal("[ vulkan ] Unable to enumerate layer properties.\n");
     }
 
     *instance_extension_properties =
@@ -1397,7 +1476,6 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
                                                      &instance_create_info->enabledExtensionCount,
                                                      *instance_extension_properties);
 
-    uAssertMsg_v((success == VK_SUCCESS), enumerate_properties_fail_msg);
     if (success != VK_SUCCESS)
     {
         if(instance_extension_properties)
@@ -1405,7 +1483,7 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
             free(instance_extension_properties);
         }
 
-        uFatal(enumerate_properties_fail_msg);
+        uFatal("[ vulkan ] Unable to enumerate layer properties.\n");
     }
 
 
@@ -1429,8 +1507,6 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
         }
     }
 
-    const char* load_extensions_fail_msg = "[ vulkan ] Unable to load all requested extensions.\n";
-    uAssertMsg_v((num_added_extensions == num_user_instance_extension_names), load_extensions_fail_msg);
     if (num_added_extensions != num_user_instance_extension_names)
     {
         if(instance_extension_properties)
@@ -1438,7 +1514,7 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
             free(instance_extension_properties);
         }
 
-        uFatal(load_extensions_fail_msg);
+        uFatal("[ vulkan ] Unable to load all requested extensions.\n");
     }
 
     instance_create_info->enabledExtensionCount   = num_added_extensions;
@@ -1500,12 +1576,10 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
                                NULL,
                                (VkInstance*)&v_info->instance);
 
-    const char* instance_create_fail_msg = "[ vulkan ] Unable to create vulkan instance.\n";
-    uAssertMsg_v((success == VK_SUCCESS), instance_create_fail_msg);
     if (success != VK_SUCCESS)
     {
         uDestroyVulkan();
-        uFatal(instance_create_fail_msg);
+        uFatal("[ vulkan ] Unable to create vulkan instance.\n");
     }
 
     uCreateVulkanDebugMessenger(v_info,
@@ -1622,7 +1696,7 @@ uInitializeVulkan(const s8** const const restrict user_instance_validation_layer
                             image_group,
                             swap_chain_info);
 
-    uCreateVulkanGraphicsPipeline();
+    uCreateVulkanGraphicsPipeline(v_info);
 }
 
 

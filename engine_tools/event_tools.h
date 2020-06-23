@@ -3,8 +3,7 @@
 
 #include <engine_tools/type_tools.h>
 
-
-// [ cfarvin::REMOVE ] remove stdio
+// [ cfarvin::REMOVE ] Remove stdio.h
 #include <stdio.h>
 
 typedef enum

@@ -2,13 +2,30 @@
 @SET SCRIPT_DIR=%cd%
 @SET APP_NAME="Understone"
 @SET APP_ARCH=x64
+@SET SHADER_DIR=%SCRIPT_DIR%\shaders
+@SET SHADER_SRC_DIR=%SHADER_DIR%\source
+@SET SHADER_BIN_DIR=%SHADER_DIR%\bin
 rem @SET "VULKAN_SDK_PATH=C:\VulkanSDK\1.1.126.0\"
 @SET "VULKAN_SDK_PATH=C:\VulkanSDK\1.2.141.2\"
 
+::------------------------------
+::
+:: Compile Shaders
+::
+::------------------------------
+echo Compiling shaders....
+%VULKAN_SDK_PATH%\Bin\glslc.exe %SHADER_SRC_DIR%\vkTriangle.vert -o %SHADER_BIN_DIR%\vkTriangle_vert.spv -Werror --target-env=vulkan1.2
+%VULKAN_SDK_PATH%\Bin\glslc.exe %SHADER_SRC_DIR%\vkTriangle.frag -o %SHADER_BIN_DIR%\vkTriangle_frag.spv -Werror --target-env=vulkan1.2
+IF %ERRORLEVEL% NEQ 0 GOTO :exit
+echo.
 
+
+::------------------------------
 ::
+:: Compile Engine
+::
+::------------------------------
 :: Initialize cl.exe for correct environment.
-::
 @where cl >nul 2>nul
 :: VS 2017 Professional Edition
 rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall" %APP_ARCH% >nul
@@ -17,9 +34,9 @@ rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2
 IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %APP_ARCH% >nul
 
 
-::
-:: Compile & Link
-::
+
+:: Compile & Link Options
+::------------------------------
 :: /TC                  Compile as C code.
 :: /TP                  Compile as C++ code.
 :: /Oi                  Enable intrinsic functions.
@@ -38,10 +55,15 @@ IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\
 :: /MACHINE:<arg>       Declare machine arch (should match vcvarsall env setting).
 :: /NODEFAULTLIB:<arg>  Ignore a library.
 :: /LIBPATH:<arg>       Specify library directory/directories.
+
+:: Store msvc clutter elsewhere
 IF %ERRORLEVEL% NEQ 0 GOTO :exit
 mkdir msvc_landfill >nul 2>nul
 pushd msvc_landfill >nul
 
+
+:: Engine compilation settings
+::------------------------------
 
 :: General Parameters
 SET GeneralParameters=/Oi /Qpar /EHsc /GL /nologo /Ot
@@ -74,9 +96,9 @@ shell32.lib ^
 odbccp32.lib ^
 vulkan-1.lib
 
-::
+
 :: Compiler Invocation
-::
+::------------------------------
 cl %SCRIPT_DIR%\\%APP_NAME%.c ^
 %GeneralParameters% %DebugParameters% %IncludeParameters% /link %LinkParameters%
 
@@ -87,9 +109,11 @@ popd >null
 IF %ERRORLEVEL% NEQ 0 GOTO :exit
 rem engine.exe :: auto-run after build
 
+::------------------------------
 ::
 :: Tag Analysis
 ::
+::------------------------------
 python TagAnalysis.py --emacs
 
 :exit

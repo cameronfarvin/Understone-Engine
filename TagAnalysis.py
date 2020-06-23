@@ -118,11 +118,9 @@ def ProcessTags():
 
 def GenerateReport(serialize_type):
     report_strings = list()
-    if serialize_type == SerializeType.EMACS:
-        emacs_report_header = '= Tag Analysis Results (Emacs) ='
-        report_strings.append('\n' + ('=' * len(emacs_report_header)))
-        report_strings.append(emacs_report_header)
-        report_strings.append(('=' * len(emacs_report_header)))
+
+    # Space after compiler output
+    report_strings.append('\n');
 
     for tag_index, tag_list in enumerate(ProcessedTags):
         num_items = len(ProcessedTags[tag_index])
@@ -130,9 +128,8 @@ def GenerateReport(serialize_type):
             tag_list.sort()
             header_str = 'There are ' + str(num_items) + ' items of type ' + TagType(tag_index + 1).name + ':'
             report_strings.append(header_str)
-            report_strings.append(('`' * len(header_str)))
             for tag in tag_list:
-                report_strings.append('  ' + tag.Serialize(serialize_type))
+                report_strings.append('    ' + tag.Serialize(serialize_type))
             report_strings.append('\n')
 
     return '\n'.join(report_strings)
