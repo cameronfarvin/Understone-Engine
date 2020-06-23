@@ -146,9 +146,27 @@ uGetVulkanImageGroup()
 //
 
 
-// [ cfarvin::TODO ] This needs a home!
-// [ cfarvin::REVISIT ] This needs a home!
-__UE_global__ VkPipelineLayout REHOME_pipeline_layout;
+//
+// [ begin ] Prime uVulkanRenderInfo
+typedef struct
+{
+    const VkPipelineLayout pipeline_layout;
+    const VkRenderPass     render_pass;
+} uVulkanRenderInfo;
+__UE_singleton__ uVulkanRenderInfo* uAPI_PRIME_VULKAN_RENDER_INFO = NULL;
+__UE_internal__ __UE_inline__ const uVulkanRenderInfo* const
+uGetVulkanRenderInfo()
+{
+    if(!uAPI_PRIME_VULKAN_RENDER_INFO)
+    {
+        *(uVulkanRenderInfo**)&uAPI_PRIME_VULKAN_RENDER_INFO =
+            (uVulkanRenderInfo*)calloc(1, sizeof(uVulkanRenderInfo));
+    }
+
+    return uAPI_PRIME_VULKAN_RENDER_INFO;
+}
+// [ begin ] Prime uVulkanRenderInfo
+//
 
 
 VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger;
@@ -171,6 +189,64 @@ __UE_internal__ __UE_call__ bool
 uSelectVulkanSwapChain(_mut_ uVulkanSwapChainInfo* const restrict swap_chain_info);
 // [ end ] Forward decls
 //
+
+
+__UE_internal__ __UE_call__ void
+uCreateVulkanRenderPass(const uVulkanInfo*          const restrict v_info,
+                        const uVulkanSwapChainInfo* const restrict swap_chain_info,
+                        _mut_ uVulkanRenderInfo*    const restrict render_info)
+{
+    uAssertMsg_v(v_info,                           "[ vulkan ] uVulkanInfo ptr must be non null.\n");
+    uAssertMsg_v(swap_chain_info,                  "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
+    uAssertMsg_v(swap_chain_info->surface_formats, "[ vulkan ] VkSurfaceFormatsKHR ptr must be non null.\n");
+    uAssertMsg_v(render_info,                      "[ vulkan ] uVulkanRenderInfo ptr must be non null.\n");
+
+
+    // Attachement description
+    VkSurfaceFormatKHR surface_format =
+        (swap_chain_info->surface_formats)[swap_chain_info->designated_format_index];
+
+    VkAttachmentDescription color_attachment = { 0 };
+    color_attachment.format         = surface_format.format;
+    color_attachment.samples        = VK_SAMPLE_COUNT_1_BIT;       // Note: 1 == No MSAA
+    color_attachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR; // [ cfarvin::PERF ] expensive or nominal?
+    color_attachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+    color_attachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    color_attachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+    color_attachment.finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    // Attachment reference
+    VkAttachmentReference color_attachment_reference = { 0 };
+    color_attachment_reference.attachment = 0; // Read: "Attachment index"
+    color_attachment_reference.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    // Subpasses
+    // Note: References layout(location = 0) in frag shader.
+    VkSubpassDescription subpass_description = { 0 };
+    subpass_description.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass_description.colorAttachmentCount = 1;
+    subpass_description.pColorAttachments    = &color_attachment_reference;
+
+    // Render pass
+    VkRenderPassCreateInfo render_pass_create_info = { 0 };
+    render_pass_create_info.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    render_pass_create_info.attachmentCount = 1;
+    render_pass_create_info.pAttachments    = &color_attachment;
+    render_pass_create_info.subpassCount    = 1;
+    render_pass_create_info.pSubpasses      = &subpass_description;
+
+    VkResult result = vkCreateRenderPass(v_info->logical_device,
+                                         &render_pass_create_info,
+                                         NULL,
+                                         (VkRenderPass*)&(render_info->render_pass));
+
+    if (result != VK_SUCCESS)
+    {
+        uDestroyVulkan();
+        uFatal("[ vulkan ] Unable to create render pass.\n");
+    }
+}
 
 
 __UE_internal__ __UE_call__ void
@@ -202,6 +278,7 @@ uCreateVulkanShaderModule(const char*           const restrict spir_v_file_data,
         uFatal("[ vulkan ] Unable to create shader module.\n");
     }
 }
+
 
 __UE_internal__ __UE_call__ void
 uReadSpirvFile(const char*   const       restrict file_name,
@@ -260,13 +337,16 @@ uReadSpirvFile(const char*   const       restrict file_name,
     uVkVerbose("\tLoaded shader: %s.\n", file_name);
 }
 
+
 __UE_internal__ __UE_call__ void
 uCreateVulkanGraphicsPipeline(const uVulkanInfo*          const restrict v_info,
-                              const uVulkanSwapChainInfo* const restrict swap_chain_info)
+                              const uVulkanSwapChainInfo* const restrict swap_chain_info,
+                              _mut_ uVulkanRenderInfo*    const restrict render_info)
 {
     uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null");
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkPhysical device must be non zero");
     uAssertMsg_v(swap_chain_info,        "[ vulkan ] uVulkanSwapChainInfo ptr must be non null");
+    uAssertMsg_v(render_info,            "[ vulkan ] uVulkanRenderInfo ptr must be non null");
 
 
     // [ cfarvin::TODO ] Modules below are hard coded for now
@@ -432,7 +512,7 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*          const restrict v_info,
     VkResult result = vkCreatePipelineLayout(v_info->logical_device,
                                              &pipeline_layout_create_info,
                                              NULL,
-                                             &REHOME_pipeline_layout);
+                                             (VkPipelineLayout*)&(render_info->pipeline_layout));
 
     if (result != VK_SUCCESS)
     {
@@ -1830,6 +1910,7 @@ uInitializeVulkan(const s8** const const restrict user_instance_validation_layer
     uVulkanQueueInfo*     queue_info       = (uVulkanQueueInfo*)uGetVulkanQueueInfo();
     uVulkanSwapChainInfo* swap_chain_info  = (uVulkanSwapChainInfo*)uGetVulkanSwapChainInfo();
     uVulkanImageGroup*    image_group      = (uVulkanImageGroup*)uGetVulkanImageGroup();
+    uVulkanRenderInfo*    render_info      = (uVulkanRenderInfo*)uGetVulkanRenderInfo();
 
     uCreateVulkanApplicationInfo(uGetGameTitle(), &application_info);
 
@@ -1868,8 +1949,15 @@ uInitializeVulkan(const s8** const const restrict user_instance_validation_layer
                             image_group,
                             swap_chain_info);
 
+    // render_info partially built
+    uCreateVulkanRenderPass(v_info,
+                            swap_chain_info,
+                            render_info);
+
+    // render_info partially built
     uCreateVulkanGraphicsPipeline(v_info,
-                                  swap_chain_info);
+                                  swap_chain_info,
+                                  render_info);
 }
 
 
@@ -1880,6 +1968,7 @@ uDestroyVulkan()
     uVulkanQueueInfo*     queue_info       = (uVulkanQueueInfo*)uGetVulkanQueueInfo();
     uVulkanSwapChainInfo* swap_chain_info  = (uVulkanSwapChainInfo*)uGetVulkanSwapChainInfo();
     uVulkanImageGroup*    image_group      = (uVulkanImageGroup*)uGetVulkanImageGroup();
+    uVulkanRenderInfo*    render_info      = (uVulkanRenderInfo*)uGetVulkanRenderInfo();
 
     uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(v_info->instance,       "[ vulkan ] VkInstance ptr must be non null.\n");
@@ -1948,9 +2037,11 @@ uDestroyVulkan()
         if (v_info->logical_device)
         {
             // Destroy pipeline layout
-            if (REHOME_pipeline_layout)
+            // Destroy render pass
+            if (render_info)
             {
-                vkDestroyPipelineLayout(v_info->logical_device, REHOME_pipeline_layout, NULL);
+                vkDestroyPipelineLayout(v_info->logical_device, render_info->pipeline_layout, NULL);
+                vkDestroyRenderPass(v_info->logical_device, render_info->render_pass, NULL);
             }
             vkDestroyDevice(v_info->logical_device, NULL);
 
@@ -1968,6 +2059,11 @@ uDestroyVulkan()
     if (queue_info)
     {
         free(queue_info);
+    }
+
+    if (render_info)
+    {
+        free(render_info);
     }
 
     // uVulkanSwapChainInfo data

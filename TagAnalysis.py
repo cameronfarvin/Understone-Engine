@@ -13,6 +13,7 @@ class Settings():
 
 class TagType(enum.Enum):
     TODO      = enum.auto()
+    PERF      = enum.auto()
     NOTE      = enum.auto()
     TEMP      = enum.auto()
     TEST      = enum.auto()
