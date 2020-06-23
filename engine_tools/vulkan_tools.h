@@ -206,7 +206,7 @@ uReadSpirvFile(const char*   const       restrict file_name,
 
 
     FILE* spir_v_file = NULL;
-    fopen_s(&spir_v_file, file_name, "r");
+    fopen_s(&spir_v_file, file_name, "rb");
     if (!spir_v_file)
     {
         uDestroyVulkan();
@@ -227,20 +227,22 @@ uReadSpirvFile(const char*   const       restrict file_name,
         uFatal("[ vulkan ] SPIR-V file: %s has zero size.\n", file_name);
     }
 
-    *return_file_data = (char*)calloc(*return_file_size, sizeof(char));
+    size_t allocation_size = *return_file_size * sizeof(char);
+    *return_file_data = (char*)calloc(1, allocation_size);
     if (!(*return_file_data))
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to allocate host memory for SPIR-V file: %s.\n" , file_name);
     }
 
+    rewind(spir_v_file);
     size_t items_read = fread_s((void*)(*return_file_data), // buffer
-                                (*return_file_size),        // buffer size
+                                allocation_size,            // buffer size
                                 1,                          // element size
                                 (*return_file_size),        // element count
                                 spir_v_file);               // FILE*
 
-    if (items_read == 0)
+    if (items_read != *return_file_size)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to verify reading of SPIR-V file: %s.\n" , file_name);

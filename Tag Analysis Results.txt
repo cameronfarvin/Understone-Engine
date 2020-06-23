@@ -21,8 +21,8 @@ There are 19 items of type TODO:
     [ TODO ] (type_tools.h, 28): Relocate
     [ TODO ] (uDynamicArray.h, 76): Properly check for failure on realloc
     [ TODO ] (uString.h, 160): implement uString substring
-    [ TODO ] (vulkan_tools.h, 259): Modules below are hard coded for now
-    [ TODO ] (vulkan_tools.h, 465): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
+    [ TODO ] (vulkan_tools.h, 262): Modules below are hard coded for now
+    [ TODO ] (vulkan_tools.h, 468): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
     [ TODO ] (win_platform.h, 128): scaling/ortho
 
 
@@ -34,5 +34,5 @@ There are 2 items of type REMOVE:
 There are 3 items of type REVISIT:
     [ REVISIT ] (entity_tools.h, 66): intersection materials
     [ REVISIT ] (uString.h, 125): Strlen correctness, use throughout uString
-    [ REVISIT ] (vulkan_tools.h, 1239): 
+    [ REVISIT ] (vulkan_tools.h, 1242): 
 
