@@ -37,6 +37,7 @@ const uWin32Info* win32_info = NULL;
 // [ cfarvin::REMOVE ] Remove stdio.h
 #include <stdio.h>
 
+
 //
 // [ begin ] Prime uVulkanSwapChainInfo
 typedef struct
@@ -65,6 +66,7 @@ uGetVulkanSwapChainInfo()
 // [ end ] Prime uVulkanSwapChainInfo
 //
 
+
 //
 // [ begin ] Prime uVulkanQueueInfo
 // Note: as queue indices are added, ensure that unique value extraction
@@ -88,6 +90,7 @@ uGetVulkanQueueInfo()
 }
 // [ end ] Prime uVulkanQueueInfo
 //
+
 
 //
 // [ begin ] Prime uVulkanInfo
@@ -141,6 +144,11 @@ uGetVulkanImageGroup()
 }
 // [ begin ] Prime uVulkanImageGroup
 //
+
+
+// [ cfarvin::TODO ] This needs a home!
+// [ cfarvin::REVISIT ] This needs a home!
+__UE_global__ VkPipelineLayout REHOME_pipeline_layout;
 
 
 VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger;
@@ -249,17 +257,20 @@ uReadSpirvFile(const char*   const       restrict file_name,
     }
 
     fclose(spir_v_file);
+    uVkVerbose("\tLoaded shader: %s.\n", file_name);
 }
 
 __UE_internal__ __UE_call__ void
-uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict v_info)
+uCreateVulkanGraphicsPipeline(const uVulkanInfo*          const restrict v_info,
+                              const uVulkanSwapChainInfo* const restrict swap_chain_info)
 {
     uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null");
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkPhysical device must be non zero");
+    uAssertMsg_v(swap_chain_info,        "[ vulkan ] uVulkanSwapChainInfo ptr must be non null");
 
 
     // [ cfarvin::TODO ] Modules below are hard coded for now
-    uVkVerbose("[ vulkan ] Loading shader files...\n");
+    uVkVerbose("Loading shader files...\n");
 
     // Vertex module
     VkShaderModule vkTriangle_vert_module = NULL;
@@ -287,9 +298,172 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict v_info)
                               vkTriangle_frag_size,
                               &vkTriangle_frag_module);
 
+    // Create shader stages
+    VkPipelineShaderStageCreateInfo shader_stage_array[2] = { 0 };
+
+    // Vert
+    shader_stage_array[0].sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shader_stage_array[0].stage               = VK_SHADER_STAGE_VERTEX_BIT;
+    shader_stage_array[0].module              = vkTriangle_vert_module;
+    shader_stage_array[0].pName               = "main"; // entry point
+    shader_stage_array[0].pSpecializationInfo = NULL;   // optional: set shader constants
+
+    // Frag
+    shader_stage_array[1].sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shader_stage_array[1].stage               = VK_SHADER_STAGE_FRAGMENT_BIT;
+    shader_stage_array[1].module              = vkTriangle_frag_module;
+    shader_stage_array[1].pName               = "main"; // entry point
+    shader_stage_array[1].pSpecializationInfo = NULL;   // optional: set shader constants
+
+    // Vertex input
+    VkPipelineVertexInputStateCreateInfo vertex_input_create_info = { 0 }; // [ cfarvin::STUDY ]
+    vertex_input_create_info.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertex_input_create_info.vertexBindingDescriptionCount   = 0;
+    vertex_input_create_info.pVertexBindingDescriptions      = NULL;
+    vertex_input_create_info.vertexAttributeDescriptionCount = 0;
+    vertex_input_create_info.pVertexAttributeDescriptions    = NULL;
+
+    // Input assembly
+    VkPipelineInputAssemblyStateCreateInfo input_assembly_create_info = { 0 };
+    input_assembly_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    input_assembly_create_info.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    input_assembly_create_info.primitiveRestartEnable = VK_FALSE; // [ cfarvin::STUDY ]
+
+    // Viewport
+    VkViewport frame_buffer_viewport = { 0 };
+    frame_buffer_viewport.x        = 0.0f;
+    frame_buffer_viewport.y        = 0.0f;
+    frame_buffer_viewport.width    = (r32)swap_chain_info->swap_extent.width;
+    frame_buffer_viewport.height   = (r32)swap_chain_info->swap_extent.height;
+    frame_buffer_viewport.minDepth = 0.0f;
+    frame_buffer_viewport.maxDepth = 1.0f;
+
+    // Scissor
+    VkRect2D frame_buffer_scissor = { 0 };
+    frame_buffer_scissor.offset.x = 0;
+    frame_buffer_scissor.offset.y = 0;
+    frame_buffer_scissor.extent = swap_chain_info->swap_extent;
+
+    // Viewport state
+    VkPipelineViewportStateCreateInfo frame_buffer_viewport_create_info = { 0 };
+    frame_buffer_viewport_create_info.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    frame_buffer_viewport_create_info.viewportCount = 1;
+    frame_buffer_viewport_create_info.pViewports    = &frame_buffer_viewport;
+    frame_buffer_viewport_create_info.scissorCount  = 1;
+    frame_buffer_viewport_create_info.pScissors     = &frame_buffer_scissor;
+
+    // Rasterizer
+    VkPipelineRasterizationStateCreateInfo raster_create_info = { 0 };
+    raster_create_info.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    raster_create_info.depthClampEnable        = VK_FALSE;
+    raster_create_info.rasterizerDiscardEnable = VK_FALSE;
+    raster_create_info.polygonMode             = VK_POLYGON_MODE_FILL;
+    raster_create_info.lineWidth               = 1.0f;
+    raster_create_info.cullMode                = VK_CULL_MODE_BACK_BIT;
+    raster_create_info.frontFace               = VK_FRONT_FACE_CLOCKWISE;
+    raster_create_info.depthBiasEnable         = VK_FALSE;
+    raster_create_info.depthBiasConstantFactor = 0.0f;
+    raster_create_info.depthBiasClamp          = 0.0f;
+    raster_create_info.depthBiasSlopeFactor    = 0.0f;
+
+    // Multisampling
+    VkPipelineMultisampleStateCreateInfo ms_create_info = { 0 };
+    ms_create_info.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    ms_create_info.sampleShadingEnable   = VK_FALSE; // [ cfarvin::STUDY ]
+    ms_create_info.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
+    ms_create_info.minSampleShading      = 1.0f;
+    ms_create_info.pSampleMask           = NULL;
+    ms_create_info.alphaToCoverageEnable = VK_FALSE;
+    ms_create_info.alphaToOneEnable      = VK_FALSE;
+
+    // Depth stencil [ currently off ]
+    // [ cfarvin::RESTORE ]
+    //VkPipelineDepthStencilStateCreateInfo* depth_stencil_create_info = NULL;
+
+    // Color blending
+    // Note: VkPipelineColorBlendStateCreateInfo builds global state.
+    //       VkPipelineColorBlendAttachmentState sets local state per attached frame buffer.
+    //       We will use the latter as we have a single frame buffer.
+    // [ cfarvin::STUDY ]
+    VkPipelineColorBlendAttachmentState color_blend_attachment = { 0 };
+    color_blend_attachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT |
+                                                 VK_COLOR_COMPONENT_G_BIT |
+                                                 VK_COLOR_COMPONENT_B_BIT |
+                                                 VK_COLOR_COMPONENT_A_BIT;
+    color_blend_attachment.blendEnable         = VK_FALSE;
+    color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    color_blend_attachment.colorBlendOp        = VK_BLEND_OP_ADD;
+    color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
+
+    VkPipelineColorBlendStateCreateInfo color_blend_create_info = { 0 };
+    color_blend_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    color_blend_create_info.logicOpEnable = VK_FALSE; // [ cfarvin::STUDY ]
+    color_blend_create_info.logicOp = VK_LOGIC_OP_COPY;
+    color_blend_create_info.attachmentCount = 1;
+    color_blend_create_info.pAttachments = &color_blend_attachment;
+    color_blend_create_info.blendConstants[0] = 0.0f;
+    color_blend_create_info.blendConstants[1] = 0.0f;
+    color_blend_create_info.blendConstants[2] = 0.0f;
+    color_blend_create_info.blendConstants[3] = 0.0f;
+
+    // Dynamic state
+    // Note: Causes previous configuration to be ignored, and information to be supplied
+    //       at drawing time.
+    VkDynamicState dynamic_states[2] = { 0 };
+    dynamic_states[0] = VK_DYNAMIC_STATE_VIEWPORT;
+    dynamic_states[1] = VK_DYNAMIC_STATE_LINE_WIDTH;
+
+    VkPipelineDynamicStateCreateInfo dynamic_state_create_info = { 0 };
+    dynamic_state_create_info.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamic_state_create_info.dynamicStateCount = 2;
+    dynamic_state_create_info.pDynamicStates    = dynamic_states;
+
+    // Pipeline layout
+    VkPipelineLayoutCreateInfo pipeline_layout_create_info = { 0 };
+    pipeline_layout_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_create_info.setLayoutCount         = 0;
+    pipeline_layout_create_info.pSetLayouts            = NULL;
+    pipeline_layout_create_info.pushConstantRangeCount = 0;
+    pipeline_layout_create_info.pPushConstantRanges    = NULL;
+
+    VkResult result = vkCreatePipelineLayout(v_info->logical_device,
+                                             &pipeline_layout_create_info,
+                                             NULL,
+                                             &REHOME_pipeline_layout);
+
+    if (result != VK_SUCCESS)
+    {
+        if (vkTriangle_vert_data)
+        {
+            free(vkTriangle_vert_data);
+        }
+
+        if (vkTriangle_vert_data)
+        {
+            free(vkTriangle_vert_data);
+        }
+        uDestroyVulkan();
+        uFatal("[ vulkan ] Unable to create pipeline layout.\n");
+    }
+
+
     // Cleanup
     vkDestroyShaderModule(v_info->logical_device, vkTriangle_vert_module, NULL);
     vkDestroyShaderModule(v_info->logical_device, vkTriangle_frag_module, NULL);
+
+    // [ cfarvin::REVISIT ] When is it safe to free these?
+    if (vkTriangle_vert_data)
+    {
+        free(vkTriangle_vert_data);
+    }
+
+    if (vkTriangle_frag_data)
+    {
+        free(vkTriangle_frag_data);
+    }
 }
 
 
@@ -1676,7 +1850,6 @@ uInitializeVulkan(const s8** const const restrict user_instance_validation_layer
                                 num_user_device_extension_names,
                                 swap_chain_info);
 
-    // queue_info consumed
     uCreateVulkanLogicalDevice(v_info,
                                queue_info,
                                user_instance_validation_layer_names,
@@ -1684,8 +1857,6 @@ uInitializeVulkan(const s8** const const restrict user_instance_validation_layer
                                user_device_extension_names,
                                num_user_device_extension_names);
 
-    // swap_chain_info consumed
-    // queue_info consumed
     // image_group partially built
     uCreateVulkanSwapChain(v_info,
                            swap_chain_info,
@@ -1693,12 +1864,12 @@ uInitializeVulkan(const s8** const const restrict user_instance_validation_layer
                            image_group);
 
     // image_group partially built
-    // swap_chain_info consumed
     uCreateVulkanImageViews(v_info,
                             image_group,
                             swap_chain_info);
 
-    uCreateVulkanGraphicsPipeline(v_info);
+    uCreateVulkanGraphicsPipeline(v_info,
+                                  swap_chain_info);
 }
 
 
@@ -1776,6 +1947,11 @@ uDestroyVulkan()
 
         if (v_info->logical_device)
         {
+            // Destroy pipeline layout
+            if (REHOME_pipeline_layout)
+            {
+                vkDestroyPipelineLayout(v_info->logical_device, REHOME_pipeline_layout, NULL);
+            }
             vkDestroyDevice(v_info->logical_device, NULL);
 
         }

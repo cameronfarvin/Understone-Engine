@@ -16,6 +16,7 @@ class TagType(enum.Enum):
     NOTE      = enum.auto()
     TEMP      = enum.auto()
     TEST      = enum.auto()
+    STUDY     = enum.auto()
     DEBUG     = enum.auto()
     REMOVE    = enum.auto()
     FINDME    = enum.auto()

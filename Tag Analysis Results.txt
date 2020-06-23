@@ -4,7 +4,7 @@
 
 
 
-There are 19 items of type TODO:
+There are 20 items of type TODO:
     [ TODO ] (entity_tools.h, 245): Will presently only work with spheres.
     [ TODO ] (entity_tools.h, 254): Will presently only work with spheres.
     [ TODO ] (entity_tools.h, 333): Will presently only work with spheres.
@@ -21,9 +21,18 @@ There are 19 items of type TODO:
     [ TODO ] (type_tools.h, 28): Relocate
     [ TODO ] (uDynamicArray.h, 76): Properly check for failure on realloc
     [ TODO ] (uString.h, 160): implement uString substring
-    [ TODO ] (vulkan_tools.h, 262): Modules below are hard coded for now
-    [ TODO ] (vulkan_tools.h, 468): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
+    [ TODO ] (vulkan_tools.h, 149): This needs a home!
+    [ TODO ] (vulkan_tools.h, 272): Modules below are hard coded for now
+    [ TODO ] (vulkan_tools.h, 641): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
     [ TODO ] (win_platform.h, 128): scaling/ortho
+
+
+There are 5 items of type STUDY:
+    [ STUDY ] (vulkan_tools.h, 319): VkPipelineVertexInputStateCreateInfo vertex_input_create_info = { 0 };
+    [ STUDY ] (vulkan_tools.h, 330): input_assembly_create_info.primitiveRestartEnable = VK_FALSE;
+    [ STUDY ] (vulkan_tools.h, 372): ms_create_info.sampleShadingEnable   = VK_FALSE;
+    [ STUDY ] (vulkan_tools.h, 387): 
+    [ STUDY ] (vulkan_tools.h, 403): color_blend_create_info.logicOpEnable = VK_FALSE;
 
 
 There are 2 items of type REMOVE:
@@ -31,8 +40,14 @@ There are 2 items of type REMOVE:
     [ REMOVE ] (vulkan_tools.h, 37): Remove stdio.h
 
 
-There are 3 items of type REVISIT:
+There are 5 items of type REVISIT:
     [ REVISIT ] (entity_tools.h, 66): intersection materials
     [ REVISIT ] (uString.h, 125): Strlen correctness, use throughout uString
-    [ REVISIT ] (vulkan_tools.h, 1242): 
+    [ REVISIT ] (vulkan_tools.h, 150): This needs a home!
+    [ REVISIT ] (vulkan_tools.h, 457): When is it safe to free these?
+    [ REVISIT ] (vulkan_tools.h, 1415): 
+
+
+There are 1 items of type RESTORE:
+    [ RESTORE ] (vulkan_tools.h, 380): 
 
