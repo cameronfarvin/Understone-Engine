@@ -1,0 +1,4 @@
+*.h linguist-language=C
+*.c linguist-language=C
+"Tag Analysis Results.txt" linguist-generated
+* text=auto
