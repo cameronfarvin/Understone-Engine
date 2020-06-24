@@ -152,6 +152,7 @@ typedef struct
 {
     const VkPipelineLayout pipeline_layout;
     const VkRenderPass     render_pass;
+    const VkPipeline       graphics_pipeline;
 } uVulkanRenderInfo;
 __UE_singleton__ uVulkanRenderInfo* uAPI_PRIME_VULKAN_RENDER_INFO = NULL;
 __UE_internal__ __UE_inline__ const uVulkanRenderInfo* const
@@ -190,6 +191,12 @@ uSelectVulkanSwapChain(_mut_ uVulkanSwapChainInfo* const restrict swap_chain_inf
 // [ end ] Forward decls
 //
 
+
+__UE_internal__ __UE_call__ void
+uCreateVulkanFrameBuffers()
+{
+
+}
 
 __UE_internal__ __UE_call__ void
 uCreateVulkanRenderPass(const uVulkanInfo*          const restrict v_info,
@@ -447,23 +454,21 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*          const restrict v_info,
     raster_create_info.depthBiasSlopeFactor    = 0.0f;
 
     // Multisampling
-    VkPipelineMultisampleStateCreateInfo ms_create_info = { 0 };
-    ms_create_info.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    ms_create_info.sampleShadingEnable   = VK_FALSE; // [ cfarvin::STUDY ]
-    ms_create_info.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
-    ms_create_info.minSampleShading      = 1.0f;
-    ms_create_info.pSampleMask           = NULL;
-    ms_create_info.alphaToCoverageEnable = VK_FALSE;
-    ms_create_info.alphaToOneEnable      = VK_FALSE;
+    VkPipelineMultisampleStateCreateInfo multi_sample_create_info = { 0 };
+    multi_sample_create_info.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multi_sample_create_info.sampleShadingEnable   = VK_FALSE; // [ cfarvin::STUDY ]
+    multi_sample_create_info.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
+    multi_sample_create_info.minSampleShading      = 1.0f;
+    multi_sample_create_info.pSampleMask           = NULL;
+    multi_sample_create_info.alphaToCoverageEnable = VK_FALSE;
+    multi_sample_create_info.alphaToOneEnable      = VK_FALSE;
 
     // Depth stencil [ currently off ]
-    // [ cfarvin::RESTORE ]
-    //VkPipelineDepthStencilStateCreateInfo* depth_stencil_create_info = NULL;
+    VkPipelineDepthStencilStateCreateInfo* depth_stencil_create_info = NULL;
 
     // Color blending
     // Note: VkPipelineColorBlendStateCreateInfo builds global state.
     //       VkPipelineColorBlendAttachmentState sets local state per attached frame buffer.
-    //       We will use the latter as we have a single frame buffer.
     // [ cfarvin::STUDY ]
     VkPipelineColorBlendAttachmentState color_blend_attachment = { 0 };
     color_blend_attachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT |
@@ -529,6 +534,37 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*          const restrict v_info,
         uFatal("[ vulkan ] Unable to create pipeline layout.\n");
     }
 
+    // Create graphics pipeline
+    VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = { 0 };
+    graphics_pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    graphics_pipeline_create_info.stageCount          = 2;
+    graphics_pipeline_create_info.pStages             = shader_stage_array;
+    graphics_pipeline_create_info.pVertexInputState   = &vertex_input_create_info;
+    graphics_pipeline_create_info.pInputAssemblyState = &input_assembly_create_info;
+    graphics_pipeline_create_info.pViewportState      = &frame_buffer_viewport_create_info;
+    graphics_pipeline_create_info.pRasterizationState = &raster_create_info;
+    graphics_pipeline_create_info.pMultisampleState   = &multi_sample_create_info;
+    graphics_pipeline_create_info.pDepthStencilState  = depth_stencil_create_info; // Currently off
+    graphics_pipeline_create_info.pColorBlendState    = &color_blend_create_info;
+    graphics_pipeline_create_info.pDynamicState       = NULL;                      // Filled out, not using.
+    graphics_pipeline_create_info.layout              = render_info->pipeline_layout;
+    graphics_pipeline_create_info.renderPass          = render_info->render_pass;
+    graphics_pipeline_create_info.subpass             = 0;                         // Read: "Subpass index"
+    graphics_pipeline_create_info.basePipelineHandle  = NULL;
+    graphics_pipeline_create_info.basePipelineIndex   = -1;
+
+    result = vkCreateGraphicsPipelines(v_info->logical_device,
+                                       VK_NULL_HANDLE,
+                                       1,
+                                       &graphics_pipeline_create_info,
+                                       NULL,
+                                       (VkPipeline*)&(render_info->graphics_pipeline));
+
+    if (result != VK_SUCCESS)
+    {
+        uDestroyVulkan();
+        uFatal("[ vulkan ] Unable to create graphics pipeline.\n");
+    }
 
     // Cleanup
     vkDestroyShaderModule(v_info->logical_device, vkTriangle_vert_module, NULL);
@@ -1958,6 +1994,8 @@ uInitializeVulkan(const s8** const const restrict user_instance_validation_layer
     uCreateVulkanGraphicsPipeline(v_info,
                                   swap_chain_info,
                                   render_info);
+
+    /* uCreateVulkanFrameBuffers(swap_chain_info, ); */
 }
 
 
@@ -2036,10 +2074,10 @@ uDestroyVulkan()
 
         if (v_info->logical_device)
         {
-            // Destroy pipeline layout
-            // Destroy render pass
+            // Destroy pipeline layout, render pass, graphics pipeline
             if (render_info)
             {
+                vkDestroyPipeline(v_info->logical_device, render_info->graphics_pipeline, NULL);
                 vkDestroyPipelineLayout(v_info->logical_device, render_info->pipeline_layout, NULL);
                 vkDestroyRenderPass(v_info->logical_device, render_info->render_pass, NULL);
             }
