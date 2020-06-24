@@ -124,11 +124,13 @@ uGetVulkanInfo()
 
 //
 // [ begin ] Prime uVulkanImageGroup
+// [ cfarvin::REVISIT ] Consider re-naming to uVulkanPresentGroup?
 typedef struct
 {
-    _mut_ VkImage*     images;
-    _mut_ VkImageView* image_views;
-    const u32          num_images;
+    _mut_ VkImage*       images;
+    _mut_ VkImageView*   image_views;   // Note: To have num_images elements
+    _mut_ VkFramebuffer* frame_buffers; // Note: To have num_images elements
+    const u32            num_images;
 } uVulkanImageGroup;
 __UE_singleton__ uVulkanImageGroup* uAPI_PRIME_VULKAN_IMAGE_GROUP = NULL;
 __UE_internal__ __UE_inline__ const uVulkanImageGroup* const
@@ -150,9 +152,12 @@ uGetVulkanImageGroup()
 // [ begin ] Prime uVulkanRenderInfo
 typedef struct
 {
-    const VkPipelineLayout pipeline_layout;
-    const VkRenderPass     render_pass;
-    const VkPipeline       graphics_pipeline;
+    const VkAttachmentDescription* attachment_descriptions;
+    const VkAttachmentReference*   attachment_references;
+    const VkPipelineLayout         pipeline_layout;
+    const VkRenderPass             render_pass;
+    const VkPipeline               graphics_pipeline;
+    const u32                      num_attachments;
 } uVulkanRenderInfo;
 __UE_singleton__ uVulkanRenderInfo* uAPI_PRIME_VULKAN_RENDER_INFO = NULL;
 __UE_internal__ __UE_inline__ const uVulkanRenderInfo* const
@@ -193,11 +198,54 @@ uSelectVulkanSwapChain(_mut_ uVulkanSwapChainInfo* const restrict swap_chain_inf
 
 
 __UE_internal__ __UE_call__ void
-uCreateVulkanFrameBuffers()
+uCreateVulkanFrameBuffers(const uVulkanInfo*          const restrict v_info,
+                          const uVulkanSwapChainInfo* const restrict swap_chain_info,
+                          const uVulkanImageGroup*    const restrict image_group,
+                          const uVulkanRenderInfo*    const restrict render_info)
 {
+    uAssertMsg_v(v_info,                      "[ vulkan ] uVulkanInfo ptr must be non null.\n");
+    uAssertMsg_v(v_info->logical_device,      "[ vulkan ] VkPhysicalDevice must be non zero.\n");
+    uAssertMsg_v(swap_chain_info,             "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
+    uAssertMsg_v(image_group,                 "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
+    uAssertMsg_v(!image_group->frame_buffers, "[ vulkan ] VkFrameBuffer ptr must be null; will be overwritten.\n");
+    uAssertMsg_v(render_info,                 "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
 
+
+    // Create a frame buffer for each image view
+    *(VkFramebuffer**)&(image_group->frame_buffers) = calloc(image_group->num_images, sizeof(VkFramebuffer));
+    if (!(image_group->frame_buffers))
+    {
+        uDestroyVulkan();
+        uFatal("[ vulkan ] Unable to allocate frame buffer array.\n");
+    }
+
+    for (u32 image_idx = 0; image_idx < image_group->num_images; image_idx++)
+    {
+        VkFramebufferCreateInfo frame_buffer_create_info = { 0 };
+        frame_buffer_create_info.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        frame_buffer_create_info.renderPass      = render_info->render_pass;
+        frame_buffer_create_info.attachmentCount = 1;
+        frame_buffer_create_info.pAttachments    = &(image_group->image_views[image_idx]);
+        frame_buffer_create_info.width           = swap_chain_info->swap_extent.width;
+        frame_buffer_create_info.height          = swap_chain_info->swap_extent.height;
+        frame_buffer_create_info.layers          = 1; // Non stereoscopic
+
+        VkResult result = vkCreateFramebuffer(v_info->logical_device,
+                                              &frame_buffer_create_info,
+                                              NULL,
+                                              &(image_group->frame_buffers[image_idx]));
+
+        if (result != VK_SUCCESS)
+        {
+            uDestroyVulkan();
+            uFatal("[ vulkan ] Unable to create frame buffer.\n");
+        }
+    }
 }
 
+
+// [ cfarvin::TODO ] When we are rendering w/ more than one attachment:
+//                   Update this function to take the number and type of attachments.
 __UE_internal__ __UE_call__ void
 uCreateVulkanRenderPass(const uVulkanInfo*          const restrict v_info,
                         const uVulkanSwapChainInfo* const restrict swap_chain_info,
@@ -207,39 +255,70 @@ uCreateVulkanRenderPass(const uVulkanInfo*          const restrict v_info,
     uAssertMsg_v(swap_chain_info,                  "[ vulkan ] uVulkanSwapChainInfo ptr must be non null.\n");
     uAssertMsg_v(swap_chain_info->surface_formats, "[ vulkan ] VkSurfaceFormatsKHR ptr must be non null.\n");
     uAssertMsg_v(render_info,                      "[ vulkan ] uVulkanRenderInfo ptr must be non null.\n");
+    uAssertMsg_v(!render_info->attachment_descriptions,
+                 "[ vulkan ] VkAttachmentDesctiption ptr must be null; will be overwritten.\n");
+    uAssertMsg_v(!render_info->attachment_references,
+                 "[ vulkan ] VkAttachmentReference ptr must be null; will be overwritten.\n");
 
 
-    // Attachement description
+    // [ cfarvin::TEMP ] Will determine number and type from arguments in the future,
+    //                   hard coded for now.
+    *(u32*)&render_info->num_attachments = 1;
+    *(VkAttachmentDescription**)&(render_info->attachment_descriptions) = calloc(render_info->num_attachments,
+                                                                                 sizeof(VkAttachmentDescription));
+    if (!render_info->attachment_descriptions)
+    {
+        uDestroyVulkan();
+        uFatal("[ vulkan ] Unable to allocate attachment descriptions.\n");
+    }
+
+    *(VkAttachmentReference**)&(render_info->attachment_references) = calloc(render_info->num_attachments,
+                                                                             sizeof(VkAttachmentReference));
+    if (!render_info->attachment_references)
+    {
+        uDestroyVulkan();
+        uFatal("[ vulkan ] Unable to allocate attachment references.\n");
+    }
+
     VkSurfaceFormatKHR surface_format =
         (swap_chain_info->surface_formats)[swap_chain_info->designated_format_index];
 
-    VkAttachmentDescription color_attachment = { 0 };
-    color_attachment.format         = surface_format.format;
-    color_attachment.samples        = VK_SAMPLE_COUNT_1_BIT;       // Note: 1 == No MSAA
-    color_attachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR; // [ cfarvin::PERF ] expensive or nominal?
-    color_attachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
-    color_attachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    color_attachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-    color_attachment.finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    // [ cfarvin::TODO ] This currently only handles color attachment references.
+    for (u32 attachment_idx = 0; attachment_idx < render_info->num_attachments; attachment_idx++)
+    {
+        // Attachement description
+        VkAttachmentDescription* attachment_descriptions =
+            *(VkAttachmentDescription**)&(render_info->attachment_descriptions);
 
-    // Attachment reference
-    VkAttachmentReference color_attachment_reference = { 0 };
-    color_attachment_reference.attachment = 0; // Read: "Attachment index"
-    color_attachment_reference.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        attachment_descriptions[attachment_idx].format         = surface_format.format;
+        attachment_descriptions[attachment_idx].samples        = VK_SAMPLE_COUNT_1_BIT;       // Note: 1 == No MSAA
+        attachment_descriptions[attachment_idx].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR; // [ cfarvin::PERF ] expensive or nominal?
+        attachment_descriptions[attachment_idx].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+        attachment_descriptions[attachment_idx].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachment_descriptions[attachment_idx].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachment_descriptions[attachment_idx].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+        attachment_descriptions[attachment_idx].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+        // Attachment reference
+        VkAttachmentReference* color_attachment_reference =
+            *(VkAttachmentReference**)&(render_info->attachment_references);
+
+        color_attachment_reference[attachment_idx].attachment = 0; // Read: "Attachment index"
+        color_attachment_reference[attachment_idx].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    }
 
     // Subpasses
     // Note: References layout(location = 0) in frag shader.
     VkSubpassDescription subpass_description = { 0 };
     subpass_description.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass_description.colorAttachmentCount = 1;
-    subpass_description.pColorAttachments    = &color_attachment_reference;
+    subpass_description.colorAttachmentCount = render_info->num_attachments;
+    subpass_description.pColorAttachments    = render_info->attachment_references;
 
     // Render pass
     VkRenderPassCreateInfo render_pass_create_info = { 0 };
     render_pass_create_info.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    render_pass_create_info.attachmentCount = 1;
-    render_pass_create_info.pAttachments    = &color_attachment;
+    render_pass_create_info.attachmentCount = render_info->num_attachments;
+    render_pass_create_info.pAttachments    = render_info->attachment_descriptions;
     render_pass_create_info.subpassCount    = 1;
     render_pass_create_info.pSubpasses      = &subpass_description;
 
@@ -472,9 +551,9 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*          const restrict v_info,
     // [ cfarvin::STUDY ]
     VkPipelineColorBlendAttachmentState color_blend_attachment = { 0 };
     color_blend_attachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT |
-                                                 VK_COLOR_COMPONENT_G_BIT |
-                                                 VK_COLOR_COMPONENT_B_BIT |
-                                                 VK_COLOR_COMPONENT_A_BIT;
+        VK_COLOR_COMPONENT_G_BIT |
+        VK_COLOR_COMPONENT_B_BIT |
+        VK_COLOR_COMPONENT_A_BIT;
     color_blend_attachment.blendEnable         = VK_FALSE;
     color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
     color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -1732,7 +1811,7 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
                                _mut_ VkExtensionProperties** _mut_ const       restrict instance_extension_properties,
                                _mut_ VkInstanceCreateInfo*   const             restrict instance_create_info,
                                const s8**                    const       const restrict user_instance_extension_names,
-                               const u16                                               num_user_instance_extension_names)
+                               const u16                                                num_user_instance_extension_names)
 {
     uAssertMsg_v(instance_create_info,              "[ vulkan ] Null InstanceCreateInfo ptr provided.\n");
     uAssertMsg_v(!(*instance_extension_names),      "[ vulkan ] Extension names ptr ptr must be null; will be overwritten.\n");
@@ -1995,7 +2074,10 @@ uInitializeVulkan(const s8** const const restrict user_instance_validation_layer
                                   swap_chain_info,
                                   render_info);
 
-    /* uCreateVulkanFrameBuffers(swap_chain_info, ); */
+    uCreateVulkanFrameBuffers(v_info,
+                              swap_chain_info,
+                              image_group,
+                              render_info);
 }
 
 
@@ -2018,18 +2100,24 @@ uDestroyVulkan()
     // uVulkanImageGroup data
     if (image_group)
     {
-        if (v_info->logical_device && image_group->image_views)
+        if (v_info->logical_device)
         {
-            for (u32 image_view_idx = 0;
-                 image_view_idx < image_group->num_images;
-                 image_view_idx++)
+            // Destroy image views, frame buffers
+            for (u32 image_idx = 0; image_idx < image_group->num_images; image_idx++)
             {
-                VkImageView image_view = image_group->image_views[image_view_idx];
-                if (image_view)
+                if (image_group->image_views)
                 {
+
                     vkDestroyImageView(v_info->logical_device,
-                                       image_view,
+                                       image_group->image_views[image_idx],
                                        NULL);
+                }
+
+                if (image_group->frame_buffers)
+                {
+                    vkDestroyFramebuffer(v_info->logical_device,
+                                         image_group->frame_buffers[image_idx],
+                                         NULL);
                 }
             }
         }
@@ -2042,6 +2130,11 @@ uDestroyVulkan()
         if (image_group->image_views)
         {
             free(image_group->image_views);
+        }
+
+        if (image_group->frame_buffers)
+        {
+            free(image_group->frame_buffers);
         }
 
         free(image_group);
@@ -2074,7 +2167,7 @@ uDestroyVulkan()
 
         if (v_info->logical_device)
         {
-            // Destroy pipeline layout, render pass, graphics pipeline
+            // Destroy pipeline layout, render pass, graphics pipeline, frame buffer(s)
             if (render_info)
             {
                 vkDestroyPipeline(v_info->logical_device, render_info->graphics_pipeline, NULL);
@@ -2101,6 +2194,15 @@ uDestroyVulkan()
 
     if (render_info)
     {
+        if (render_info->attachment_descriptions)
+        {
+            free((VkAttachmentDescription*)render_info->attachment_descriptions);
+        }
+
+        if (render_info->attachment_references)
+        {
+            free((VkAttachmentReference*)render_info->attachment_references);
+        }
         free(render_info);
     }
 
