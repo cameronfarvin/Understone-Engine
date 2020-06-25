@@ -199,21 +199,22 @@ uGetVulkanRenderInfo()
 //
 
 
-// [ cfarvin::TODO ] Rehome/reformat
 #define uVULKAN_NUM_COMMAND_BUFFERS   3
-#define uVULKAN_NUM_WAIT_SEMAPHORES   1
-#define uVULKAN_NUM_SIGNAL_SEMAPHORES 1
-#define uVULKAN_NUM_STAGE_FLAGS       1
+#define uVULKAN_MAX_FRAMES_IN_FLIGHT  2
 typedef struct
 {
+    VkSemaphore          wait_semaphores[uVULKAN_MAX_FRAMES_IN_FLIGHT];
+    VkSemaphore          signal_semaphores[uVULKAN_MAX_FRAMES_IN_FLIGHT];
+    VkFence              swap_chain_image_fences[uVULKAN_NUM_COMMAND_BUFFERS];
+    VkFence              fences[uVULKAN_MAX_FRAMES_IN_FLIGHT];
+    VkPipelineStageFlags stage_flags[uVULKAN_MAX_FRAMES_IN_FLIGHT];
     VkDevice             logical_device;
     VkSwapchainKHR       swap_chain;
-    VkSemaphore          wait_semaphores[uVULKAN_NUM_WAIT_SEMAPHORES];
-    VkSemaphore          signal_semaphores[uVULKAN_NUM_SIGNAL_SEMAPHORES];
-    VkPipelineStageFlags stage_flags[uVULKAN_NUM_STAGE_FLAGS];
     VkSubmitInfo         submit_info;
     VkQueue              graphics_queue;
     VkQueue              present_queue;
+    VkPresentInfoKHR     present_info;
+    u32                  frame;
 
     // [ cfarvin::REVISIT ] At most we want tripple buffering?
     VkCommandBuffer  command_buffers[uVULKAN_NUM_COMMAND_BUFFERS];
@@ -244,33 +245,90 @@ uSelectVulkanSwapChain(_mut_ uVulkanSurfaceInfo* const restrict surface_info);
 
 
 __UE_internal__ __UE_call__ void
-uCreateVulkanDrawSemaphores(const uVulkanInfo*      const restrict v_info,
-                            _mut_ uVulkanDrawTools* const restrict draw_tools)
+uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
+                           _mut_ uVulkanDrawTools* const restrict draw_tools)
 {
-    uAssertMsg_v(v_info,                      "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(v_info->logical_device,      "[ vulkan ] VkDevice must be non zero.\n");
-    uAssertMsg_v(draw_tools,                  "[ vulkan ] uVulkanDrawTools ptr must be non null.\n");
+    uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
+    uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkDevice must be non zero.\n");
+    uAssertMsg_v(draw_tools,             "[ vulkan ] uVulkanDrawTools ptr must be non null.\n");
 
 
     VkSemaphoreCreateInfo semaphore_create_info = { 0 };
     semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
+    VkFenceCreateInfo fence_create_info = { 0 };
+    fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT; // Done state
+
+#if _WIN32
+#pragma warning( push )
+#pragma warning( disable : 4127 )
+#endif // _WIN32
+    uAssertMsg_v((uVULKAN_MAX_FRAMES_IN_FLIGHT == (uVULKAN_NUM_COMMAND_BUFFERS - 1)),
+                 "[ api ] Max in-flight frames must be exactly one less than number command buffers.\n");
+#if _WIN32
+#pragma warning( pop )
+#endif // _WIN32
+
     VkResult result = VK_SUCCESS;
-    const char* semaphore_create_error_msg = "[ vulkan ] Unable to create draw semaphores.\n";
+    const char* sync_create_error_msg = "[ vulkan ] Unable to create draw syn objects.\n";
 
-    result = vkCreateSemaphore(v_info->logical_device, &semaphore_create_info, NULL, &(draw_tools->wait_semaphores[0]));
-    if (result != VK_SUCCESS)
+    for (u8 sync_obj_idx = 0; sync_obj_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; sync_obj_idx++)
     {
-        uDestroyVulkan();
-        uFatal(semaphore_create_error_msg);
+        // Create wait semaphores
+        result = vkCreateSemaphore(v_info->logical_device,
+                                   &semaphore_create_info,
+                                   NULL,
+                                   &(draw_tools->wait_semaphores[sync_obj_idx]));
+
+        if (result != VK_SUCCESS)
+        {
+            uDestroyVulkan();
+            uFatal(sync_create_error_msg);
+        }
+
+        // Create signal semaphores
+        result = vkCreateSemaphore(v_info->logical_device,
+                                   &semaphore_create_info,
+                                   NULL,
+                                   &(draw_tools->signal_semaphores[sync_obj_idx]));
+
+        if (result != VK_SUCCESS)
+        {
+            uDestroyVulkan();
+            uFatal(sync_create_error_msg);
+        }
+
+        // Create fences
+        result = vkCreateFence(v_info->logical_device,
+                                   &fence_create_info,
+                                   NULL,
+                                   &(draw_tools->fences[sync_obj_idx]));
+
+        if (result != VK_SUCCESS)
+        {
+            uDestroyVulkan();
+            uFatal(sync_create_error_msg);
+        }
     }
 
-    result = vkCreateSemaphore(v_info->logical_device, &semaphore_create_info, NULL, &(draw_tools->signal_semaphores[0]));
-    if (result != VK_SUCCESS)
+// [ cfarvin::REVISIT ] These dont' get destroyed properly. See destruction in Understone.c::uDestroyDrawTools()
+#if 0
+    for (u8 fence_idx = 0; fence_idx < uVULKAN_NUM_COMMAND_BUFFERS; fence_idx++)
     {
-        uDestroyVulkan();
-        uFatal(semaphore_create_error_msg);
+        // Create swap chain image fences
+        result = vkCreateFence(v_info->logical_device,
+                               &fence_create_info,
+                               NULL,
+                               &(draw_tools->swap_chain_image_fences[fence_idx]));
+
+        if (result != VK_SUCCESS)
+        {
+            uDestroyVulkan();
+            uFatal(sync_create_error_msg);
+        }
     }
+#endif // 0
 }
 
 
@@ -1762,7 +1820,7 @@ uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bi
                  const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
                  void*                                       user_data)
 {
-    VkBool32 should_abort_calling_process = VK_FALSE; // [ cfarvin::TODO ] Enable
+    VkBool32 should_abort_calling_process = VK_TRUE;
     if(user_data) {} // Silence warnings
 
     if (message_severity_bits >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ||
@@ -2101,7 +2159,6 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
         uFatal("[ vulkan ] Unable to enumerate layer properties.\n");
     }
 
-
     // Set Extension Names
     uVkVerbose("Searching for extensions...\n");
     u32 num_added_extensions = 0;
@@ -2337,12 +2394,17 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
                                 render_info,
                                 surface_info);
 
-    uCreateVulkanDrawSemaphores(v_info, (uVulkanDrawTools*)return_draw_tools);
+    uCreateVulkanDrawSyncTools(v_info, (uVulkanDrawTools*)return_draw_tools);
 
     // DrawTool creation
     uVulkanDrawTools* non_const_draw_tools = *(uVulkanDrawTools**)&return_draw_tools;
 
-    non_const_draw_tools->stage_flags[0]  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    for (u8 frame_idx = 0; frame_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; frame_idx++)
+    {
+        non_const_draw_tools->stage_flags[frame_idx] =
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    }
+
     non_const_draw_tools->logical_device  = v_info->logical_device;
     non_const_draw_tools->swap_chain      = v_info->swap_chain;
     non_const_draw_tools->graphics_queue  = queue_info->queues[uVULKAN_GRAPHICS_QUEUE_INDEX];
@@ -2350,17 +2412,24 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
 
     VkSubmitInfo submit_info = { 0 };
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.waitSemaphoreCount   = uVULKAN_NUM_WAIT_SEMAPHORES;
-    submit_info.pWaitSemaphores      = non_const_draw_tools->wait_semaphores;
+    submit_info.waitSemaphoreCount   = 1;
     submit_info.pWaitDstStageMask    = non_const_draw_tools->stage_flags;
     submit_info.commandBufferCount   = 1;
-    submit_info.signalSemaphoreCount = uVULKAN_NUM_SIGNAL_SEMAPHORES;
-    submit_info.pSignalSemaphores    = non_const_draw_tools->signal_semaphores;
+    submit_info.signalSemaphoreCount = 1;
 
     non_const_draw_tools->submit_info = submit_info;
     memcpy(&(non_const_draw_tools->command_buffers[0]),
            command_info->command_buffers,
            uVULKAN_NUM_COMMAND_BUFFERS * sizeof(VkCommandBuffer));
+
+    VkPresentInfoKHR present_info = { 0 };
+    present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    present_info.waitSemaphoreCount = 1;
+    present_info.swapchainCount     = 1;
+    present_info.pSwapchains        = &(non_const_draw_tools->swap_chain);
+    present_info.pResults           = NULL;
+
+    non_const_draw_tools->present_info = present_info;
 }
 
 
@@ -2383,6 +2452,11 @@ uDestroyVulkan()
     uAssertMsg_v(render_info,            "[ vulkan ] uVulkanRenderInfo ptr must be non null.\n");
     uAssertMsg_v(command_info,           "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
 
+    // Wait for device to be idle
+    if (v_info->logical_device)
+    {
+        vkDeviceWaitIdle(v_info->logical_device);
+    }
 
     //
     // uVulkanImageGroup data
@@ -2547,10 +2621,6 @@ uDestroyVulkan()
 
         free(surface_info);
     }
-
-#if _WIN32
-    uDestroyWin32((uWin32Info* const)win32_info);
-#endif // _WIN32
 }
 
 #endif // __UE_VULKAN_TOOLS_H__

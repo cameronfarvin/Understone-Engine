@@ -141,15 +141,18 @@ uDAPop(_mut_ uDynamicArray* const restrict da)
 __UE_internal__ __UE_inline__ bool
 uDAFitToSize(_mut_ uDynamicArray* const restrict da)
 {
-    uAssertMsg_v(da,      "Null uDynamicArray ptr provided.\n");
+    uAssertMsg_v(da, "Null uDynamicArray ptr provided.\n");
 
     if (da && (da->length > da->scaling_factor))
     {
         size_t* non_const_max_length = (size_t*) &(da->max_length);
         *non_const_max_length = da->length;
-        da->data = realloc(da->data, (da->datatype_size * da->max_length));
-
-        return true;
+        void* realloc_return = realloc(da->data, (da->datatype_size * da->max_length));
+        if (realloc_return)
+        {
+            da->data = realloc_return;
+            return true;
+        }
     }
 
     return false;
