@@ -10,8 +10,9 @@
 #define VPPC_STR_LITERAL(vppc) (vppc)
 
 
+
 //
-// Fundamental Types
+// Fundamental types
 //
 typedef uint8_t  u8;
 typedef uint16_t u16;
@@ -25,7 +26,6 @@ typedef float    r32;
 typedef double   r64;
 
 
-// [ cfarvin::TODO ] Relocate
 typedef struct
 {
     u16 width;
@@ -43,7 +43,7 @@ typedef enum
 
 
 //
-// Endian Types
+// Endian types
 //
 union
 {
@@ -76,7 +76,7 @@ uDetermineSystemEndianness()
 
 
 //
-// Size Types
+// Size types
 //
 typedef struct
 {
@@ -88,7 +88,7 @@ typedef struct
 
 
 //
-// Color Types
+// Color types
 //
 typedef union
 {

@@ -70,20 +70,91 @@ uRefreshInputState()
 
     switch(sys_event)
     {
-    case uEventNone:
-    {
-        return;
+        case uEventNone:
+        {
+            return;
+        }
+        case uEventResize:
+        {
+            uHandleWindowResize();
+            return;
+        }
+        case uEventClose:
+        {
+            RUNNING = false;
+            return;
+        }
     }
-    case uEventResize:
+}
+
+
+__UE_internal__ __UE_inline__ void
+uDrawFrame(const uVulkanDrawTools* const restrict dt)
+{
+    uAssertMsg_v(dt,                 "[ render ] uVulkanDrawtools must be non zero.\n");
+    uAssertMsg_v(dt->logical_device, "[ render ] VkDevice must be non zero.\n");
+    uAssertMsg_v(dt->swap_chain,     "[ render ] VkSwapchainKHR must be non zero.\n");
+
+    // [ cfarvin::TODO ] check return codes
+    u32 image_idx;
+    vkAcquireNextImageKHR(dt->logical_device,
+                          dt->swap_chain,
+                          ~((u64)0),
+                          (dt->wait_semaphores)[0],
+                          VK_NULL_HANDLE,
+                          &image_idx);
+
+    VkSubmitInfo* submit_info = (VkSubmitInfo*)&dt->submit_info;
+    submit_info->pCommandBuffers = (VkCommandBuffer*)(&dt->command_buffers[image_idx]);
+
+    VkResult result = vkQueueSubmit(dt->graphics_queue,
+                                    1,
+                                    submit_info,
+                                    VK_NULL_HANDLE);
+    if (result != VK_SUCCESS)
     {
-        uHandleWindowResize();
-        return;
+        uFatal("[ render ] Unable to submit queue.\n");
     }
-    case uEventClose:
+
+    VkPresentInfoKHR present_info = { 0 };
+    present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    present_info.waitSemaphoreCount = 1;
+    present_info.pWaitSemaphores    = &(dt->signal_semaphores[0]);
+    present_info.swapchainCount     = 1;
+    present_info.pSwapchains        = &(dt->swap_chain);
+    present_info.pImageIndices      = &image_idx;
+    present_info.pResults           = NULL;
+
+    result = vkQueuePresentKHR(dt->present_queue, &present_info);
+
+    if (result != VK_SUCCESS)
     {
-        RUNNING = false;
-        return;
+        uFatal("[ render ] Unable to present.\n");
     }
+}
+
+
+__UE_internal__ __UE_call__ void
+uDestroyDrawTools(_mut_ uVulkanDrawTools* const restrict draw_tools)
+{
+    uVulkanInfo* v_info = (uVulkanInfo*)uGetVulkanInfo();
+
+    uAssertMsg_v(v_info,                 "[ engine ] uVulkanInfo ptr must be non null.\n");
+    uAssertMsg_v(v_info->logical_device, "[ engine ] VkDevice ptr must be non null.\n");
+    uAssertMsg_v(draw_tools,             "[ engine ] uVulkanDrawTools ptr must be non null.\n");
+
+
+    if (draw_tools && v_info && v_info->logical_device)
+    {
+        for (u32 wait_idx = 0; wait_idx < uVULKAN_NUM_WAIT_SEMAPHORES; wait_idx++)
+        {
+            vkDestroySemaphore(v_info->logical_device, draw_tools->wait_semaphores[wait_idx], NULL);
+        }
+
+        for (u32 signal_idx = 0; signal_idx < uVULKAN_NUM_SIGNAL_SEMAPHORES; signal_idx++)
+        {
+            vkDestroySemaphore(v_info->logical_device, draw_tools->signal_semaphores[signal_idx], NULL);
+        }
     }
 }
 
@@ -118,7 +189,10 @@ int main(int argc, char** argv)
 
     if (argc && argv) {}
 
-    uInitializeVulkan(required_instance_validation_layers,
+    const uVulkanDrawTools draw_tools = { 0 };
+
+    uInitializeVulkan(&draw_tools,
+                      required_instance_validation_layers,
                       sizeof(required_instance_validation_layers)/sizeof(char*),
                       required_instance_extensions,
                       sizeof(required_instance_extensions)/sizeof(char*),
@@ -127,9 +201,11 @@ int main(int argc, char** argv)
 
     while(RUNNING)
     {
+        uDrawFrame(&draw_tools);
         uRefreshInputState();
     }
 
+    uDestroyDrawTools((uVulkanDrawTools*)&draw_tools);
     uDestroyEngine();
     return 0;
 }
