@@ -4,7 +4,7 @@
 
 
 
-There are 20 items of type TODO:
+There are 22 items of type TODO:
     [ TODO ] (entity_tools.h, 245): Will presently only work with spheres.
     [ TODO ] (entity_tools.h, 254): Will presently only work with spheres.
     [ TODO ] (entity_tools.h, 333): Will presently only work with spheres.
@@ -20,28 +20,30 @@ There are 20 items of type TODO:
     [ TODO ] (memory_tools.h, 12): This file needs _Generic
     [ TODO ] (uDynamicArray.h, 76): Properly check for failure on realloc
     [ TODO ] (uString.h, 160): implement uString substring
-    [ TODO ] (vulkan_tools.h, 524): When we are rendering w/ more than one attachment:
-    [ TODO ] (vulkan_tools.h, 563): This currently only handles color attachment references.
-    [ TODO ] (vulkan_tools.h, 726): Modules below are hard coded for now
-    [ TODO ] (vulkan_tools.h, 1124): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
+    [ TODO ] (vulkan_tools.h, 255): When we are rendering w/ more than one attachment:
+    [ TODO ] (vulkan_tools.h, 573): When we are rendering w/ more than one attachment:
+    [ TODO ] (vulkan_tools.h, 863): When we are rendering w/ more than one attachment:
+    [ TODO ] (vulkan_tools.h, 902): This currently only handles color attachment references.
+    [ TODO ] (vulkan_tools.h, 1065): Modules below are hard coded for now
+    [ TODO ] (vulkan_tools.h, 1463): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
     [ TODO ] (win_platform.h, 128): scaling/ortho
 
 
 There are 1 items of type PERF:
-    [ PERF ] (vulkan_tools.h, 572): attachment_descriptions[attachment_idx].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;   expensive or nominal?
+    [ PERF ] (vulkan_tools.h, 911): attachment_descriptions[attachment_idx].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;   expensive or nominal?
 
 
 There are 1 items of type TEMP:
-    [ TEMP ] (vulkan_tools.h, 541): Will determine number and type from arguments in the future,
+    [ TEMP ] (vulkan_tools.h, 880): Will determine number and type from arguments in the future,
 
 
 There are 6 items of type STUDY:
-    [ STUDY ] (vulkan_tools.h, 589): subpasses, subpass dependencies
-    [ STUDY ] (vulkan_tools.h, 773): VkPipelineVertexInputStateCreateInfo vertex_input_create_info = { 0 };
-    [ STUDY ] (vulkan_tools.h, 784): input_assembly_create_info.primitiveRestartEnable = VK_FALSE;
-    [ STUDY ] (vulkan_tools.h, 826): multi_sample_create_info.sampleShadingEnable   = VK_FALSE;
-    [ STUDY ] (vulkan_tools.h, 839): 
-    [ STUDY ] (vulkan_tools.h, 855): color_blend_create_info.logicOpEnable = VK_FALSE;
+    [ STUDY ] (vulkan_tools.h, 928): subpasses, subpass dependencies
+    [ STUDY ] (vulkan_tools.h, 1112): VkPipelineVertexInputStateCreateInfo vertex_input_create_info = { 0 };
+    [ STUDY ] (vulkan_tools.h, 1123): input_assembly_create_info.primitiveRestartEnable = VK_FALSE;
+    [ STUDY ] (vulkan_tools.h, 1165): multi_sample_create_info.sampleShadingEnable   = VK_FALSE;
+    [ STUDY ] (vulkan_tools.h, 1178): 
+    [ STUDY ] (vulkan_tools.h, 1194): color_blend_create_info.logicOpEnable = VK_FALSE;
 
 
 There are 2 items of type REMOVE:
@@ -49,12 +51,15 @@ There are 2 items of type REMOVE:
     [ REMOVE ] (vulkan_tools.h, 37): Remove stdio.h
 
 
-There are 7 items of type REVISIT:
+There are 10 items of type REVISIT:
     [ REVISIT ] (Understone.c, 154): Is this necessary?
+    [ REVISIT ] (Understone.c, 236): These don't get destroyed properly. See creation in vulkan_tools.h::uCreateVulkanDrawSyncTools()
     [ REVISIT ] (entity_tools.h, 66): intersection materials
     [ REVISIT ] (uString.h, 125): Strlen correctness, use throughout uString
     [ REVISIT ] (vulkan_tools.h, 151): Consider re-naming to uVulkanPresentGroup?
     [ REVISIT ] (vulkan_tools.h, 219): At most we want tripple buffering?
-    [ REVISIT ] (vulkan_tools.h, 940): When is it safe to free these?
-    [ REVISIT ] (vulkan_tools.h, 1905): 
+    [ REVISIT ] (vulkan_tools.h, 321): vkDestroyDevice(v_info->logical_device, NULL);
+    [ REVISIT ] (vulkan_tools.h, 651): These dont' get destroyed properly. See destruction in Understone.c::uDestroyDrawTools()
+    [ REVISIT ] (vulkan_tools.h, 1279): When is it safe to free these?
+    [ REVISIT ] (vulkan_tools.h, 2244): 
 

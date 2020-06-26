@@ -17,7 +17,7 @@
 #include <win/win_platform.h>
 #endif // _WIN32
 
-#define uVULKAN_MAX_NANOSECOND_WAIT 10000000
+#define uVULKAN_MAX_NANOSECOND_WAIT 100000000
 
 
 //
@@ -247,7 +247,7 @@ uDestroyDrawTools(_mut_ uVulkanDrawTools* const restrict draw_tools)
 __UE_internal__ __UE_call__ void
 uDestroyEngine()
 {
-    uDestroyVulkan(uGetVulkanInfo());
+    uDestroyVulkan();
 
 #if _WIN32
     uDestroyWin32((uWin32Info* const)win32_info);
@@ -295,6 +295,8 @@ int main(int argc, char** argv)
 
     uDestroyDrawTools((uVulkanDrawTools*)&draw_tools);
     uDestroyEngine();
+
+    uDebugPrint("[ engine ] Graceful exit.\n");
     return 0;
 }
 
