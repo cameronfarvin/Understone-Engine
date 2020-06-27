@@ -1,5 +1,6 @@
-// Set __uDEBUG_SYSTEM__ == 0 in debug_tools.h to disable system
-// debugging functionality
+// Set __uDEBUG_SYSTEM__ == 1 in compiler invocation to enable system debugging
+// -- msvc: /D__UE_DEBUG__#1
+
 #include <engine_tools/debug_tools.h>
 #include <engine_tools/type_tools.h>
 #include <engine_tools/memory_tools.h>
@@ -101,8 +102,12 @@ uUpdatePresentInfoAndPresent(_mut_ uVulkanDrawTools* const restrict dt,
     (dt->present_info).pImageIndices   = (u32*)next_frame_idx;
     (dt->present_info).pWaitSemaphores = &(dt->signal_semaphores[dt->frame]);
 
+#if __UE_DEBUG__
     VkResult result = vkQueuePresentKHR(dt->present_queue, &(dt->present_info));
     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to present.\n");
+#else
+    vkQueuePresentKHR(dt->present_queue, &(dt->present_info));
+#endif // __UE_DEBUG__
 }
 
 
@@ -113,8 +118,12 @@ uSubmitGraphicsQueue(const uVulkanDrawTools* const restrict dt)
     uAssertMsg_v(dt->graphics_queue, "[ render ] VkQueue (graphics) must be non zero.\n");
     uAssertMsg_v(dt->fences,         "[ render ] VkFence ptr must be non null.\n");
 
+#if __UE_DEBUG__
     VkResult result = vkQueueSubmit(dt->graphics_queue, 1, &(dt->submit_info), dt->fences[dt->frame]);
     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to submit queue.\n");
+#else
+    vkQueueSubmit(dt->graphics_queue, 1, &(dt->submit_info), dt->fences[dt->frame]);
+#endif // __UE_DEBUG__
 }
 
 
@@ -178,12 +187,23 @@ uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt,
     uAssertMsg_v(return_idx,         "[ render ] Return index ptr must be non null.\n");
 
 
+
+#if __UE_DEBUG__
     VkResult result = vkAcquireNextImageKHR(dt->logical_device,
                                             dt->swap_chain,
                                             uVULKAN_MAX_NANOSECOND_WAIT,
                                             dt->wait_semaphores[dt->frame], // Sets the semaphore
                                             VK_NULL_HANDLE,
                                             return_idx);
+#else
+    vkAcquireNextImageKHR(dt->logical_device,
+                          dt->swap_chain,
+                          uVULKAN_MAX_NANOSECOND_WAIT,
+                          dt->wait_semaphores[dt->frame], // Sets the semaphore
+                          VK_NULL_HANDLE,
+                          return_idx);
+#endif // __UE_DEBUG__
+
 
     uAssertMsg_v(result != VK_TIMEOUT,
                  "[ render ] [ timeout ] Could not acquire next swap chain image.\n");
@@ -276,6 +296,12 @@ int main(int argc, char** argv)
 #endif // __UE_DEBUG__
 
     if (argc && argv) {}
+
+#if __UE_DEBUG__
+    printf("[ build ] DEBUG\n");
+#else
+    printf("[ build ] RELEASE\n");
+#endif
 
     uVulkanDrawTools draw_tools = { 0 };
 

@@ -4,14 +4,6 @@
 #include <string.h>
 
 
-//
-// Set to 0 to disable all debugging functions
-//
-#define __UE_DEBUG__ 1
-//
-//
-//
-
 #if  __UE_DEBUG__
 #define __UE_inline__    /* INLINE REMOVED */
 #else // __UE_DEBUG__
@@ -32,10 +24,10 @@
  * Understone Error Reporting
  *
  * Error & Warning reporting: (always on)
- *    2. `uFatal` (Alaways verbose): Print a formatted fatal error
+ *    2. `uFatal` (always verbose): Print a formatted fatal error
  *        with file and line information to stderr and exit the
  *        process with code 666.
- *    2. `uError_v` (Verbose): Print a formatted error with file
+ *    2. `uError_v` (verbose): Print a formatted error with file
  *        and line information to stderr (does not halt).
  *    3. `uError`: Print a formatted error without file and line
  *        information to stderr (does not halt).
@@ -43,20 +35,25 @@
  *        information to stderr (does not halt).
  *
  * Debug printing: (debug only)
- *    1. `uDebugPrint_v` (Verbose): Print a formatted debug string
+ *    1. `uDebugPrint_v` (verbose): Print a formatted debug string
  *        with file and line information to stderr. (does not
  *        halt).
  *    2. `uDebugPrint`: Print a formatted debug string without
  *        file and line information to stderr. (does not halt).
  *
  * Debug assertions: (debug only)
- *    1. `uAssert_v` (Verbose): If the condition is false,
+ *    1. `uAssert_v` (verbose): If the condition is false,
  *        print a message with file and line information to
  *        stderr and exit the process with code 666.
- *    1. `uAssert` (Verbose): If the condition is false,
+ *    1. `uAssert` (verbose): If the condition is false,
  *        print a message without file and line information to
  *        stderr and exit the process with code 666.
  *
+ * Test assertions: (awlays on)
+ *    1. `uTestAssert` (always verbose): If the condition is false,
+ *        print a message with file and line information to
+ *        stderr and exit the process with code 666.
+
  * The length of the message/error is determined by the
  * `MAX_ERROR_LEN` macro set in the lines below.
  *
@@ -117,11 +114,26 @@ char _message_buffer[MAX_ERROR_LEN];
     fputs(_error_buffer, stderr)
 
 
+// uAssert_v()
+#define uTesetAssert(cond, ...)                                 \
+    if (!(cond)) {                                              \
+        snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);  \
+        snprintf(_error_buffer,                                 \
+                 MAX_ERROR_LEN,                                 \
+                 "[ assertion ] [ %s::%d ] %s",                 \
+                 __FILE__,                                      \
+                 __LINE__,                                      \
+                 _message_buffer);                              \
+        fputs(_error_buffer, stderr);                           \
+        fflush(stderr);                                         \
+        exit(666); }
 
 //
 // Debug only
 //
 #if __UE_DEBUG__
+
+
 // uDebugPrint_v()
 #define uDebugPrint_v(...)                                      \
     snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);      \
@@ -134,6 +146,7 @@ char _message_buffer[MAX_ERROR_LEN];
     fputs(_error_buffer, stderr);                               \
     fflush(stderr)
 
+
 // uDebugPrint()
 #define uDebugPrint(...)                                        \
     snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);      \
@@ -143,6 +156,7 @@ char _message_buffer[MAX_ERROR_LEN];
              _message_buffer);                                  \
     fputs(_error_buffer, stderr);                               \
     fflush(stderr)
+
 
 // uAssertMsg()
 #define uAssertMsg(cond, ...)                                   \
@@ -155,6 +169,7 @@ char _message_buffer[MAX_ERROR_LEN];
         fputs(_error_buffer, stderr);                           \
         fflush(stderr);                                         \
         exit(666); }
+
 
 // uAssert_v()
 #define uAssertMsg_v(cond, ...)                                 \
@@ -170,24 +185,29 @@ char _message_buffer[MAX_ERROR_LEN];
         fflush(stderr);                                         \
         exit(666); }
 
+
 // uAssert()
 #define uAssert(cond)                           \
     if (!((long long) (cond))) { exit(666); }   \
 
+
+#define uDebugStatement( statement ) statement
+
 #if _WIN32
-#define _CRTDBG_MAP_ALLOC  
-#include <stdlib.h>  
-#include <crtdbg.h> 
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
 #endif // _WIN32
 
 
 #else // __UE_DEBUG__
-#define uError_v(...)        /* System debugging is disabled */
-#define uError(...)          /* System debugging is disabled */
+// Disable the following when not in debug-mode
 #define uDebugPrint_v(...)   /* System debugging is disabled */
 #define uDebugPrint(...)     /* System debugging is disabled */
 #define uAssert(cond, ...)   /* System debugging is disabled */
 #define uAssert_v(cond, ...) /* System debugging is disabled */
+#define uAssertMsg_v(cond, ...) /* System debugging is disabled */
+#define uDebugStatement( statement ) /* System debugging is disabled*/
 #endif // __UE_DEBUG__
 
 #endif // __UE_DEBUG_TOOLS_H__

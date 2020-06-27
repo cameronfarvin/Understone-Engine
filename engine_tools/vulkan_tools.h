@@ -788,12 +788,14 @@ uCreateVulkanCommandBuffers(const uVulkanInfo*        const restrict v_info,
 
 __UE_internal__ __UE_call__ void
 uCreateVulkanCommandPool(const uVulkanInfo*        const restrict v_info,
-                         const uVulkanQueueInfo*   const restrict queue_info,
+                         // [ cfarvin::REMOVE ]
+                         /* const uVulkanQueueInfo*   const restrict queue_info, */
                          const uVulkanCommandInfo* const restrict command_info)
 {
     uAssertMsg_v(v_info,                  "[ vulkan ] uVulkaninfo ptr must be non null.\n");
     uAssertMsg_v(v_info->physical_device, "[ vulkan ] VkPhysicalDevice must be non zero.\n");
-    uAssertMsg_v(queue_info,              "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n");
+    // [ cfarvin::REMOVE ]
+    /* uAssertMsg_v(queue_info,              "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n"); */
     uAssertMsg_v(command_info,            "[ vulkan ] uVulkanCommandInfo ptr must be non zero.\n");
 
 
@@ -2724,7 +2726,9 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
 
     uCreateVulkanFrameBuffers(v_info, surface_info, image_group, render_info);
 
-    uCreateVulkanCommandPool(v_info, queue_info, command_info);
+    // [ cfarvin::REMOVE ]
+    /* uCreateVulkanCommandPool(v_info, queue_info, command_info); */
+    uCreateVulkanCommandPool(v_info, command_info);
 
     uCreateVulkanCommandBuffers(v_info,
                                 command_info,

@@ -69,10 +69,10 @@ pushd msvc_landfill >nul
 SET GeneralParameters=/Oi /Qpar /EHsc /GL /nologo /Ot
 
 :: Debug Paramters
-SET DebugParameters=/Od /MTd /W4 /WX
+SET DebugParameters=/Od /MTd /W4 /WX /D__UE_DEBUG__#1
 
 :: Release Parameters
-SET ReleaseParameters=/MT /O2 /W4 /WX /Ob2
+SET ReleaseParameters=/MT /O2 /W4 /WX /Ob2 /D__UE_DEBUG__#0
 
 :: Include Parameters
 SET IncludeParameters=/I%cd%\.. ^
