@@ -14,6 +14,7 @@ rem @SET "VULKAN_SDK_PATH=C:\VulkanSDK\1.1.126.0\"
 ::
 ::------------------------------
 echo Compiling shaders....
+mkdir %SHADER_BIN_DIR% >nul 2>nul
 %VULKAN_SDK_PATH%\Bin\glslc.exe %SHADER_SRC_DIR%\vkTriangle.vert -o %SHADER_BIN_DIR%\vkTriangle_vert.spv -Werror
 %VULKAN_SDK_PATH%\Bin\glslc.exe %SHADER_SRC_DIR%\vkTriangle.frag -o %SHADER_BIN_DIR%\vkTriangle_frag.spv -Werror
 IF %ERRORLEVEL% NEQ 0 GOTO :exit
