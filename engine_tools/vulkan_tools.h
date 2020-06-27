@@ -229,10 +229,10 @@ VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
 
 //
 // [ begin ] Forward decls
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uDestroyVulkan();
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uQueryVulkanDeviceExtensions(const VkPhysicalDevice*             restrict physical_device,
                              const s8**              const const restrict user_device_extension_names,
                              const u16                                    num_user_device_extension_names,
@@ -259,18 +259,18 @@ uCreateVulkanRenderPass(const uVulkanInfo*        const restrict v_info,
                         const uVulkanSurfaceInfo* const restrict surface_info,
                         _mut_ uVulkanRenderInfo*  const restrict render_info);
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
                               const uVulkanSurfaceInfo* const restrict surface_info,
                               _mut_ uVulkanRenderInfo*  const restrict render_info);
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanFrameBuffers(const uVulkanInfo*        const restrict v_info,
                           const uVulkanSurfaceInfo* const restrict surface_info,
                           const uVulkanImageGroup*  const restrict image_group,
                           const uVulkanRenderInfo*  const restrict render_info);
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanCommandBuffers(const uVulkanInfo*        const restrict v_info,
                             const uVulkanCommandInfo* const restrict command_info,
                             const uVulkanImageGroup*  const restrict image_group,
@@ -582,7 +582,7 @@ uRebuildVulkanSwapChain(VkDevice logical_device)
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
                            _mut_ uVulkanDrawTools* const restrict draw_tools)
 {
@@ -670,7 +670,7 @@ uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanCommandBuffers(const uVulkanInfo*        const restrict v_info,
                             const uVulkanCommandInfo* const restrict command_info,
                             const uVulkanImageGroup*  const restrict image_group,
@@ -786,7 +786,7 @@ uCreateVulkanCommandBuffers(const uVulkanInfo*        const restrict v_info,
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanCommandPool(const uVulkanInfo*        const restrict v_info,
                          // [ cfarvin::REMOVE ]
                          /* const uVulkanQueueInfo*   const restrict queue_info, */
@@ -817,7 +817,7 @@ uCreateVulkanCommandPool(const uVulkanInfo*        const restrict v_info,
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanFrameBuffers(const uVulkanInfo*        const restrict v_info,
                           const uVulkanSurfaceInfo* const restrict surface_info,
                           const uVulkanImageGroup*  const restrict image_group,
@@ -966,7 +966,7 @@ uCreateVulkanRenderPass(const uVulkanInfo*        const restrict v_info,
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanShaderModule(const char*           const restrict spir_v_file_data,
                           const size_t                         spir_v_file_size,
                           _mut_ VkShaderModule* const restrict shader_module)
@@ -997,7 +997,7 @@ uCreateVulkanShaderModule(const char*           const restrict spir_v_file_data,
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uReadSpirvFile(const char*   const       restrict file_name,
                _mut_ char**  _mut_ const restrict return_file_data,
                _mut_ size_t*             restrict return_file_size)
@@ -1055,7 +1055,7 @@ uReadSpirvFile(const char*   const       restrict file_name,
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
                               const uVulkanSurfaceInfo* const restrict surface_info,
                               _mut_ uVulkanRenderInfo*  const restrict render_info)
@@ -1345,7 +1345,7 @@ uCreateVulkanImageViews(const uVulkanInfo*        const restrict v_info,
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uVulkanExtractUniqueQueueFamilies(const uVulkanQueueInfo* const restrict queue_info,
                                   _mut_ u32*              const restrict unique_queue_array,
                                   const u8                               num_possible_queues,
@@ -1538,7 +1538,7 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*        const restrict v_info,
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
                            const uVulkanQueueInfo* const       restrict queue_info,
                            const s8**              const const restrict instance_validation_layer_names,
@@ -1637,7 +1637,7 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
 }
 
 
-__UE_internal__ __UE_call__ bool
+__UE_internal__ bool __UE_call__
 uValidateVulkanDeviceFeaturesReqruirement(const VkPhysicalDevice physical_device)
 {
     if (physical_device) {}
@@ -1651,7 +1651,7 @@ uValidateVulkanDeviceFeaturesReqruirement(const VkPhysicalDevice physical_device
 }
 
 
-__UE_internal__ __UE_call__ bool
+__UE_internal__ bool __UE_call__
 uValidateVulkanDevicePropertiesReqruirement(const VkPhysicalDevice physical_device)
 {
     if (physical_device) {}
@@ -1665,7 +1665,7 @@ uValidateVulkanDevicePropertiesReqruirement(const VkPhysicalDevice physical_devi
 }
 
 
-__UE_internal__ __UE_call__ bool
+__UE_internal__ bool __UE_call__
 uValidateVulkanDeviceExtensionsReqruirement(const VkPhysicalDevice                      physical_device,
                                             const s8**             const const restrict user_device_extension_names,
                                             const u16                                   num_user_device_extension_names)
@@ -1695,7 +1695,7 @@ uValidateVulkanDeviceExtensionsReqruirement(const VkPhysicalDevice              
 }
 
 
-__UE_internal__ __UE_call__ bool
+__UE_internal__ bool __UE_call__
 uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice                 physical_device,
                                       const VkSurfaceKHR*     const restrict surface,
                                       _mut_ uVulkanQueueInfo* const restrict queue_info)
@@ -1925,7 +1925,7 @@ uSelectVulkanSwapChain(_mut_ uVulkanSurfaceInfo* const restrict surface_info)
 }
 
 
-__UE_internal__ __UE_call__ bool
+__UE_internal__ bool __UE_call__
 uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice                   physical_device,
                                                 const VkSurfaceKHR*       const restrict surface,
                                                 _mut_ uVulkanSurfaceInfo* const restrict return_surface_info)
@@ -2018,7 +2018,7 @@ uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice          
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uSelectVulkanPhysicalDevice(const VkPhysicalDevice**  const const restrict physical_device_list,
                             _mut_ VkPhysicalDevice*   const       restrict return_device,
                             _mut_ uVulkanQueueInfo*   const       restrict queue_info,
@@ -2084,7 +2084,7 @@ uSelectVulkanPhysicalDevice(const VkPhysicalDevice**  const const restrict physi
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanPhysicalDevice(_mut_ uVulkanInfo*        const       restrict v_info,
                             _mut_ uVulkanQueueInfo*   const       restrict queue_info,
                             const s8**                const const restrict user_device_extension_names,
@@ -2176,7 +2176,7 @@ uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bi
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanDebugMessengerInfo(_mut_ VkDebugUtilsMessengerCreateInfoEXT* const restrict debug_message_create_info)
 {
     uAssertMsg_v(debug_message_create_info, "[ vulkan ] VkDebugUtilsMessengerCreateInfoEXT ptr must be non null.\n");
@@ -2198,7 +2198,7 @@ uCreateVulkanDebugMessengerInfo(_mut_ VkDebugUtilsMessengerCreateInfoEXT* const 
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanDebugMessenger(const uVulkanInfo*                        const restrict v_info,
                             _mut_ VkDebugUtilsMessengerCreateInfoEXT* const restrict debug_message_create_info,
                             _mut_ VkDebugUtilsMessengerEXT*           const restrict debug_messenger)
@@ -2234,7 +2234,7 @@ uCreateVulkanDebugMessenger(const uVulkanInfo*                        const rest
 
 
 #if _WIN32
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateWin32Surface(_mut_ uVulkanInfo*        const restrict v_info,
                     _mut_ uVulkanSurfaceInfo* const restrict surface_info)
 {
@@ -2273,7 +2273,7 @@ uCreateWin32Surface(_mut_ uVulkanInfo*        const restrict v_info,
 #endif // _WIN32
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanSurface(_mut_ uVulkanInfo*        const restrict v_info,
                      _mut_ uVulkanSurfaceInfo* const restrict surface_info)
 {
@@ -2289,7 +2289,7 @@ uCreateVulkanSurface(_mut_ uVulkanInfo*        const restrict v_info,
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physical_device,
                              const s8**              const const restrict user_device_extension_names,
                              const u16                                    num_user_device_extension_names,
@@ -2365,7 +2365,7 @@ uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physic
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uQueryVulkanInstanceLayers(_mut_ s8***                 _mut_ _mut_ const restrict instance_validation_layer_names,
                            _mut_ VkLayerProperties**   const _mut_       restrict instance_validation_layer_properties,
                            _mut_ VkInstanceCreateInfo* const             restrict instance_create_info,
@@ -2448,7 +2448,7 @@ uQueryVulkanInstanceLayers(_mut_ s8***                 _mut_ _mut_ const restric
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const restrict instance_extension_names,
                                _mut_ VkExtensionProperties** _mut_ const       restrict instance_extension_properties,
                                _mut_ VkInstanceCreateInfo*   const             restrict instance_create_info,
@@ -2534,7 +2534,7 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
                       const VkApplicationInfo* const       restrict application_info,
                       const s8**               const const restrict user_instance_validation_layer_names,
@@ -2626,7 +2626,7 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uCreateVulkanApplicationInfo(const s8*                const restrict application_name,
                              _mut_ VkApplicationInfo* const restrict application_info)
 {
@@ -2642,7 +2642,7 @@ uCreateVulkanApplicationInfo(const s8*                const restrict application
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools,
                   const s8**              const const restrict user_instance_validation_layer_names,
                   const u16                                    num_user_instance_validation_layer_names ,
@@ -2775,7 +2775,7 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uDestroyVulkan()
 {
     uVulkanInfo* v_info = (uVulkanInfo*)uGetVulkanInfo();

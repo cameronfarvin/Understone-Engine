@@ -6,7 +6,7 @@
 
 
 
-__UE_internal__ __UE_inline__ u8
+__UE_internal__ u8 __UE_inline__
 BindValueTo8BitColorChannel(const r32 value_min,
                             const r32 value_max,
                             const r32 value)
@@ -22,7 +22,7 @@ BindValueTo8BitColorChannel(const r32 value_min,
 }
 
 
-__UE_internal__ __UE_inline__ void
+__UE_internal__ void __UE_inline__
 RGB32ToHSV32(const Color32_RGB* restrict const rgb_source,
              _mut_ Color32_HSV* restrict const hsv_result)
 {
@@ -128,7 +128,7 @@ RGB32ToHSV32(const Color32_RGB* restrict const rgb_source,
 }
 
 
-__UE_internal__ __UE_inline__ void
+__UE_internal__ void __UE_inline__
 HSV32ToRGB32(const Color32_HSV* restrict const hsv_source,
              _mut_ Color32_RGB* restrict const rgb_result)
 {

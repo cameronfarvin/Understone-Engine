@@ -60,7 +60,7 @@ typedef enum
 uEndianness uSystemEndianness;
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uDetermineSystemEndianness()
 {
     uEndiannessUnion.dword = 1;

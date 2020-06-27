@@ -25,7 +25,7 @@ typedef struct
 } Material;
 
 
-__UE_internal__ __UE_call__  void
+__UE_internal__ void __UE_call__
 GetDefaultMaterialByClass(_mut_ Material*     restrict const material,
                           const MaterialClass                material_class)
 {

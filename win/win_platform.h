@@ -32,7 +32,7 @@ typedef struct
 } uWin32Info;
 
 // Forward declare creation method
-__UE_internal__  __UE_call__ const uWin32Info* const
+__UE_internal__ const uWin32Info* const __UE_call__
 uWin32CreateWin32Info();
 
 __UE_singleton__ uWin32Info* uAPI_PRIME_WIN32_INFO = NULL;
@@ -149,7 +149,7 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 
-__UE_internal__ __UE_call__ const uWin32Info* const
+__UE_internal__ const uWin32Info* const __UE_call__
 uWin32CreateWin32Info()
 {
     if (uAPI_PRIME_WIN32_INFO)
@@ -233,7 +233,7 @@ uWin32HandleEvents()
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uDestroyWin32(_mut_ uWin32Info* const restrict win32_info)
 {
     uAssertMsg_v(win32_info, "Received null win32_info ptr.\n");

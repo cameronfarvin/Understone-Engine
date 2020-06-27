@@ -100,8 +100,11 @@ vulkan-1.lib
 
 :: Compiler Invocation
 ::------------------------------
-cl %SCRIPT_DIR%\\%APP_NAME%.c ^
-%GeneralParameters% %DebugParameters% %IncludeParameters% /link %LinkParameters%
+:: Debug invocation
+cl %SCRIPT_DIR%\\%APP_NAME%.c %GeneralParameters% %DebugParameters% %IncludeParameters% /link %LinkParameters%
+
+:: Release invocation
+cl %SCRIPT_DIR%\\%APP_NAME%.c %GeneralParameters% %ReleaseParameters% %IncludeParameters% /link %LinkParameters%
 
 IF %ERRORLEVEL% NEQ 0 GOTO :exit
 xcopy /y Understone.exe ..\ >null

@@ -1,7 +1,7 @@
 #ifndef __UE_ENTITY_TOOLS_H___
 #define __UE_ENTITY_TOOLS_H___
 
-#include <rt_settings.h>
+//#include <rt_settings.h> [ cfarvin::REVISIT ]
 #include <macro_tools.h>
 #include <type_tools.h>
 #include <maths_tools.h>
@@ -430,7 +430,7 @@ TraceEntityArray(const Ray*             restrict const ray,
 
 // [ cfarvin::TODO ] Will presently only work with spheres.
 //                   Future: C99+ _Generic for entity types.
-__UE_internal__ __UE_call__ Entity*
+__UE_internal__  Entity*
 CreateRandomEntities(size_t num_entitys)
 {
     Entity* entity_arr = CreateEntities(num_entitys);

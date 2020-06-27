@@ -6,8 +6,8 @@
 //
 // Decorators
 //
-#ifndef __UE_call__
-#define __UE_call__ /* NOTICE: CALL */
+#ifndef __UE_call__ 
+#define __UE_call__ __cdecl
 #endif // __UE_call__
 
 #ifndef _mut_

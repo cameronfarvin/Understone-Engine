@@ -308,7 +308,7 @@ HSV32ToRGB32(const Color32_HSV* restrict const hsv_source,
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 WritePPM32(const restrict Color32_RGB* const pixel_array,
            u32                               image_width,
            u32                               image_height,
@@ -361,7 +361,7 @@ WritePPM32(const restrict Color32_RGB* const pixel_array,
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 WriteBitmap32(const restrict Color32_RGB* const pixel_array,
               u32                               image_width,
               u32                               image_height,

@@ -126,7 +126,7 @@ runDynamicArrayTests()
 
 
 #define memoryArenaTestFailMessage "Failed memory arena tests\n"
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 runMemoryArenaTests()
 {
     puts("\tRunning memory arena tests...");
@@ -256,7 +256,7 @@ runMemoryArenaTests()
                  "Failed to deallocate on uMemoryArena array test");
 }
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 runMathsTests()
 {
     puts("\tRunning memory arena tests...");

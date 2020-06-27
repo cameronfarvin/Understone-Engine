@@ -232,7 +232,7 @@ uDrawFrame(_mut_ uVulkanDrawTools* const restrict dt)
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uDestroyDrawTools(_mut_ uVulkanDrawTools* const restrict draw_tools)
 {
     uVulkanInfo* v_info = (uVulkanInfo*)uGetVulkanInfo();
@@ -264,7 +264,7 @@ uDestroyDrawTools(_mut_ uVulkanDrawTools* const restrict draw_tools)
 }
 
 
-__UE_internal__ __UE_call__ void
+__UE_internal__ void __UE_call__
 uDestroyEngine()
 {
     uDestroyVulkan();

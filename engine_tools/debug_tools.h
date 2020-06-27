@@ -202,11 +202,11 @@ char _message_buffer[MAX_ERROR_LEN];
 
 #else // __UE_DEBUG__
 // Disable the following when not in debug-mode
-#define uDebugPrint_v(...)   /* System debugging is disabled */
-#define uDebugPrint(...)     /* System debugging is disabled */
-#define uAssert(cond, ...)   /* System debugging is disabled */
-#define uAssert_v(cond, ...) /* System debugging is disabled */
-#define uAssertMsg_v(cond, ...) /* System debugging is disabled */
+#define uDebugPrint_v(...)           /* System debugging is disabled */
+#define uDebugPrint(...)             /* System debugging is disabled */
+#define uAssert(cond, ...)           /* System debugging is disabled */
+#define uAssert_v(cond, ...)         /* System debugging is disabled */
+#define uAssertMsg_v(cond, ...)      /* System debugging is disabled */
 #define uDebugStatement( statement ) /* System debugging is disabled*/
 #endif // __UE_DEBUG__
 
