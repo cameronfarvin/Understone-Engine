@@ -167,7 +167,7 @@ ReflectRays(/* const Ray*             restrict const ray, */
 // Ensure that the reflected ray does not intersect
 // the originating entity at a point other than its
 // origin.
-#if __UE_DEBUG__
+#if __UE_debug__ == 1
         RayIntersection test_intersection = { 0 };
         IntersectEntity(&bounce_ray,
                         &entity_arr[intersected_entity_index],
@@ -177,7 +177,7 @@ ReflectRays(/* const Ray*             restrict const ray, */
             __UE_ASSERT__(v3IsEqual(&test_intersection.normal_vector,
                                     &bounce_ray.origin));
         }
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 
         TraceEntityArray(&bounce_ray,
                          &bounce_intersection,
@@ -482,7 +482,7 @@ CreateRandomEntities(size_t num_entitys)
                                         (r32)(~(u32)0),
                                         (r32)XorShift32());
 //
-#if __UE_DEBUG__
+#if __UE_debug__ == 1
 //
         // Log
         printf("  Entity [%zd]:\n", entity_index);
@@ -497,7 +497,7 @@ CreateRandomEntities(size_t num_entitys)
                entity_arr[entity_index].material.color.channel.B);
         fflush(stdout);
 //
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 //
     }
 

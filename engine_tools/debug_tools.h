@@ -4,19 +4,19 @@
 #include <string.h>
 
 
-#if  __UE_DEBUG__
+#if  __UE_debug__ == 1
 #define __UE_inline__    /* INLINE REMOVED */
-#else // __UE_DEBUG__
+#else // __UE_debug__ == 1
 #define __UE_inline__    inline
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 
 
 #ifndef functionFired
-#if __UE_DEBUG__
+#if __UE_debug__ == 1
 #define functionFired  printf("[ debug ] function fired: %s\n", __func__);
 #else
 #define functionFired  /* Debugging is disabled: functionFired */
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 #endif // functionFired
 
 
@@ -128,11 +128,11 @@ char _message_buffer[MAX_ERROR_LEN];
         fflush(stderr);                                         \
         exit(666); }
 
+
 //
 // Debug only
 //
-#if __UE_DEBUG__
-
+#if __UE_debug__ == 1
 
 // uDebugPrint_v()
 #define uDebugPrint_v(...)                                      \
@@ -199,8 +199,7 @@ char _message_buffer[MAX_ERROR_LEN];
 #include <crtdbg.h>
 #endif // _WIN32
 
-
-#else // __UE_DEBUG__
+#else // __UE_debug__ == 1
 // Disable the following when not in debug-mode
 #define uDebugPrint_v(...)           /* System debugging is disabled */
 #define uDebugPrint(...)             /* System debugging is disabled */
@@ -208,6 +207,6 @@ char _message_buffer[MAX_ERROR_LEN];
 #define uAssert_v(cond, ...)         /* System debugging is disabled */
 #define uAssertMsg_v(cond, ...)      /* System debugging is disabled */
 #define uDebugStatement( statement ) /* System debugging is disabled*/
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 
 #endif // __UE_DEBUG_TOOLS_H__

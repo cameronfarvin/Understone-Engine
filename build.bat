@@ -70,10 +70,10 @@ pushd msvc_landfill >nul
 SET GeneralParameters=/Oi /Qpar /EHsc /GL /nologo /Ot
 
 :: Debug Paramters
-SET DebugParameters=/Od /MTd /W4 /WX /D__UE_DEBUG__#1
+SET DebugParameters=/Od /MTd /W4 /WX /D__UE_debug__#1
 
 :: Release Parameters
-SET ReleaseParameters=/MT /O2 /W4 /WX /Ob2 /D__UE_DEBUG__#0
+SET ReleaseParameters=/MT /O2 /W4 /WX /Ob2
 
 :: Include Parameters
 SET IncludeParameters=/I%cd%\.. ^
@@ -101,10 +101,10 @@ vulkan-1.lib
 :: Compiler Invocation
 ::------------------------------
 :: Debug invocation
-cl %SCRIPT_DIR%\\%APP_NAME%.c %GeneralParameters% %DebugParameters% %IncludeParameters% /link %LinkParameters%
+rem cl %DebugParameters% %SCRIPT_DIR%\\%APP_NAME%.c %GeneralParameters% %IncludeParameters% /link %LinkParameters%
 
 :: Release invocation
-cl %SCRIPT_DIR%\\%APP_NAME%.c %GeneralParameters% %ReleaseParameters% %IncludeParameters% /link %LinkParameters%
+cl %ReleaseParameters% %SCRIPT_DIR%\\%APP_NAME%.c %GeneralParameters% %IncludeParameters% /link %LinkParameters%
 
 IF %ERRORLEVEL% NEQ 0 GOTO :exit
 xcopy /y Understone.exe ..\ >null

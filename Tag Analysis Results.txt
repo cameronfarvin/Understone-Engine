@@ -54,9 +54,10 @@ There are 5 items of type REMOVE:
     [ REMOVE ] (vulkan_tools.h, 2729): 
 
 
-There are 10 items of type REVISIT:
-    [ REVISIT ] (Understone.c, 162): Is this necessary?
-    [ REVISIT ] (Understone.c, 255): These don't get destroyed properly. See creation in vulkan_tools.h::uCreateVulkanDrawSyncTools()
+There are 11 items of type REVISIT:
+    [ REVISIT ] (Understone.c, 163): Is this necessary?
+    [ REVISIT ] (Understone.c, 256): These don't get destroyed properly. See creation in vulkan_tools.h::uCreateVulkanDrawSyncTools()
+    [ REVISIT ] (entity_tools.h, 4): #include <rt_settings.h>
     [ REVISIT ] (entity_tools.h, 66): intersection materials
     [ REVISIT ] (uString.h, 125): Strlen correctness, use throughout uString
     [ REVISIT ] (vulkan_tools.h, 151): Consider re-naming to uVulkanPresentGroup?

@@ -221,11 +221,11 @@ typedef struct
 } uVulkanDrawTools;
 
 
-#if __UE_DEBUG__
+#ifdef __UE_debug__
 VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger;
 VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger_info  = { 0 };
 VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 
 //
 // [ begin ] Forward decls
@@ -452,7 +452,7 @@ uDestroyVulkanInfo()
     {
         if (v_info->instance)
         {
-#if __UE_DEBUG__
+#ifdef __UE_debug__
             // Destroy debug messenger
             PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT =
                 (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(v_info->instance,
@@ -465,7 +465,7 @@ uDestroyVulkanInfo()
                                                 vulkan_main_debug_messenger,
                                                 NULL);
             }
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
         }
 
         if (v_info->instance)
@@ -2152,7 +2152,7 @@ uCreateVulkanPhysicalDevice(_mut_ uVulkanInfo*        const       restrict v_inf
 }
 
 
-#if __UE_DEBUG__
+#ifdef __UE_debug__
 // Note: no function/argument decorations to conform w/ Vulkan spec.
 static VKAPI_ATTR VkBool32 VKAPI_CALL
 uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bits,
@@ -2230,7 +2230,7 @@ uCreateVulkanDebugMessenger(const uVulkanInfo*                        const rest
         }
     }
 }
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 
 
 #if _WIN32
@@ -2562,9 +2562,9 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
     s8**                   instance_extension_names             = NULL;
     s8**                   instance_validation_layer_names      = NULL;
 
-#if __UE_DEBUG__
+#ifdef __UE_debug__
     uCreateVulkanDebugMessengerInfo(&vulkan_setup_debug_messenger_info);
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 
     VkResult success = VK_SUCCESS;
     VkInstanceCreateInfo instance_create_info = { 0 };
@@ -2585,9 +2585,9 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
 
     instance_create_info.sType            = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_create_info.pApplicationInfo = application_info;
-#if __UE_DEBUG__
+#ifdef __UE_debug__
     instance_create_info.pNext            = &vulkan_setup_debug_messenger_info;
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
     success = vkCreateInstance(&instance_create_info,
                                NULL,
                                (VkInstance*)&v_info->instance);
@@ -2598,11 +2598,11 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
         uFatal("[ vulkan ] Unable to create vulkan instance.\n");
     }
 
-#if __UE_DEBUG__
+#ifdef __UE_debug__
     uCreateVulkanDebugMessenger(v_info,
                                 (VkDebugUtilsMessengerCreateInfoEXT*)&vulkan_main_debug_messenger_info,
                                 (VkDebugUtilsMessengerEXT*)&vulkan_main_debug_messenger);
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 
     if (instance_extension_names)
     {

@@ -1,5 +1,5 @@
 // Set __uDEBUG_SYSTEM__ == 1 in compiler invocation to enable system debugging
-// -- msvc: /D__UE_DEBUG__#1
+// -- msvc: /D__UE_debug__ == 1#1
 
 #include <engine_tools/debug_tools.h>
 #include <engine_tools/type_tools.h>
@@ -102,12 +102,12 @@ uUpdatePresentInfoAndPresent(_mut_ uVulkanDrawTools* const restrict dt,
     (dt->present_info).pImageIndices   = (u32*)next_frame_idx;
     (dt->present_info).pWaitSemaphores = &(dt->signal_semaphores[dt->frame]);
 
-#if __UE_DEBUG__
+#if __UE_debug__ == 1
     VkResult result = vkQueuePresentKHR(dt->present_queue, &(dt->present_info));
     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to present.\n");
 #else
     vkQueuePresentKHR(dt->present_queue, &(dt->present_info));
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 }
 
 
@@ -118,12 +118,12 @@ uSubmitGraphicsQueue(const uVulkanDrawTools* const restrict dt)
     uAssertMsg_v(dt->graphics_queue, "[ render ] VkQueue (graphics) must be non zero.\n");
     uAssertMsg_v(dt->fences,         "[ render ] VkFence ptr must be non null.\n");
 
-#if __UE_DEBUG__
+#if __UE_debug__ == 1
     VkResult result = vkQueueSubmit(dt->graphics_queue, 1, &(dt->submit_info), dt->fences[dt->frame]);
     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to submit queue.\n");
 #else
     vkQueueSubmit(dt->graphics_queue, 1, &(dt->submit_info), dt->fences[dt->frame]);
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 }
 
 
@@ -188,7 +188,7 @@ uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt,
 
 
 
-#if __UE_DEBUG__
+#if __UE_debug__ == 1
     VkResult result = vkAcquireNextImageKHR(dt->logical_device,
                                             dt->swap_chain,
                                             uVULKAN_MAX_NANOSECOND_WAIT,
@@ -202,7 +202,7 @@ uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt,
                           dt->wait_semaphores[dt->frame], // Sets the semaphore
                           VK_NULL_HANDLE,
                           return_idx);
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 
 
     uAssertMsg_v(result != VK_TIMEOUT,
@@ -282,7 +282,7 @@ int main(int argc, char** argv)
     runAllTests();
 #endif
 
-#if __UE_DEBUG__
+#if __UE_debug__ == 1
 #ifdef _WIN32
     // Enable _CRT Allocation Analysis
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -293,14 +293,14 @@ int main(int argc, char** argv)
     _CrtSetReportMode(_CRT_WARN,   _CRTDBG_MODE_FILE);
     _CrtSetReportFile(_CRT_WARN,   _CRTDBG_FILE_STDOUT);
 #endif // _WIN32
-#endif // __UE_DEBUG__
+#endif // __UE_debug__ == 1
 
     if (argc && argv) {}
 
-#if __UE_DEBUG__
-    printf("[ build ] DEBUG\n");
+#if __UE_debug__ == 1
+    printf("[ build ] DEBUG build\n");
 #else
-    printf("[ build ] RELEASE\n");
+    printf("[ build ] RELEASE build.\n");
 #endif
 
     uVulkanDrawTools draw_tools = { 0 };
