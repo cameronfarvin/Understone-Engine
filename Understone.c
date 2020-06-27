@@ -29,10 +29,12 @@
 // [ begin ] Global members
 __UE_global__ bool RUNNING = true;
 
+#if __UE_debug__ == 1
 __UE_global__ char* required_instance_validation_layers[] =
 {
     "VK_LAYER_KHRONOS_validation"
 };
+#endif __UE_debug__ == 1
 
 __UE_global__ char* required_instance_extensions[] =
 {
@@ -310,8 +312,10 @@ int main(int argc, char** argv)
     uVulkanDrawTools draw_tools = { 0 };
 
     uInitializeVulkan(&draw_tools,
+#if __UE_debug__ == 1
                       required_instance_validation_layers,
                       sizeof(required_instance_validation_layers)/sizeof(char*),
+#endif __UE_debug__ == 1
                       required_instance_extensions,
                       sizeof(required_instance_extensions)/sizeof(char*),
                       required_device_extensions,
@@ -323,8 +327,8 @@ int main(int argc, char** argv)
         uRefreshInputState();
     }
 
-    //uDestroyDrawTools((uVulkanDrawTools*)&draw_tools);
-    //uDestroyEngine();
+    uDestroyDrawTools((uVulkanDrawTools*)&draw_tools);
+    uDestroyEngine();
 
     uDebugPrint("[ engine ] Graceful exit.\n");
     return 0;

@@ -51,12 +51,12 @@ There are 5 items of type REMOVE:
     [ REMOVE ] (vulkan_tools.h, 37): Remove stdio.h
     [ REMOVE ] (vulkan_tools.h, 791): 
     [ REMOVE ] (vulkan_tools.h, 797): 
-    [ REMOVE ] (vulkan_tools.h, 2736): 
+    [ REMOVE ] (vulkan_tools.h, 2757): 
 
 
 There are 11 items of type REVISIT:
-    [ REVISIT ] (Understone.c, 167): Is this necessary?
-    [ REVISIT ] (Understone.c, 260): These don't get destroyed properly. See creation in vulkan_tools.h::uCreateVulkanDrawSyncTools()
+    [ REVISIT ] (Understone.c, 169): Is this necessary?
+    [ REVISIT ] (Understone.c, 262): These don't get destroyed properly. See creation in vulkan_tools.h::uCreateVulkanDrawSyncTools()
     [ REVISIT ] (entity_tools.h, 4): #include <rt_settings.h>
     [ REVISIT ] (entity_tools.h, 66): intersection materials
     [ REVISIT ] (uString.h, 125): Strlen correctness, use throughout uString
@@ -65,5 +65,5 @@ There are 11 items of type REVISIT:
     [ REVISIT ] (vulkan_tools.h, 321): vkDestroyDevice(v_info->logical_device, NULL);
     [ REVISIT ] (vulkan_tools.h, 653): These dont' get destroyed properly. See destruction in Understone.c::uDestroyDrawTools()
     [ REVISIT ] (vulkan_tools.h, 1283): When is it safe to free these?
-    [ REVISIT ] (vulkan_tools.h, 2255): 
+    [ REVISIT ] (vulkan_tools.h, 2261): 
 

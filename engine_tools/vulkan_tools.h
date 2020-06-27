@@ -639,9 +639,9 @@ uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
 
         // Create fences
         result = vkCreateFence(v_info->logical_device,
-                                   &fence_create_info,
-                                   NULL,
-                                   &(draw_tools->fences[sync_obj_idx]));
+                               &fence_create_info,
+                               NULL,
+                               &(draw_tools->fences[sync_obj_idx]));
 
         if (result != VK_SUCCESS)
         {
@@ -1541,8 +1541,10 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*        const restrict v_info,
 __UE_internal__ void __UE_call__
 uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
                            const uVulkanQueueInfo* const       restrict queue_info,
+#if __UE_debug__ == 1
                            const s8**              const const restrict instance_validation_layer_names,
                            const u16                                    num_instance_validation_layer_names,
+#endif // __UE_debug__ == 1
                            const s8**              const const restrict user_device_extension_names,
                            const u16                                    num_user_device_extension_names)
 {
@@ -1551,11 +1553,13 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
     uAssertMsg_v(!v_info->logical_device,  "[ vulkan ] VkDevice must be zero; will be overwritten.\n");
     uAssertMsg_v(queue_info,               "[ vulkan ] Queue indices ptr must be non null\n");
     uAssertMsg_v(queue_info->queues,       "[ vulkan ] VkQueue ptr must be non null.\n");
+#if __UE_debug__ == 1
     if (num_instance_validation_layer_names)
     {
         uAssertMsg_v(instance_validation_layer_names && *instance_validation_layer_names,
                      "[ vulkan ] If the instance validation layer quanitity is non zero, the names ptr must be non null\n");
     }
+#endif // __UE_debug__ == 1
     if (num_user_device_extension_names)
     {
         uAssertMsg_v(user_device_extension_names && *user_device_extension_names,
@@ -1599,8 +1603,10 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
     logical_device_create_info.pQueueCreateInfos       = device_queue_create_infos;
     logical_device_create_info.queueCreateInfoCount    = num_unique_queues;
     logical_device_create_info.pEnabledFeatures        = &physical_device_features;
+#if __UE_debug__ == 1
     logical_device_create_info.enabledLayerCount       = num_instance_validation_layer_names;
     logical_device_create_info.ppEnabledLayerNames     = instance_validation_layer_names;
+#endif // __UE_debug__ == 1
     logical_device_create_info.enabledExtensionCount   = num_user_device_extension_names;
     logical_device_create_info.ppEnabledExtensionNames = user_device_extension_names;
 
@@ -2156,9 +2162,9 @@ uCreateVulkanPhysicalDevice(_mut_ uVulkanInfo*        const       restrict v_inf
 // Note: no function/argument decorations to conform w/ Vulkan spec.
 static VKAPI_ATTR VkBool32 VKAPI_CALL
 uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bits,
-    VkDebugUtilsMessageTypeFlagsEXT             message_type_bits,
-    const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
-    void* user_data)
+                 VkDebugUtilsMessageTypeFlagsEXT             message_type_bits,
+                 const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
+                 void* user_data)
 {
     VkBool32 should_abort_calling_process = VK_TRUE;
     if (user_data) {} // Silence warnings
@@ -2372,12 +2378,13 @@ uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physic
 }
 
 
+#if __UE_debug__ == 1
 __UE_internal__ void __UE_call__
-uQueryVulkanInstanceLayers(_mut_ s8***                 _mut_ _mut_ const restrict instance_validation_layer_names,
-                           _mut_ VkLayerProperties**   const _mut_       restrict instance_validation_layer_properties,
-                           _mut_ VkInstanceCreateInfo* const             restrict instance_create_info,
-                           const s8**                  const       const restrict user_instance_validation_layer_names,
-                           const u32                                              num_user_instance_validation_layer_names)
+uQueryVulkanInstanceValidationLayers(_mut_ s8***                 _mut_ _mut_ const restrict instance_validation_layer_names,
+                                     _mut_ VkLayerProperties**   const _mut_       restrict instance_validation_layer_properties,
+                                     _mut_ VkInstanceCreateInfo* const             restrict instance_create_info,
+                                     const s8**                  const       const restrict user_instance_validation_layer_names,
+                                     const u32                                              num_user_instance_validation_layer_names)
 {
     uAssertMsg_v(instance_create_info,                     "[ vulkan ] VkInstanceCreateInfo ptr must be non null.\n");
     uAssertMsg_v(!(*instance_validation_layer_names),      "[ vulkan ] Layer names ptr must be null; will be overwritten.\n");
@@ -2421,7 +2428,6 @@ uQueryVulkanInstanceLayers(_mut_ s8***                 _mut_ _mut_ const restric
         uFatal("[ vulkan ] Unable to enumerate layers.\n");
     }
 
-
     // Set Layer Names
     uVkVerbose("Searching for validation layers...\n");
     u32 num_added_layers = 0;
@@ -2445,6 +2451,7 @@ uQueryVulkanInstanceLayers(_mut_ s8***                 _mut_ _mut_ const restric
         }
     }
 
+
     if (num_added_layers != num_user_instance_validation_layer_names)
     {
         uFatal("[ vulkan ] Unable to load all requested layers.\n");
@@ -2453,7 +2460,7 @@ uQueryVulkanInstanceLayers(_mut_ s8***                 _mut_ _mut_ const restric
     instance_create_info->enabledLayerCount   = num_added_layers;
     instance_create_info->ppEnabledLayerNames = *instance_validation_layer_names;
 }
-
+#endif // __UE_debug__ == 1
 
 __UE_internal__ void __UE_call__
 uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const restrict instance_extension_names,
@@ -2544,19 +2551,23 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
 __UE_internal__ void __UE_call__
 uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
                       const VkApplicationInfo* const       restrict application_info,
+#if __UE_debug__ == 1
                       const s8**               const const restrict user_instance_validation_layer_names,
                       const u16                                     num_user_instance_validation_layer_names,
+#endif //__UE_debug__ == 1
                       const s8**               const const restrict user_instance_extension_names,
                       const u16                                     num_user_instance_extension_names)
 
 {
     uAssertMsg_v(v_info,           "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(application_info, "[ vulkan ] VkApplicationInfo ptr must be non null.\n");
+#if __UE_debug__ == 1
     if (num_user_instance_validation_layer_names)
     {
         uAssertMsg_v(user_instance_validation_layer_names && *user_instance_validation_layer_names,
                      "[ vulkan ] If the instance layer quanitity is non zero, the names ptr must be non null.\n");
     }
+#endif // __UE_debug__ == 1
     if (num_user_instance_extension_names)
     {
         uAssertMsg_v(user_instance_extension_names && *user_instance_extension_names,
@@ -2583,12 +2594,14 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
                                    user_instance_extension_names,
                                    num_user_instance_extension_names);
 
+#if __UE_debug__ == 1
     // Query layers; store in VkInstanceCreateInfo
-    uQueryVulkanInstanceLayers(&instance_validation_layer_names,
-                               &instance_validation_layer_properties,
-                               &instance_create_info,
-                               user_instance_validation_layer_names,
-                               num_user_instance_validation_layer_names);
+    uQueryVulkanInstanceValidationLayers(&instance_validation_layer_names,
+                                         &instance_validation_layer_properties,
+                                         &instance_create_info,
+                                         user_instance_validation_layer_names,
+                                         num_user_instance_validation_layer_names);
+#endif // __UE_debug__ == 1
 
     instance_create_info.sType            = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_create_info.pApplicationInfo = application_info;
@@ -2651,18 +2664,22 @@ uCreateVulkanApplicationInfo(const s8*                const restrict application
 
 __UE_internal__ void __UE_call__
 uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools,
+#if __UE_debug__ == 1
                   const s8**              const const restrict user_instance_validation_layer_names,
-                  const u16                                    num_user_instance_validation_layer_names ,
+                  const u16                                    num_user_instance_validation_layer_names,
+#endif // __UE_debug__ == 1
                   const s8**              const const restrict user_instance_extension_names,
                   const u16                                    num_user_instance_extension_names,
                   const s8**              const const restrict user_device_extension_names,
                   const u16                                    num_user_device_extension_names)
 {
+#if __UE_debug__ == 1
     if (num_user_instance_validation_layer_names)
     {
         uAssertMsg_v(user_instance_validation_layer_names && *user_instance_validation_layer_names,
                      "[ vulkan ] If the instance layer quanitity is non zero, the names ptr must be non null.\n");
     }
+#endif // __UE_debug__ == 1
     if (num_user_instance_extension_names)
     {
         uAssertMsg_v(user_instance_extension_names && *user_instance_extension_names,
@@ -2694,8 +2711,10 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
 
     uCreateVulkanInstance(v_info,
                           &application_info,
+#if __UE_debug__ == 1
                           user_instance_validation_layer_names,
                           num_user_instance_validation_layer_names,
+#endif // __UE_debug__ == 1
                           user_instance_extension_names,
                           num_user_instance_extension_names);
 
@@ -2711,8 +2730,10 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
 
     uCreateVulkanLogicalDevice(v_info,
                                queue_info,
+#if __UE_debug__ == 1
                                user_instance_validation_layer_names,
                                num_user_instance_validation_layer_names,
+#endif // __UE_debug__ == 1
                                user_device_extension_names,
                                num_user_device_extension_names);
 

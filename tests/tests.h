@@ -11,7 +11,11 @@
 #include <inttypes.h>
 
 
+// For now, run tests on startup for every debug build,
+// Otherwise, don't run.
+#if __UE_debug__ == 1
 #define __uTESTS_ENABLED__ 1
+#endif // __UE_debug__ == 1
 
 
 #define arrayTestFailMessage "Failed dynamic array tests\n"

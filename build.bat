@@ -100,10 +100,10 @@ vulkan-1.lib
 
 :: Compiler Invocation
 ::------------------------------
-:: Debug invocation
+:: Uncomment for debug invocation
 cl %DebugParameters% %SCRIPT_DIR%\\%APP_NAME%.c %GeneralParameters% %IncludeParameters% /link %LinkParameters%
 
-:: Release invocation
+:: Uncomment for release invocation
 rem cl %ReleaseParameters% %SCRIPT_DIR%\\%APP_NAME%.c %GeneralParameters% %IncludeParameters% /link %LinkParameters%
 
 IF %ERRORLEVEL% NEQ 0 GOTO :exit
