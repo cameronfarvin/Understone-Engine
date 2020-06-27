@@ -323,8 +323,8 @@ int main(int argc, char** argv)
         uRefreshInputState();
     }
 
-    uDestroyDrawTools((uVulkanDrawTools*)&draw_tools);
-    uDestroyEngine();
+    //uDestroyDrawTools((uVulkanDrawTools*)&draw_tools);
+    //uDestroyEngine();
 
     uDebugPrint("[ engine ] Graceful exit.\n");
     return 0;

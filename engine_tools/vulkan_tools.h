@@ -78,7 +78,7 @@ typedef struct
 } uVulkanSurfaceInfo;
 __UE_singleton__ uVulkanSurfaceInfo* uAPI_PRIME_VULKAN_SURFACE_INFO = NULL;
 __UE_internal__ __UE_inline__ const uVulkanSurfaceInfo* const
-uGetVulkanSwapChainInfo()
+uGetVulkanSurfaceInfo()
 {
     if (!uAPI_PRIME_VULKAN_SURFACE_INFO)
     {
@@ -221,7 +221,7 @@ typedef struct
 } uVulkanDrawTools;
 
 
-#ifdef __UE_debug__
+#if __UE_debug__ == 1
 VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger;
 VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger_info  = { 0 };
 VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
@@ -403,7 +403,7 @@ uDestroyVulkanCommandInfo()
 __UE_internal__ __UE_inline__ void
 uDestroyVulkanSurfaceInfo()
 {
-    uVulkanSurfaceInfo* surface_info = (uVulkanSurfaceInfo*)uGetVulkanSwapChainInfo();
+    uVulkanSurfaceInfo* surface_info = (uVulkanSurfaceInfo*)uGetVulkanSurfaceInfo();
     uVulkanInfo*        v_info       = (uVulkanInfo*)uGetVulkanInfo();
 
     uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
@@ -452,7 +452,7 @@ uDestroyVulkanInfo()
     {
         if (v_info->instance)
         {
-#ifdef __UE_debug__
+#if __UE_debug__ == 1
             // Destroy debug messenger
             PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT =
                 (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(v_info->instance,
@@ -553,7 +553,7 @@ uRebuildVulkanSwapChain(VkDevice logical_device)
     // get references to those which were not.
     uVulkanInfo*        v_info       = (uVulkanInfo*)uGetVulkanInfo();
     uVulkanQueueInfo*   queue_info   = (uVulkanQueueInfo*)uGetVulkanQueueInfo();
-    uVulkanSurfaceInfo* surface_info = (uVulkanSurfaceInfo*)uGetVulkanSwapChainInfo();
+    uVulkanSurfaceInfo* surface_info = (uVulkanSurfaceInfo*)uGetVulkanSurfaceInfo();
     uVulkanImageGroup*  image_group  = (uVulkanImageGroup*)uGetVulkanImageGroup();
     uVulkanRenderInfo*  render_info  = (uVulkanRenderInfo*)uGetVulkanRenderInfo();
     uVulkanCommandInfo* command_info = (uVulkanCommandInfo*)uGetVulkanCommandInfo();
@@ -2152,25 +2152,32 @@ uCreateVulkanPhysicalDevice(_mut_ uVulkanInfo*        const       restrict v_inf
 }
 
 
-#ifdef __UE_debug__
+#if __UE_debug__ == 1
 // Note: no function/argument decorations to conform w/ Vulkan spec.
 static VKAPI_ATTR VkBool32 VKAPI_CALL
 uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bits,
-                 VkDebugUtilsMessageTypeFlagsEXT             message_type_bits,
-                 const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
-                 void*                                       user_data)
+    VkDebugUtilsMessageTypeFlagsEXT             message_type_bits,
+    const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
+    void* user_data)
 {
     VkBool32 should_abort_calling_process = VK_TRUE;
-    if(user_data) {} // Silence warnings
+    if (user_data) {} // Silence warnings
 
     if (message_severity_bits >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ||
-        message_type_bits     >= VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+        message_type_bits >= VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
     {
         printf("[ vulkan validation ] %s.\n", callback_data->pMessage);
         fflush(stdout);
 
         /* uFatal("[ vulkan validation ] %s.\n", callback_data->pMessage); */
     }
+#if __UE_VK_VERBOSE__ == 1
+    else
+    {
+        printf("[ vulkan verbose validation ] %s.\n", callback_data->pMessage);
+        fflush(stdout);
+    }
+#endif // __UE_VK_VERBOSE__== 1
 
     return should_abort_calling_process;
 }
@@ -2562,7 +2569,7 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
     s8**                   instance_extension_names             = NULL;
     s8**                   instance_validation_layer_names      = NULL;
 
-#ifdef __UE_debug__
+#if __UE_debug__ == 1
     uCreateVulkanDebugMessengerInfo(&vulkan_setup_debug_messenger_info);
 #endif // __UE_debug__ == 1
 
@@ -2585,7 +2592,7 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
 
     instance_create_info.sType            = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_create_info.pApplicationInfo = application_info;
-#ifdef __UE_debug__
+#if __UE_debug__ == 1
     instance_create_info.pNext            = &vulkan_setup_debug_messenger_info;
 #endif // __UE_debug__ == 1
     success = vkCreateInstance(&instance_create_info,
@@ -2598,7 +2605,7 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
         uFatal("[ vulkan ] Unable to create vulkan instance.\n");
     }
 
-#ifdef __UE_debug__
+#if __UE_debug__ == 1
     uCreateVulkanDebugMessenger(v_info,
                                 (VkDebugUtilsMessengerCreateInfoEXT*)&vulkan_main_debug_messenger_info,
                                 (VkDebugUtilsMessengerEXT*)&vulkan_main_debug_messenger);
@@ -2670,7 +2677,7 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
     VkApplicationInfo   application_info = { 0 };
     uVulkanInfo*        v_info           = (uVulkanInfo*)uGetVulkanInfo();
     uVulkanQueueInfo*   queue_info       = (uVulkanQueueInfo*)uGetVulkanQueueInfo();
-    uVulkanSurfaceInfo* surface_info     = (uVulkanSurfaceInfo*)uGetVulkanSwapChainInfo();
+    uVulkanSurfaceInfo* surface_info     = (uVulkanSurfaceInfo*)uGetVulkanSurfaceInfo();
     uVulkanImageGroup*  image_group      = (uVulkanImageGroup*)uGetVulkanImageGroup();
     uVulkanRenderInfo*  render_info      = (uVulkanRenderInfo*)uGetVulkanRenderInfo();
     uVulkanCommandInfo* command_info     = (uVulkanCommandInfo*)uGetVulkanCommandInfo();

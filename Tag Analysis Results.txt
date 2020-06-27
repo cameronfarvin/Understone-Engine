@@ -51,7 +51,7 @@ There are 5 items of type REMOVE:
     [ REMOVE ] (vulkan_tools.h, 37): Remove stdio.h
     [ REMOVE ] (vulkan_tools.h, 791): 
     [ REMOVE ] (vulkan_tools.h, 797): 
-    [ REMOVE ] (vulkan_tools.h, 2729): 
+    [ REMOVE ] (vulkan_tools.h, 2736): 
 
 
 There are 11 items of type REVISIT:
@@ -65,5 +65,5 @@ There are 11 items of type REVISIT:
     [ REVISIT ] (vulkan_tools.h, 321): vkDestroyDevice(v_info->logical_device, NULL);
     [ REVISIT ] (vulkan_tools.h, 653): These dont' get destroyed properly. See destruction in Understone.c::uDestroyDrawTools()
     [ REVISIT ] (vulkan_tools.h, 1283): When is it safe to free these?
-    [ REVISIT ] (vulkan_tools.h, 2248): 
+    [ REVISIT ] (vulkan_tools.h, 2255): 
 
