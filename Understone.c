@@ -148,38 +148,46 @@ uUpdateQueueSubmissionOrder(_mut_ uVulkanDrawTools* const restrict dt,
 
 
 __UE_internal__ __UE_inline__ void
-uEnsureFrameReadiness(_mut_ uVulkanDrawTools* const restrict dt,
-                      const u32*              const restrict next_frame_idx)
+uEnsureFrameReadiness(_mut_ uVulkanDrawTools* const restrict dt
+                      /* const u32*              const restrict next_frame_idx */)
 {
     uAssertMsg_v(dt,                  "[ render ] uVulkanDrawtools must be non zero.\n");
     uAssertMsg_v(dt->logical_device,  "[ render ] VkDevice must be non zero.\n");
     uAssertMsg_v(dt->fences,          "[ render ] VkFence ptr must be non null.\n");
-    uAssertMsg_v(next_frame_idx, "[ render ] Next frame index ptr must be non null.\n");
+    /* uAssertMsg_v(next_frame_idx,      "[ render ] Next frame index ptr must be non null.\n"); */
 
 
+#if __UE_debug__ == 1
     VkResult result = vkWaitForFences(dt->logical_device,
                                       1,
                                       &dt->fences[dt->frame],
                                       VK_TRUE,
                                       uVULKAN_MAX_NANOSECOND_WAIT);
-
     uAssertMsg_v(result != VK_TIMEOUT, "[ render ] [ timeout ] Fence timeout on frame: %d.\n", dt->frame);
+#else
+    vkWaitForFences(dt->logical_device,
+                    1,
+                    &dt->fences[dt->frame],
+                    VK_TRUE,
+                    uVULKAN_MAX_NANOSECOND_WAIT);
+#endif // __UE_debug__ == 1
+
     vkResetFences(dt->logical_device, 1, &dt->fences[dt->frame]);
 
     // [ cfarvin::REVISIT ] Is this necessary?
-    if (dt->swap_chain_image_fences[*next_frame_idx] != VK_NULL_HANDLE)
-    {
-        result = vkWaitForFences(dt->logical_device,
-                                 1,
-                                 &(dt->swap_chain_image_fences[*next_frame_idx]),
-                                 VK_TRUE,
-                                 uVULKAN_MAX_NANOSECOND_WAIT);
+    // [ cfarvin::TODO ] This is only useful when the present mode is not MAILBOX
+    /* if (dt->swap_chain_image_fences[*next_frame_idx] != VK_NULL_HANDLE) */
+    /* { */
+    /*     result = vkWaitForFences(dt->logical_device, */
+    /*                              1, */
+    /*                              &(dt->swap_chain_image_fences[*next_frame_idx]), */
+    /*                              VK_TRUE, */
+    /*                              uVULKAN_MAX_NANOSECOND_WAIT); */
 
-        uAssertMsg_v(result != VK_TIMEOUT, "[ render ] [ timeout ] Fence timeout on image: %d.\n", *next_frame_idx);
-        uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to ensure frame readiness.\n");
-    }
-
-    dt->swap_chain_image_fences[*next_frame_idx] = dt->fences[dt->frame];
+    /*     uAssertMsg_v(result != VK_TIMEOUT, "[ render ] [ timeout ] Fence timeout on image: %d.\n", *next_frame_idx); */
+    /*     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to ensure frame readiness.\n"); */
+    /* } */
+    /* dt->swap_chain_image_fences[*next_frame_idx] = dt->fences[dt->frame]; */
 }
 
 
@@ -228,7 +236,7 @@ uDrawFrame(_mut_ uVulkanDrawTools* const restrict dt)
 
     u32 next_frame_idx = 0;
     uAcquireNextSwapChainFrameIndex(dt, &next_frame_idx);
-    uEnsureFrameReadiness(dt, &next_frame_idx);
+    uEnsureFrameReadiness(dt /* &next_frame_idx */);
     uUpdateQueueSubmissionOrder(dt, &next_frame_idx);
     uSubmitGraphicsQueue(dt);
     uUpdatePresentInfoAndPresent(dt, &next_frame_idx);
@@ -246,6 +254,8 @@ uDestroyDrawTools(_mut_ uVulkanDrawTools* const restrict draw_tools)
     uAssertMsg_v(v_info,                 "[ engine ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(v_info->logical_device, "[ engine ] VkDevice ptr must be non null.\n");
     uAssertMsg_v(draw_tools,             "[ engine ] uVulkanDrawTools ptr must be non null.\n");
+    uAssertMsg_v(!RUNNING,
+                 "[ engine ] Tear down called while [  __UE_global__ RUNNING == true ].\n");
 
 
     if (draw_tools && v_info && v_info->logical_device)
@@ -273,6 +283,7 @@ uDestroyDrawTools(_mut_ uVulkanDrawTools* const restrict draw_tools)
 __UE_internal__ void __UE_call__
 uDestroyEngine()
 {
+    uAssertMsg_v(!RUNNING, "[ engine ] Tear down called while [  __UE_global__ RUNNING == true ].\n");
     uDestroyVulkan();
 
 #if _WIN32

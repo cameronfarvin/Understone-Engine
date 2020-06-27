@@ -2,9 +2,8 @@
 = This file is generated on compilation. Content changes will be overwritten =
 ==============================================================================
 
-
-
-There are 22 items of type TODO:
+There are 23 items of type TODO:
+    [ TODO ] (Understone.c, 178): This is only useful when the present mode is not MAILBOX
     [ TODO ] (entity_tools.h, 245): Will presently only work with spheres.
     [ TODO ] (entity_tools.h, 254): Will presently only work with spheres.
     [ TODO ] (entity_tools.h, 333): Will presently only work with spheres.
@@ -55,8 +54,8 @@ There are 5 items of type REMOVE:
 
 
 There are 11 items of type REVISIT:
-    [ REVISIT ] (Understone.c, 169): Is this necessary?
-    [ REVISIT ] (Understone.c, 262): These don't get destroyed properly. See creation in vulkan_tools.h::uCreateVulkanDrawSyncTools()
+    [ REVISIT ] (Understone.c, 177): Is this necessary?
+    [ REVISIT ] (Understone.c, 272): These don't get destroyed properly. See creation in vulkan_tools.h::uCreateVulkanDrawSyncTools()
     [ REVISIT ] (entity_tools.h, 4): #include <rt_settings.h>
     [ REVISIT ] (entity_tools.h, 66): intersection materials
     [ REVISIT ] (uString.h, 125): Strlen correctness, use throughout uString

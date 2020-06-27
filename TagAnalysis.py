@@ -121,9 +121,6 @@ def ProcessTags():
 def GenerateReport(serialize_type):
     report_strings = list()
 
-    # Space after compiler output
-    report_strings.append('\n');
-
     for tag_index, tag_list in enumerate(ProcessedTags):
         num_items = len(ProcessedTags[tag_index])
         if num_items > 0:

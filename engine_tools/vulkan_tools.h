@@ -1051,7 +1051,7 @@ uReadSpirvFile(const char*   const       restrict file_name,
     }
 
     fclose(spir_v_file);
-    uVkVerbose("\tLoaded shader: %s.\n", file_name);
+    uVkVerbose("\tLoaded shader: %s\n", file_name);
 }
 
 
