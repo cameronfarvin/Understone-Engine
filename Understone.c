@@ -18,7 +18,11 @@
 #include <win/win_platform.h>
 #endif // _WIN32
 
-#define uVULKAN_MAX_NANOSECOND_WAIT 100000000
+#if __UE_debug__ == 1
+#define uVULKAN_MAX_NANOSECOND_WAIT ~((u64)0)
+#else
+#define uVULKAN_MAX_NANOSECOND_WAIT 100000
+#endif // __UE_debug__ == 1
 
 
 //

@@ -1012,14 +1012,14 @@ uReadSpirvFile(const char*   const       restrict file_name,
     if (!spir_v_file)
     {
         uDestroyVulkan();
-        uFatal("[ vulkan ] Unable to open SPIR-V file: %s.\n", file_name);
+        uFatal("[ vulkan ] Unable to open SPIR-V file: %s\n", file_name);
     }
 
     s32 fseek_success = fseek(spir_v_file, 0L, SEEK_END);
     if (fseek_success) // Success == 0
     {
         uDestroyVulkan();
-        uFatal("[ vulkan ] Unable to seek within SPIR-V file: %s.\n", file_name);
+        uFatal("[ vulkan ] Unable to seek within SPIR-V file: %s\n", file_name);
     }
 
     *return_file_size = (size_t)ftell(spir_v_file);
