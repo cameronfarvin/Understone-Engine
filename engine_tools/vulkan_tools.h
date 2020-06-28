@@ -208,6 +208,9 @@ uGetVulkanRenderInfo()
 #define uVULKAN_MAX_FRAMES_IN_FLIGHT  2
 typedef struct
 {
+    VkSemaphore          rs_image_available;
+    VkSemaphore          rs_render_finished;
+
     VkSemaphore          is_image_acquired[uVULKAN_MAX_FRAMES_IN_FLIGHT];
     VkSemaphore          is_render_complete[uVULKAN_MAX_FRAMES_IN_FLIGHT];
     VkFence              in_flight_fences[uVULKAN_MAX_FRAMES_IN_FLIGHT];
@@ -594,6 +597,14 @@ uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
     VkSemaphoreCreateInfo semaphore_create_info = { 0 };
     semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
+    // rs
+    //
+    vkCreateSemaphore(v_info->logical_device, &semaphore_create_info, NULL, &(draw_tools->rs_image_available));
+    vkCreateSemaphore(v_info->logical_device, &semaphore_create_info, NULL, &(draw_tools->rs_render_finished));
+    //
+    // rs
+
+
     VkFenceCreateInfo fence_create_info = { 0 };
     fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT; // Done state
@@ -907,10 +918,10 @@ uCreateVulkanRenderPass(const uVulkanInfo*        const restrict v_info,
     VkSubpassDependency subpass_dependency = { 0 };
     subpass_dependency.srcSubpass = VK_SUBPASS_EXTERNAL; // Indicates this is the first subpass to be run
     subpass_dependency.dstSubpass = 0;                   // Index of this subpass in the pSubpasses array
-    subpass_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    subpass_dependency.srcAccessMask = 0;
-    subpass_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    subpass_dependency.dstAccessMask = 0;
+    subpass_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;  // Stage to wait on.
+    subpass_dependency.srcAccessMask = 0;                                             // Types of operations to wait on in that ^ stage.
+    subpass_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;  // Stage to wait on.
+    subpass_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;          // Types of operations to wait on in that ^ stage.
 
     VkSubpassDescription subpass_description = { 0 };
     subpass_description.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -2138,13 +2149,13 @@ uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bi
                  const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
                  void* user_data)
 {
-    VkBool32 should_abort_calling_process = VK_TRUE;
+    VkBool32 should_abort_calling_process = VK_FALSE;
     if (user_data) {} // Silence warnings
 
     if (message_severity_bits >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ||
         message_type_bits >= VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
     {
-        printf("[ vulkan validation ] %s.\n", callback_data->pMessage);
+        printf("[ vulkan validation begin ]\n%s\n[ vulkan validation end ]\n", callback_data->pMessage);
         fflush(stdout);
 
         RUNNING = false;
@@ -2678,8 +2689,11 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
     uAssertMsg_v(command_info, "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
 
 
-    uCreateVulkanApplicationInfo(uGetGameTitle(), &application_info);
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
+    printf("[ vulkan ] Validation layers: ON.\n");
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 
+    uCreateVulkanApplicationInfo(uGetGameTitle(), &application_info);
     uCreateVulkanInstance(v_info,
                           &application_info,
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
@@ -2794,15 +2808,13 @@ uDestroyVulkan()
 
 #endif // __UE_VULKAN_TOOLS_H__
 
-#if 0
+
 /*
   [ cfarvin::STUDY ]  VK_DEPENDENCY_BY_REGION_BIT, VkPipelineVertexInputStateCreateInfo, input_assembly_create_info.primitiveRestartEnable,
 multi_sample_create_info.sampleShadingEnable, VkPipelineColorBlendAttachmentState, color_blend_create_info.logicOpEnable
 
 
   NOTES:
-  - Skip window manager (or build a cusom one) with VK_KHR_display && VK_KHR_display_swapchain
-  This will render fullscreen.
+  - Skip window manager (or build a cusom one) with VK_KHR_display && VK_KHR_display_swapchain; this will render fullscreen.
 
 */
-#endif // if 0

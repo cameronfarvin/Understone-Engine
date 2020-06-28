@@ -119,6 +119,7 @@ uSubmitGraphicsQueue(const uVulkanDrawTools* const restrict dt)
     uAssertMsg_v(dt->graphics_queue,   "[ render ] VkQueue (graphics) must be non zero.\n");
     uAssertMsg_v(dt->in_flight_fences, "[ render ] VkFence ptr must be non null.\n");
 
+
     uDebugStatement(VkResult result = )vkQueueSubmit(dt->graphics_queue,
                                                      1,
 
@@ -140,11 +141,13 @@ uUpdateQueueSubmissionOrder(_mut_ uVulkanDrawTools* const restrict dt,
 {
     uAssertMsg_v(dt,             "[ render ] uVulkanDrawtools must be non zero.\n");
     uAssertMsg_v(next_frame_idx, "[ render ] Next frame index ptr must be non null.\n");
+    uAssertMsg_v(*next_frame_idx <= uVULKAN_NUM_COMMAND_BUFFERS,
+        "[ vulkan ] Next frame index value exceeds command buffer length.\n")
 
 
     (dt->submit_info).pCommandBuffers   = (VkCommandBuffer*)(&dt->command_buffers[*next_frame_idx]);
-    (dt->submit_info).pWaitSemaphores   = &(dt->is_image_acquired[dt->frame]); // what to wait on before execution
-    (dt->submit_info).pSignalSemaphores = &(dt->is_render_complete[dt->frame]);  // what to signal when execution is done
+    (dt->submit_info).pWaitSemaphores   = &(dt->is_image_acquired[dt->frame]);  // what to wait on before execution
+    (dt->submit_info).pSignalSemaphores = &(dt->is_render_complete[dt->frame]); // what to signal when execution is done
 }
 
 
@@ -204,7 +207,7 @@ uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt,
     uDebugStatement(VkResult result = )vkAcquireNextImageKHR(dt->logical_device,
                                                              dt->swap_chain,
                                                              uVULKAN_MAX_NANOSECOND_WAIT,
-                                                             dt->is_render_complete[dt->frame], // Sets the semaphore
+                                                             dt->is_render_complete[dt->frame],
                                                              VK_NULL_HANDLE,
                                                              return_idx);
 
@@ -224,13 +227,54 @@ uDrawFrame(_mut_ uVulkanDrawTools* const restrict dt)
 
 
     u32 next_frame_idx = 0;
-    uAcquireNextSwapChainFrameIndex(dt, &next_frame_idx);
-    uEnsureFrameReadiness(dt /* &next_frame_idx */);
-    uUpdateQueueSubmissionOrder(dt, &next_frame_idx);
-    uSubmitGraphicsQueue(dt);
-    uUpdatePresentInfoAndPresent(dt, &next_frame_idx);
+    vkAcquireNextImageKHR(dt->logical_device,
+                          dt->swap_chain,
+                          uVULKAN_MAX_NANOSECOND_WAIT,
+                          dt->rs_image_available,
+                          NULL,
+                          &next_frame_idx);
 
-    // Update frame count
+    VkSemaphore wait_semaphores[1] = { 0 };
+    wait_semaphores[0] = dt->rs_image_available;
+
+    VkSemaphore signal_semaphores[1] = { 0 };
+    signal_semaphores[0] = dt->rs_render_finished;
+
+    VkPipelineStageFlags wait_stages[1] = { 0 };
+    wait_stages[0] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+    // graphics queue submit info
+    VkSubmitInfo submit_info = { 0 };
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit_info.waitSemaphoreCount = 1;
+    submit_info.pWaitSemaphores = wait_semaphores;
+    submit_info.pWaitDstStageMask = wait_stages;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &(dt->command_buffers[next_frame_idx]);
+    submit_info.signalSemaphoreCount = 1;
+    submit_info.pSignalSemaphores = signal_semaphores;
+
+    // submit graphics queue
+    VkResult result = vkQueueSubmit(dt->graphics_queue, 1, &submit_info, NULL);
+    uAssertMsg_v(result == VK_SUCCESS, "[ render ] Could not submit graphics queue.\n");
+
+    VkSwapchainKHR swap_chains[1] = { 0 };
+    swap_chains[0] = dt->swap_chain;
+
+    // Presentation
+    VkPresentInfoKHR present_info = { 0 };
+    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    present_info.waitSemaphoreCount = 1;
+    present_info.pWaitSemaphores = signal_semaphores;
+    present_info.swapchainCount = 1;
+    present_info.pSwapchains = swap_chains;
+    present_info.pImageIndices = &next_frame_idx;
+    present_info.pResults = NULL;
+
+    vkQueuePresentKHR(dt->present_queue, &present_info);
+    vkQueueWaitIdle(dt->present_queue);
+
+    // increment frame number
     dt->frame = (dt->frame + 1) % uVULKAN_MAX_FRAMES_IN_FLIGHT;
 }
 
