@@ -5,6 +5,10 @@
 #define __UE_VK_VERBOSE__ 1
 #endif // __UE_VK_VERBOSE__
 
+#ifndef __UE_VkForceValidation__
+#define __UE_vkForceValidation__ 1
+#endif // __UE_VkForceValidation__ 1
+
 #if __UE_VK_VERBOSE__
 #define MAX_VKVERBOSE_LEN 256
 char _vkverbose_buffer[MAX_VKVERBOSE_LEN];
@@ -148,7 +152,6 @@ uGetVulkanInfo()
 
 //
 // [ begin ] Prime uVulkanImageGroup
-// [ cfarvin::REVISIT ] Consider re-naming to uVulkanPresentGroup?
 typedef struct
 {
     _mut_ VkImage*       images;
@@ -199,15 +202,16 @@ uGetVulkanRenderInfo()
 //
 
 
+//
+// [ begin ] Prime uVulkanDrawTools
 #define uVULKAN_NUM_COMMAND_BUFFERS   3
 #define uVULKAN_MAX_FRAMES_IN_FLIGHT  2
 typedef struct
 {
-    VkSemaphore          wait_semaphores[uVULKAN_MAX_FRAMES_IN_FLIGHT];
-    VkSemaphore          signal_semaphores[uVULKAN_MAX_FRAMES_IN_FLIGHT];
-    VkFence              swap_chain_image_fences[uVULKAN_NUM_COMMAND_BUFFERS];
-    VkFence              fences[uVULKAN_MAX_FRAMES_IN_FLIGHT];
-    VkPipelineStageFlags stage_flags[uVULKAN_MAX_FRAMES_IN_FLIGHT];
+    VkSemaphore          is_image_acquired[uVULKAN_MAX_FRAMES_IN_FLIGHT];
+    VkSemaphore          is_render_complete[uVULKAN_MAX_FRAMES_IN_FLIGHT];
+    VkFence              in_flight_fences[uVULKAN_MAX_FRAMES_IN_FLIGHT];
+    VkPipelineStageFlags stage_flags[1]; // Note: act as a sync primitive
     VkDevice             logical_device;
     VkSwapchainKHR       swap_chain;
     VkSubmitInfo         submit_info;
@@ -217,15 +221,17 @@ typedef struct
     u32                  frame;
 
     // [ cfarvin::REVISIT ] At most we want tripple buffering?
-    VkCommandBuffer  command_buffers[uVULKAN_NUM_COMMAND_BUFFERS];
+    VkCommandBuffer      command_buffers[uVULKAN_NUM_COMMAND_BUFFERS];
 } uVulkanDrawTools;
+// [ end ] Prime uVulkanDrawTools
+//
 
 
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger;
 VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger_info  = { 0 };
 VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 
 //
 // [ begin ] Forward decls
@@ -252,8 +258,6 @@ uCreateVulkanImageViews(const uVulkanInfo*        const restrict v_info,
                         _mut_ uVulkanImageGroup*  _mut_ restrict image_group,
                         const uVulkanSurfaceInfo* const restrict surface_info);
 
-// [ cfarvin::TODO ] When we are rendering w/ more than one attachment:
-//                   Update this function to take the number and type of attachments.
 __UE_internal__ __UE_inline__ void
 uCreateVulkanRenderPass(const uVulkanInfo*        const restrict v_info,
                         const uVulkanSurfaceInfo* const restrict surface_info,
@@ -318,7 +322,7 @@ uDestroyVulkanRenderInfo()
 
         if (v_info->logical_device)
         {
-            vkDestroyDevice(v_info->logical_device, NULL); // [ cfarvin::REVISIT ]
+            vkDestroyDevice(v_info->logical_device, NULL);
         }
 
         if (render_info->attachment_descriptions)
@@ -452,7 +456,7 @@ uDestroyVulkanInfo()
     {
         if (v_info->instance)
         {
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
             // Destroy debug messenger
             PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT =
                 (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(v_info->instance,
@@ -465,7 +469,7 @@ uDestroyVulkanInfo()
                                                 vulkan_main_debug_messenger,
                                                 NULL);
             }
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
         }
 
         if (v_info->instance)
@@ -571,11 +575,7 @@ uRebuildVulkanSwapChain(VkDevice logical_device)
     // Rebuild swap chain
     uCreateVulkanSwapChain((uVulkanInfo*)v_info, surface_info, queue_info, image_group);
     uCreateVulkanImageViews(v_info, image_group, surface_info);
-
-    // [ cfarvin::TODO ] When we are rendering w/ more than one attachment:
-    //                   Update this function to take the number and type of attachments.
     uCreateVulkanRenderPass(v_info, surface_info, render_info);
-
     uCreateVulkanGraphicsPipeline(v_info, surface_info, render_info);
     uCreateVulkanFrameBuffers(v_info, surface_info, image_group, render_info);
     uCreateVulkanCommandBuffers(v_info, command_info, image_group, render_info, surface_info);
@@ -613,11 +613,11 @@ uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
 
     for (u8 sync_obj_idx = 0; sync_obj_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; sync_obj_idx++)
     {
-        // Create wait semaphores
+        // Create image acquired semaphores
         result = vkCreateSemaphore(v_info->logical_device,
                                    &semaphore_create_info,
                                    NULL,
-                                   &(draw_tools->wait_semaphores[sync_obj_idx]));
+                                   &(draw_tools->is_image_acquired[sync_obj_idx]));
 
         if (result != VK_SUCCESS)
         {
@@ -625,11 +625,11 @@ uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
             uFatal(sync_create_error_msg);
         }
 
-        // Create signal semaphores
+        // Create present ready semaphores
         result = vkCreateSemaphore(v_info->logical_device,
                                    &semaphore_create_info,
                                    NULL,
-                                   &(draw_tools->signal_semaphores[sync_obj_idx]));
+                                   &(draw_tools->is_render_complete[sync_obj_idx]));
 
         if (result != VK_SUCCESS)
         {
@@ -637,11 +637,11 @@ uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
             uFatal(sync_create_error_msg);
         }
 
-        // Create fences
+        // Create in-flight fences
         result = vkCreateFence(v_info->logical_device,
                                &fence_create_info,
                                NULL,
-                               &(draw_tools->fences[sync_obj_idx]));
+                               &(draw_tools->in_flight_fences[sync_obj_idx]));
 
         if (result != VK_SUCCESS)
         {
@@ -649,24 +649,6 @@ uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
             uFatal(sync_create_error_msg);
         }
     }
-
-// [ cfarvin::REVISIT ] These dont' get destroyed properly. See destruction in Understone.c::uDestroyDrawTools()
-#if 0
-    for (u8 fence_idx = 0; fence_idx < uVULKAN_NUM_COMMAND_BUFFERS; fence_idx++)
-    {
-        // Create swap chain image fences
-        result = vkCreateFence(v_info->logical_device,
-                               &fence_create_info,
-                               NULL,
-                               &(draw_tools->swap_chain_image_fences[fence_idx]));
-
-        if (result != VK_SUCCESS)
-        {
-            uDestroyVulkan();
-            uFatal(sync_create_error_msg);
-        }
-    }
-#endif // 0
 }
 
 
@@ -788,14 +770,10 @@ uCreateVulkanCommandBuffers(const uVulkanInfo*        const restrict v_info,
 
 __UE_internal__ void __UE_call__
 uCreateVulkanCommandPool(const uVulkanInfo*        const restrict v_info,
-                         // [ cfarvin::REMOVE ]
-                         /* const uVulkanQueueInfo*   const restrict queue_info, */
                          const uVulkanCommandInfo* const restrict command_info)
 {
     uAssertMsg_v(v_info,                  "[ vulkan ] uVulkaninfo ptr must be non null.\n");
     uAssertMsg_v(v_info->physical_device, "[ vulkan ] VkPhysicalDevice must be non zero.\n");
-    // [ cfarvin::REMOVE ]
-    /* uAssertMsg_v(queue_info,              "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n"); */
     uAssertMsg_v(command_info,            "[ vulkan ] uVulkanCommandInfo ptr must be non zero.\n");
 
 
@@ -881,8 +859,6 @@ uCreateVulkanRenderPass(const uVulkanInfo*        const restrict v_info,
                  "[ vulkan ] VkAttachmentReference ptr must be null; will be overwritten.\n");
 
 
-    // [ cfarvin::TEMP ] Will determine number and type from arguments in the future,
-    //                   hard coded for now.
     *(u32*)&render_info->num_attachments = 1;
     *(VkAttachmentDescription**)&(render_info->attachment_descriptions) = calloc(render_info->num_attachments,
                                                                                  sizeof(VkAttachmentDescription));
@@ -903,7 +879,6 @@ uCreateVulkanRenderPass(const uVulkanInfo*        const restrict v_info,
     VkSurfaceFormatKHR surface_format =
         (surface_info->surface_formats)[surface_info->designated_format_index];
 
-    // [ cfarvin::TODO ] This currently only handles color attachment references.
     for (u32 attachment_idx = 0; attachment_idx < render_info->num_attachments; attachment_idx++)
     {
         // Attachement description
@@ -929,10 +904,9 @@ uCreateVulkanRenderPass(const uVulkanInfo*        const restrict v_info,
 
     // Subpasses
     // Note: References layout(location = 0) in frag shader.
-    // [ cfarvin::STUDY ] subpasses, subpass dependencies
     VkSubpassDependency subpass_dependency = { 0 };
-    subpass_dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    subpass_dependency.dstSubpass = 0;
+    subpass_dependency.srcSubpass = VK_SUBPASS_EXTERNAL; // Indicates this is the first subpass to be run
+    subpass_dependency.dstSubpass = 0;                   // Index of this subpass in the pSubpasses array
     subpass_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     subpass_dependency.srcAccessMask = 0;
     subpass_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -1113,7 +1087,7 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
     shader_stage_array[1].pSpecializationInfo = NULL;   // optional: set shader constants
 
     // Vertex input
-    VkPipelineVertexInputStateCreateInfo vertex_input_create_info = { 0 }; // [ cfarvin::STUDY ]
+    VkPipelineVertexInputStateCreateInfo vertex_input_create_info = { 0 };
     vertex_input_create_info.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertex_input_create_info.vertexBindingDescriptionCount   = 0;
     vertex_input_create_info.pVertexBindingDescriptions      = NULL;
@@ -1124,7 +1098,7 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
     VkPipelineInputAssemblyStateCreateInfo input_assembly_create_info = { 0 };
     input_assembly_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     input_assembly_create_info.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    input_assembly_create_info.primitiveRestartEnable = VK_FALSE; // [ cfarvin::STUDY ]
+    input_assembly_create_info.primitiveRestartEnable = VK_FALSE;
 
     // Viewport
     VkViewport frame_buffer_viewport = { 0 };
@@ -1166,7 +1140,7 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
     // Multisampling
     VkPipelineMultisampleStateCreateInfo multi_sample_create_info = { 0 };
     multi_sample_create_info.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multi_sample_create_info.sampleShadingEnable   = VK_FALSE; // [ cfarvin::STUDY ]
+    multi_sample_create_info.sampleShadingEnable   = VK_FALSE;
     multi_sample_create_info.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
     multi_sample_create_info.minSampleShading      = 1.0f;
     multi_sample_create_info.pSampleMask           = NULL;
@@ -1179,7 +1153,6 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
     // Color blending
     // Note: VkPipelineColorBlendStateCreateInfo builds global state.
     //       VkPipelineColorBlendAttachmentState sets local state per attached frame buffer.
-    // [ cfarvin::STUDY ]
     VkPipelineColorBlendAttachmentState color_blend_attachment = { 0 };
     color_blend_attachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT |
         VK_COLOR_COMPONENT_G_BIT |
@@ -1195,7 +1168,7 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
 
     VkPipelineColorBlendStateCreateInfo color_blend_create_info = { 0 };
     color_blend_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    color_blend_create_info.logicOpEnable = VK_FALSE; // [ cfarvin::STUDY ]
+    color_blend_create_info.logicOpEnable = VK_FALSE;
     color_blend_create_info.logicOp = VK_LOGIC_OP_COPY;
     color_blend_create_info.attachmentCount = 1;
     color_blend_create_info.pAttachments = &color_blend_attachment;
@@ -1280,7 +1253,6 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
     vkDestroyShaderModule(v_info->logical_device, vkTriangle_vert_module, NULL);
     vkDestroyShaderModule(v_info->logical_device, vkTriangle_frag_module, NULL);
 
-    // [ cfarvin::REVISIT ] When is it safe to free these?
     if (vkTriangle_vert_data)
     {
         free(vkTriangle_vert_data);
@@ -1541,10 +1513,10 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*        const restrict v_info,
 __UE_internal__ void __UE_call__
 uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
                            const uVulkanQueueInfo* const       restrict queue_info,
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
                            const s8**              const const restrict instance_validation_layer_names,
                            const u16                                    num_instance_validation_layer_names,
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
                            const s8**              const const restrict user_device_extension_names,
                            const u16                                    num_user_device_extension_names)
 {
@@ -1553,13 +1525,13 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
     uAssertMsg_v(!v_info->logical_device,  "[ vulkan ] VkDevice must be zero; will be overwritten.\n");
     uAssertMsg_v(queue_info,               "[ vulkan ] Queue indices ptr must be non null\n");
     uAssertMsg_v(queue_info->queues,       "[ vulkan ] VkQueue ptr must be non null.\n");
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1  || __UE_vkForceValidation__ == 1
     if (num_instance_validation_layer_names)
     {
         uAssertMsg_v(instance_validation_layer_names && *instance_validation_layer_names,
                      "[ vulkan ] If the instance validation layer quanitity is non zero, the names ptr must be non null\n");
     }
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     if (num_user_device_extension_names)
     {
         uAssertMsg_v(user_device_extension_names && *user_device_extension_names,
@@ -1603,10 +1575,10 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
     logical_device_create_info.pQueueCreateInfos       = device_queue_create_infos;
     logical_device_create_info.queueCreateInfoCount    = num_unique_queues;
     logical_device_create_info.pEnabledFeatures        = &physical_device_features;
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     logical_device_create_info.enabledLayerCount       = num_instance_validation_layer_names;
     logical_device_create_info.ppEnabledLayerNames     = instance_validation_layer_names;
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     logical_device_create_info.enabledExtensionCount   = num_user_device_extension_names;
     logical_device_create_info.ppEnabledExtensionNames = user_device_extension_names;
 
@@ -2158,7 +2130,7 @@ uCreateVulkanPhysicalDevice(_mut_ uVulkanInfo*        const       restrict v_inf
 }
 
 
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 // Note: no function/argument decorations to conform w/ Vulkan spec.
 static VKAPI_ATTR VkBool32 VKAPI_CALL
 uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bits,
@@ -2175,7 +2147,7 @@ uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bi
         printf("[ vulkan validation ] %s.\n", callback_data->pMessage);
         fflush(stdout);
 
-        /* uFatal("[ vulkan validation ] %s.\n", callback_data->pMessage); */
+        RUNNING = false;
     }
 #if __UE_VK_VERBOSE__ == 1
     else
@@ -2243,7 +2215,7 @@ uCreateVulkanDebugMessenger(const uVulkanInfo*                        const rest
         }
     }
 }
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 
 
 #if _WIN32
@@ -2258,7 +2230,6 @@ uCreateWin32Surface(_mut_ uVulkanInfo*        const restrict v_info,
                  "[ vulkan ] uVulkanSurfaceInfo ptr must be null; will be overwritten.\n");
 
 
-    // [ cfarvin::REVISIT ]
     uWin32Info** non_const_win32_info = (uWin32Info**)&win32_info;
     *non_const_win32_info = (uWin32Info*)uWin32CreateWindow();
     uAssertMsg_v(win32_info, "[ vulkan ] [ win32 ] Unable to create Win32 window.\n");
@@ -2378,7 +2349,7 @@ uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physic
 }
 
 
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 __UE_internal__ void __UE_call__
 uQueryVulkanInstanceValidationLayers(_mut_ s8***                 _mut_ _mut_ const restrict instance_validation_layer_names,
                                      _mut_ VkLayerProperties**   const _mut_       restrict instance_validation_layer_properties,
@@ -2460,7 +2431,7 @@ uQueryVulkanInstanceValidationLayers(_mut_ s8***                 _mut_ _mut_ con
     instance_create_info->enabledLayerCount   = num_added_layers;
     instance_create_info->ppEnabledLayerNames = *instance_validation_layer_names;
 }
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 
 __UE_internal__ void __UE_call__
 uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const restrict instance_extension_names,
@@ -2551,23 +2522,23 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
 __UE_internal__ void __UE_call__
 uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
                       const VkApplicationInfo* const       restrict application_info,
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
                       const s8**               const const restrict user_instance_validation_layer_names,
                       const u16                                     num_user_instance_validation_layer_names,
-#endif //__UE_debug__ == 1
+#endif //__UE_debug__ == 1 || __UE_vkForceValidation__ == 1
                       const s8**               const const restrict user_instance_extension_names,
                       const u16                                     num_user_instance_extension_names)
 
 {
     uAssertMsg_v(v_info,           "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(application_info, "[ vulkan ] VkApplicationInfo ptr must be non null.\n");
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     if (num_user_instance_validation_layer_names)
     {
         uAssertMsg_v(user_instance_validation_layer_names && *user_instance_validation_layer_names,
                      "[ vulkan ] If the instance layer quanitity is non zero, the names ptr must be non null.\n");
     }
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     if (num_user_instance_extension_names)
     {
         uAssertMsg_v(user_instance_extension_names && *user_instance_extension_names,
@@ -2580,9 +2551,9 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
     s8**                   instance_extension_names             = NULL;
     s8**                   instance_validation_layer_names      = NULL;
 
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     uCreateVulkanDebugMessengerInfo(&vulkan_setup_debug_messenger_info);
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 
     VkResult success = VK_SUCCESS;
     VkInstanceCreateInfo instance_create_info = { 0 };
@@ -2594,20 +2565,20 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
                                    user_instance_extension_names,
                                    num_user_instance_extension_names);
 
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     // Query layers; store in VkInstanceCreateInfo
     uQueryVulkanInstanceValidationLayers(&instance_validation_layer_names,
                                          &instance_validation_layer_properties,
                                          &instance_create_info,
                                          user_instance_validation_layer_names,
                                          num_user_instance_validation_layer_names);
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 
     instance_create_info.sType            = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_create_info.pApplicationInfo = application_info;
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     instance_create_info.pNext            = &vulkan_setup_debug_messenger_info;
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     success = vkCreateInstance(&instance_create_info,
                                NULL,
                                (VkInstance*)&v_info->instance);
@@ -2618,11 +2589,11 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
         uFatal("[ vulkan ] Unable to create vulkan instance.\n");
     }
 
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     uCreateVulkanDebugMessenger(v_info,
                                 (VkDebugUtilsMessengerCreateInfoEXT*)&vulkan_main_debug_messenger_info,
                                 (VkDebugUtilsMessengerEXT*)&vulkan_main_debug_messenger);
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 
     if (instance_extension_names)
     {
@@ -2664,22 +2635,22 @@ uCreateVulkanApplicationInfo(const s8*                const restrict application
 
 __UE_internal__ void __UE_call__
 uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools,
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
                   const s8**              const const restrict user_instance_validation_layer_names,
                   const u16                                    num_user_instance_validation_layer_names,
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
                   const s8**              const const restrict user_instance_extension_names,
                   const u16                                    num_user_instance_extension_names,
                   const s8**              const const restrict user_device_extension_names,
                   const u16                                    num_user_device_extension_names)
 {
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     if (num_user_instance_validation_layer_names)
     {
         uAssertMsg_v(user_instance_validation_layer_names && *user_instance_validation_layer_names,
                      "[ vulkan ] If the instance layer quanitity is non zero, the names ptr must be non null.\n");
     }
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     if (num_user_instance_extension_names)
     {
         uAssertMsg_v(user_instance_extension_names && *user_instance_extension_names,
@@ -2711,10 +2682,10 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
 
     uCreateVulkanInstance(v_info,
                           &application_info,
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
                           user_instance_validation_layer_names,
                           num_user_instance_validation_layer_names,
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
                           user_instance_extension_names,
                           num_user_instance_extension_names);
 
@@ -2730,10 +2701,10 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
 
     uCreateVulkanLogicalDevice(v_info,
                                queue_info,
-#if __UE_debug__ == 1
+#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
                                user_instance_validation_layer_names,
                                num_user_instance_validation_layer_names,
-#endif // __UE_debug__ == 1
+#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
                                user_device_extension_names,
                                num_user_device_extension_names);
 
@@ -2754,8 +2725,6 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
 
     uCreateVulkanFrameBuffers(v_info, surface_info, image_group, render_info);
 
-    // [ cfarvin::REMOVE ]
-    /* uCreateVulkanCommandPool(v_info, queue_info, command_info); */
     uCreateVulkanCommandPool(v_info, command_info);
 
     uCreateVulkanCommandBuffers(v_info,
@@ -2769,7 +2738,7 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
     // DrawTool creation
     uVulkanDrawTools* non_const_draw_tools = *(uVulkanDrawTools**)&return_draw_tools;
 
-    for (u8 frame_idx = 0; frame_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; frame_idx++)
+    for (u8 frame_idx = 0; frame_idx < 1; frame_idx++)
     {
         non_const_draw_tools->stage_flags[frame_idx] =
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -2827,18 +2796,9 @@ uDestroyVulkan()
 
 #if 0
 /*
+  [ cfarvin::STUDY ]  VK_DEPENDENCY_BY_REGION_BIT, VkPipelineVertexInputStateCreateInfo, input_assembly_create_info.primitiveRestartEnable,
+multi_sample_create_info.sampleShadingEnable, VkPipelineColorBlendAttachmentState, color_blend_create_info.logicOpEnable
 
-  To Draw A Triangle:
-  - Create a VkInstance
-  - Select a supported graphics card (VkPhysicalDevice)
-  - Create a VkDevice and VkQueue for drawing and presentation
-  - Create a window, window surface and swap chain
-  - Wrap the swap chain images into VkImageView
-  - Create a render pass that specifies the render targets and usage
-  - Create framebuffers for the render pass
-  - Set up the graphics pipeline
-  - Allocate and record a command buffer with the draw commands for every possible swap chain image
-  - Draw frames by acquiring images, submitting the right draw command buffer and returning the images back to the swap chain
 
   NOTES:
   - Skip window manager (or build a cusom one) with VK_KHR_display && VK_KHR_display_swapchain

@@ -9,8 +9,6 @@
 #include <engine_tools/debug_tools.h>
 
 
-// [ cfarvin::TODO ] This file needs _Generic
-
 // Optimize for 64 byte cache line size,
 // 32bit word alignment
 typedef struct

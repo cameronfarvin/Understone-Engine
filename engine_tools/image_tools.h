@@ -73,8 +73,7 @@ __UE_interal__ __UE_inline__ bool
 uLoadBitmap(const restrict char*   const file_path,
             const restrict uImage* const img)
 {
-    // [ cfarvin::TODO ]
-    printf("TODO: uLoadBitmap()");
+    printf("TODO: uLoadBitmap()"); // [ cfarvin::TODO ]
     return false;
 }
 

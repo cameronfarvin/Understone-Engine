@@ -73,12 +73,12 @@ uAPI_uDAPush(_mut_ uDynamicArray* const       restrict da,
 
     if (da && data_in)
     {
-        // [ cfarvin::TODO ] Properly check for failure on realloc
         if (da->length >= da->max_length)
         {
             size_t* non_const_max_length = (size_t*) &(da->max_length);
             *non_const_max_length = da->max_length * da->scaling_factor;
             void* allocated = realloc(da->data, (da->datatype_size * da->max_length));
+            uAssertMsg_v(allocated, "[ dynamic array ] Reallocation failed.\n");
             if (allocated)
             {
                 da->data = allocated;

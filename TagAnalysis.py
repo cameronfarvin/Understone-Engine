@@ -125,7 +125,7 @@ def GenerateReport(serialize_type):
         num_items = len(ProcessedTags[tag_index])
         if num_items > 0:
             tag_list.sort()
-            header_str = 'There are ' + str(num_items) + ' items of type ' + TagType(tag_index + 1).name + ':'
+            header_str = 'There are ' + str(num_items) + ' items tagged ' + TagType(tag_index + 1).name + ':'
             report_strings.append(header_str)
             for tag in tag_list:
                 report_strings.append('    ' + tag.Serialize(serialize_type))

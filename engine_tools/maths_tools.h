@@ -554,7 +554,6 @@ m3IsEqual(const m3* restrict const a,
 }
 
 
-// [ cfarvin::TODO ] Measure & improve
 __UE_internal__ void
 m3Ident(_mut_ m3* restrict const result)
 {
@@ -616,7 +615,6 @@ m4IsEqual(const m4* const a, const m4* const b)
 }
 
 
-// [ cfarvin::TODO ] Measure & improve
 __UE_internal__ void
 m4Ident(_mut_ m4* const result)
 {

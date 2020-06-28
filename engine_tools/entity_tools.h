@@ -62,8 +62,6 @@ typedef struct
     v3   normal_vector;
     r32  magnitude;
     bool does_intersect;
-
-    // [ cfarvin::REVISIT ] intersection materials
     Material intersection_material;
 } RayIntersection;
 
@@ -242,8 +240,7 @@ SetRayDirectionByPixelCoord(_mut_ Ray* restrict const ray,
 }
 
 
-// [ cfarvin::TODO ] Will presently only work with spheres.
-//                   Future: C99+ _Generic for entity types.
+
 __UE_internal__ Entity*
 CreateEntities(const size_t entity_count)
 {
@@ -251,8 +248,6 @@ CreateEntities(const size_t entity_count)
 }
 
 
-// [ cfarvin::TODO ] Will presently only work with spheres.
-//                   Future: C99+ _Generic for entity types.
 __UE_internal__ __UE_inline__ void
 IntersectEntity(const Ray*             restrict const ray,
                 const Entity*          restrict const entity,
@@ -330,8 +325,6 @@ IntersectEntity(const Ray*             restrict const ray,
 }
 
 
-// [ cfarvin::TODO ] Will presently only work with spheres.
-//                   Future: C99+ _Generic for entity types.
 __UE_internal__ __UE_inline__ void
 TraceEntity(const Ray*             restrict const ray,
             _mut_ RayIntersection* restrict const intersection,
@@ -355,8 +348,6 @@ TraceEntity(const Ray*             restrict const ray,
 }
 
 
-// [ cfarvin::TODO ] Will presently only work with spheres.
-// [ cfarvin::TODO ] Future: C99+ _Generic for entity types.
 __UE_internal__ __UE_inline__ void
 TraceEntityArray(const Ray*             restrict const ray,
                  _mut_ RayIntersection* restrict const intersection,
@@ -428,8 +419,6 @@ TraceEntityArray(const Ray*             restrict const ray,
 }
 
 
-// [ cfarvin::TODO ] Will presently only work with spheres.
-//                   Future: C99+ _Generic for entity types.
 __UE_internal__  Entity*
 CreateRandomEntities(size_t num_entitys)
 {
@@ -505,3 +494,6 @@ CreateRandomEntities(size_t num_entitys)
 }
 
 #endif // __UE_ENTITY_TOOLS_H___
+
+
+// [ cfarvin::TODO ] The following are sphere-only: uCreateEntities(), IntersectEntity(), TraceEntity(), TraceEntityArray(), CreateRandomEntities()

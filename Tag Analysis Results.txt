@@ -2,67 +2,33 @@
 = This file is generated on compilation. Content changes will be overwritten =
 ==============================================================================
 
-There are 23 items of type TODO:
-    [ TODO ] (Understone.c, 178): This is only useful when the present mode is not MAILBOX
-    [ TODO ] (entity_tools.h, 245): Will presently only work with spheres.
-    [ TODO ] (entity_tools.h, 254): Will presently only work with spheres.
-    [ TODO ] (entity_tools.h, 333): Will presently only work with spheres.
-    [ TODO ] (entity_tools.h, 358): Will presently only work with spheres.
-    [ TODO ] (entity_tools.h, 359): Future: C99+ _Generic for entity types.
-    [ TODO ] (entity_tools.h, 431): Will presently only work with spheres.
-    [ TODO ] (font_tools.h, 4): Need to outline basic texture system before fonts
-    [ TODO ] (image_tools.h, 76): 
-    [ TODO ] (image_tools.h, 332): This is as temporary as it is bad.
+There are 9 items tagged TODO:
+    [ TODO ] (entity_tools.h, 499): The following are sphere-only: uCreateEntities(), IntersectEntity(), TraceEntity(), TraceEntityArray(), CreateRandomEntities()
+    [ TODO ] (image_tools.h, 76): printf("TODO: uLoadBitmap()");
+    [ TODO ] (image_tools.h, 331): This is as temporary as it is bad.
     [ TODO ] (material_tools.h, 72): (return_color->channel.R)
-    [ TODO ] (maths_tools.h, 557): Measure & improve
-    [ TODO ] (maths_tools.h, 619): Measure & improve
-    [ TODO ] (memory_tools.h, 12): This file needs _Generic
-    [ TODO ] (uDynamicArray.h, 76): Properly check for failure on realloc
     [ TODO ] (uString.h, 160): implement uString substring
-    [ TODO ] (vulkan_tools.h, 255): When we are rendering w/ more than one attachment:
-    [ TODO ] (vulkan_tools.h, 575): When we are rendering w/ more than one attachment:
-    [ TODO ] (vulkan_tools.h, 867): When we are rendering w/ more than one attachment:
-    [ TODO ] (vulkan_tools.h, 906): This currently only handles color attachment references.
-    [ TODO ] (vulkan_tools.h, 1069): Modules below are hard coded for now
-    [ TODO ] (vulkan_tools.h, 1467): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
+    [ TODO ] (vulkan_tools.h, 845): When we are rendering w/ more than one attachment:
+    [ TODO ] (vulkan_tools.h, 1043): Modules below are hard coded for now
+    [ TODO ] (vulkan_tools.h, 1439): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
     [ TODO ] (win_platform.h, 128): scaling/ortho
 
 
-There are 1 items of type PERF:
-    [ PERF ] (vulkan_tools.h, 915): attachment_descriptions[attachment_idx].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;   expensive or nominal?
+There are 1 items tagged PERF:
+    [ PERF ] (vulkan_tools.h, 890): attachment_descriptions[attachment_idx].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;   expensive or nominal?
 
 
-There are 1 items of type TEMP:
-    [ TEMP ] (vulkan_tools.h, 884): Will determine number and type from arguments in the future,
+There are 1 items tagged STUDY:
+    [ STUDY ] (vulkan_tools.h, 2799): VK_DEPENDENCY_BY_REGION_BIT, VkPipelineVertexInputStateCreateInfo, input_assembly_create_info.primitiveRestartEnable,
 
 
-There are 6 items of type STUDY:
-    [ STUDY ] (vulkan_tools.h, 932): subpasses, subpass dependencies
-    [ STUDY ] (vulkan_tools.h, 1116): VkPipelineVertexInputStateCreateInfo vertex_input_create_info = { 0 };
-    [ STUDY ] (vulkan_tools.h, 1127): input_assembly_create_info.primitiveRestartEnable = VK_FALSE;
-    [ STUDY ] (vulkan_tools.h, 1169): multi_sample_create_info.sampleShadingEnable   = VK_FALSE;
-    [ STUDY ] (vulkan_tools.h, 1182): 
-    [ STUDY ] (vulkan_tools.h, 1198): color_blend_create_info.logicOpEnable = VK_FALSE;
-
-
-There are 5 items of type REMOVE:
+There are 2 items tagged REMOVE:
     [ REMOVE ] (event_tools.h, 6): Remove stdio.h
-    [ REMOVE ] (vulkan_tools.h, 37): Remove stdio.h
-    [ REMOVE ] (vulkan_tools.h, 791): 
-    [ REMOVE ] (vulkan_tools.h, 797): 
-    [ REMOVE ] (vulkan_tools.h, 2757): 
+    [ REMOVE ] (vulkan_tools.h, 41): Remove stdio.h
 
 
-There are 11 items of type REVISIT:
-    [ REVISIT ] (Understone.c, 177): Is this necessary?
-    [ REVISIT ] (Understone.c, 272): These don't get destroyed properly. See creation in vulkan_tools.h::uCreateVulkanDrawSyncTools()
+There are 3 items tagged REVISIT:
     [ REVISIT ] (entity_tools.h, 4): #include <rt_settings.h>
-    [ REVISIT ] (entity_tools.h, 66): intersection materials
     [ REVISIT ] (uString.h, 125): Strlen correctness, use throughout uString
-    [ REVISIT ] (vulkan_tools.h, 151): Consider re-naming to uVulkanPresentGroup?
-    [ REVISIT ] (vulkan_tools.h, 219): At most we want tripple buffering?
-    [ REVISIT ] (vulkan_tools.h, 321): vkDestroyDevice(v_info->logical_device, NULL);
-    [ REVISIT ] (vulkan_tools.h, 653): These dont' get destroyed properly. See destruction in Understone.c::uDestroyDrawTools()
-    [ REVISIT ] (vulkan_tools.h, 1283): When is it safe to free these?
-    [ REVISIT ] (vulkan_tools.h, 2261): 
+    [ REVISIT ] (vulkan_tools.h, 223): At most we want tripple buffering?
 
