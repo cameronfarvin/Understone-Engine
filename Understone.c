@@ -21,8 +21,12 @@ __UE_global__ bool RUNNING = true;
 
 #if __UE_debug__ == 1
 #define uVULKAN_MAX_NANOSECOND_WAIT ~((u64)0)
+
+__UE_global__ size_t TOTAL_FRAME_COUNT = 0;
+#define uUpdateTFC TOTAL_FRAME_COUNT++;
 #else
 #define uVULKAN_MAX_NANOSECOND_WAIT 100000
+#define uUpdateTFC /* TOTAL_FRAME_COUNT++; */
 #endif // __UE_debug__ == 1
 
 
@@ -105,7 +109,7 @@ uUpdatePresentInfoAndPresent(_mut_ uVulkanDrawTools* const restrict dt,
 
 
     (dt->present_info).pImageIndices   = (u32*)next_frame_idx;
-    (dt->present_info).pWaitSemaphores = &(dt->is_render_complete[dt->frame]);
+    (dt->present_info).pWaitSemaphores = &(dt->render_finished[dt->frame]);
 
     uDebugStatement(VkResult result = )vkQueuePresentKHR(dt->present_queue, &(dt->present_info));
     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to present.\n");
@@ -125,8 +129,8 @@ uSubmitGraphicsQueue(const uVulkanDrawTools* const restrict dt)
 
                                                      // Regarding dt->submit_info:
                                                      //   cbuffer filled w/ _next_ frame commands;
-                                                     //   awaits dt->is_image_acquired[dt->frame]
-                                                     //   signals dt->is_render_complete[dt->frame]
+                                                     //   awaits dt->image_available[dt->frame]
+                                                     //   signals dt->render_finished[dt->frame]
                                                      &(dt->submit_info),
 
                                                      // Signal this fence when cbuffer execution finishes
@@ -146,8 +150,8 @@ uUpdateQueueSubmissionOrder(_mut_ uVulkanDrawTools* const restrict dt,
 
 
     (dt->submit_info).pCommandBuffers   = (VkCommandBuffer*)(&dt->command_buffers[*next_frame_idx]);
-    (dt->submit_info).pWaitSemaphores   = &(dt->is_image_acquired[dt->frame]);  // what to wait on before execution
-    (dt->submit_info).pSignalSemaphores = &(dt->is_render_complete[dt->frame]); // what to signal when execution is done
+    (dt->submit_info).pWaitSemaphores   = &(dt->image_available[dt->frame]);  // what to wait on before execution
+    (dt->submit_info).pSignalSemaphores = &(dt->render_finished[dt->frame]); // what to signal when execution is done
 }
 
 
@@ -207,7 +211,7 @@ uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt,
     uDebugStatement(VkResult result = )vkAcquireNextImageKHR(dt->logical_device,
                                                              dt->swap_chain,
                                                              uVULKAN_MAX_NANOSECOND_WAIT,
-                                                             dt->is_render_complete[dt->frame],
+                                                             dt->render_finished[dt->frame],
                                                              VK_NULL_HANDLE,
                                                              return_idx);
 
@@ -223,22 +227,47 @@ uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt,
 __UE_internal__ __UE_inline__ void
 uDrawFrame(_mut_ uVulkanDrawTools* const restrict dt)
 {
+    uDebugPrint("TFC: %zd\n", TOTAL_FRAME_COUNT);
     uAssertMsg_v(dt, "[ render ] uVulkanDrawtools must be non zero.\n");
 
 
+    uTrace("Top of render loop; Waiting for fences.\n");
+    vkWaitForFences(dt->logical_device,
+                    1,
+                    &(dt->in_flight_fences[dt->frame]),
+                    VK_TRUE,
+                    uVULKAN_MAX_NANOSECOND_WAIT);
+
+
+    uTrace("Acquiring next image.\n");
     u32 next_frame_idx = 0;
     vkAcquireNextImageKHR(dt->logical_device,
                           dt->swap_chain,
                           uVULKAN_MAX_NANOSECOND_WAIT,
-                          dt->rs_image_available,
+                          dt->image_available[dt->frame],
                           NULL,
                           &next_frame_idx);
 
+    uTrace("Checking for exesting fences....\n");
+    // Check if a fence exists to wait on at this index
+    if (dt->in_flight_images[next_frame_idx] != VK_NULL_HANDLE)
+    {
+        uTrace("Fence existed! Waiting....\n");
+        vkWaitForFences(dt->logical_device,
+                        1,
+                        &(dt->in_flight_images[next_frame_idx]),
+                        VK_TRUE,
+                        uVULKAN_MAX_NANOSECOND_WAIT);
+        uTrace("Done.\n");
+    }
+    dt->in_flight_images[next_frame_idx] = dt->in_flight_fences[dt->frame];
+
+
     VkSemaphore wait_semaphores[1] = { 0 };
-    wait_semaphores[0] = dt->rs_image_available;
+    wait_semaphores[0] = dt->image_available[dt->frame];
 
     VkSemaphore signal_semaphores[1] = { 0 };
-    signal_semaphores[0] = dt->rs_render_finished;
+    signal_semaphores[0] = dt->render_finished[dt->frame];
 
     VkPipelineStageFlags wait_stages[1] = { 0 };
     wait_stages[0] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -254,8 +283,15 @@ uDrawFrame(_mut_ uVulkanDrawTools* const restrict dt)
     submit_info.signalSemaphoreCount = 1;
     submit_info.pSignalSemaphores = signal_semaphores;
 
+    vkResetFences(dt->logical_device,
+                  1,
+                  &(dt->in_flight_fences[dt->frame]));
+
     // submit graphics queue
-    VkResult result = vkQueueSubmit(dt->graphics_queue, 1, &submit_info, NULL);
+    uDebugStatement(VkResult result = )vkQueueSubmit(dt->graphics_queue,
+                                                     1,
+                                                     &submit_info,
+                                                     dt->in_flight_fences[dt->frame]);
     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Could not submit graphics queue.\n");
 
     VkSwapchainKHR swap_chains[1] = { 0 };
@@ -272,10 +308,10 @@ uDrawFrame(_mut_ uVulkanDrawTools* const restrict dt)
     present_info.pResults = NULL;
 
     vkQueuePresentKHR(dt->present_queue, &present_info);
-    vkQueueWaitIdle(dt->present_queue);
 
     // increment frame number
     dt->frame = (dt->frame + 1) % uVULKAN_MAX_FRAMES_IN_FLIGHT;
+    uUpdateTFC;
 }
 
 
@@ -298,8 +334,8 @@ uDestroyDrawTools(_mut_ uVulkanDrawTools* const restrict draw_tools)
 
         for (u32 sync_obj_idx = 0; sync_obj_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; sync_obj_idx++)
         {
-            vkDestroySemaphore(v_info->logical_device, draw_tools->is_image_acquired[sync_obj_idx], NULL);
-            vkDestroySemaphore(v_info->logical_device, draw_tools->is_render_complete[sync_obj_idx], NULL);
+            vkDestroySemaphore(v_info->logical_device, draw_tools->image_available[sync_obj_idx], NULL);
+            vkDestroySemaphore(v_info->logical_device, draw_tools->render_finished[sync_obj_idx], NULL);
             vkDestroyFence(v_info->logical_device,     draw_tools->in_flight_fences[sync_obj_idx], NULL);
         }
 

@@ -208,12 +208,10 @@ uGetVulkanRenderInfo()
 #define uVULKAN_MAX_FRAMES_IN_FLIGHT  2
 typedef struct
 {
-    VkSemaphore          rs_image_available;
-    VkSemaphore          rs_render_finished;
-
-    VkSemaphore          is_image_acquired[uVULKAN_MAX_FRAMES_IN_FLIGHT];
-    VkSemaphore          is_render_complete[uVULKAN_MAX_FRAMES_IN_FLIGHT];
+    VkSemaphore          image_available[uVULKAN_MAX_FRAMES_IN_FLIGHT];
+    VkSemaphore          render_finished[uVULKAN_MAX_FRAMES_IN_FLIGHT];
     VkFence              in_flight_fences[uVULKAN_MAX_FRAMES_IN_FLIGHT];
+    VkFence              in_flight_images[uVULKAN_NUM_COMMAND_BUFFERS];
     VkPipelineStageFlags stage_flags[1]; // Note: act as a sync primitive
     VkDevice             logical_device;
     VkSwapchainKHR       swap_chain;
@@ -586,8 +584,8 @@ uRebuildVulkanSwapChain(VkDevice logical_device)
 
 
 __UE_internal__ void __UE_call__
-uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
-                           _mut_ uVulkanDrawTools* const restrict draw_tools)
+uCreateVulkanSyncTools(const uVulkanInfo*      const restrict v_info,
+                       _mut_ uVulkanDrawTools* const restrict draw_tools)
 {
     uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkDevice must be non zero.\n");
@@ -596,14 +594,6 @@ uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
 
     VkSemaphoreCreateInfo semaphore_create_info = { 0 };
     semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-    // rs
-    //
-    vkCreateSemaphore(v_info->logical_device, &semaphore_create_info, NULL, &(draw_tools->rs_image_available));
-    vkCreateSemaphore(v_info->logical_device, &semaphore_create_info, NULL, &(draw_tools->rs_render_finished));
-    //
-    // rs
-
 
     VkFenceCreateInfo fence_create_info = { 0 };
     fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
@@ -628,7 +618,7 @@ uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
         result = vkCreateSemaphore(v_info->logical_device,
                                    &semaphore_create_info,
                                    NULL,
-                                   &(draw_tools->is_image_acquired[sync_obj_idx]));
+                                   &(draw_tools->image_available[sync_obj_idx]));
 
         if (result != VK_SUCCESS)
         {
@@ -640,7 +630,7 @@ uCreateVulkanDrawSyncTools(const uVulkanInfo*      const restrict v_info,
         result = vkCreateSemaphore(v_info->logical_device,
                                    &semaphore_create_info,
                                    NULL,
-                                   &(draw_tools->is_render_complete[sync_obj_idx]));
+                                   &(draw_tools->render_finished[sync_obj_idx]));
 
         if (result != VK_SUCCESS)
         {
@@ -2747,7 +2737,7 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
                                 render_info,
                                 surface_info);
 
-    uCreateVulkanDrawSyncTools(v_info, (uVulkanDrawTools*)return_draw_tools);
+    uCreateVulkanSyncTools(v_info, (uVulkanDrawTools*)return_draw_tools);
 
     // DrawTool creation
     uVulkanDrawTools* non_const_draw_tools = *(uVulkanDrawTools**)&return_draw_tools;
@@ -2811,7 +2801,7 @@ uDestroyVulkan()
 
 /*
   [ cfarvin::STUDY ]  VK_DEPENDENCY_BY_REGION_BIT, VkPipelineVertexInputStateCreateInfo, input_assembly_create_info.primitiveRestartEnable,
-multi_sample_create_info.sampleShadingEnable, VkPipelineColorBlendAttachmentState, color_blend_create_info.logicOpEnable
+  multi_sample_create_info.sampleShadingEnable, VkPipelineColorBlendAttachmentState, color_blend_create_info.logicOpEnable
 
 
   NOTES:

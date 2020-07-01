@@ -8,18 +8,18 @@ There are 9 items tagged TODO:
     [ TODO ] (image_tools.h, 331): This is as temporary as it is bad.
     [ TODO ] (material_tools.h, 72): (return_color->channel.R)
     [ TODO ] (uString.h, 160): implement uString substring
-    [ TODO ] (vulkan_tools.h, 856): When we are rendering w/ more than one attachment:
-    [ TODO ] (vulkan_tools.h, 1054): Modules below are hard coded for now
-    [ TODO ] (vulkan_tools.h, 1450): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
+    [ TODO ] (vulkan_tools.h, 846): When we are rendering w/ more than one attachment:
+    [ TODO ] (vulkan_tools.h, 1044): Modules below are hard coded for now
+    [ TODO ] (vulkan_tools.h, 1440): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
     [ TODO ] (win_platform.h, 128): scaling/ortho
 
 
 There are 1 items tagged PERF:
-    [ PERF ] (vulkan_tools.h, 901): attachment_descriptions[attachment_idx].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;   expensive or nominal?
+    [ PERF ] (vulkan_tools.h, 891): attachment_descriptions[attachment_idx].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;   expensive or nominal?
 
 
 There are 1 items tagged STUDY:
-    [ STUDY ] (vulkan_tools.h, 2813): VK_DEPENDENCY_BY_REGION_BIT, VkPipelineVertexInputStateCreateInfo, input_assembly_create_info.primitiveRestartEnable,
+    [ STUDY ] (vulkan_tools.h, 2803): VK_DEPENDENCY_BY_REGION_BIT, VkPipelineVertexInputStateCreateInfo, input_assembly_create_info.primitiveRestartEnable,
 
 
 There are 2 items tagged REMOVE:
@@ -30,5 +30,5 @@ There are 2 items tagged REMOVE:
 There are 3 items tagged REVISIT:
     [ REVISIT ] (entity_tools.h, 4): #include <rt_settings.h>
     [ REVISIT ] (uString.h, 125): Strlen correctness, use throughout uString
-    [ REVISIT ] (vulkan_tools.h, 226): At most we want tripple buffering?
+    [ REVISIT ] (vulkan_tools.h, 224): At most we want tripple buffering?
 
