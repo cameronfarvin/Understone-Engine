@@ -155,9 +155,12 @@ uGetVulkanInfo()
 typedef struct
 {
     _mut_ VkImage*       images;
-    _mut_ VkImageView*   image_views;   // Note: To have num_images elements
-    _mut_ VkFramebuffer* frame_buffers; // Note: To have num_images elements
+    _mut_ VkImageView*   image_views;          // Note: To have num_images elements
+    _mut_ VkFramebuffer* frame_buffers;        // Note: To have num_images elements
     const u32            num_images;
+
+    // [ cfarvin::TODO ] Use this (allocate rather than use array) or delete it.
+    const u32            max_frames_in_flight;
 } uVulkanImageGroup;
 __UE_singleton__ uVulkanImageGroup* uAPI_PRIME_VULKAN_IMAGE_GROUP = NULL;
 __UE_internal__ __UE_inline__ const uVulkanImageGroup* const
@@ -240,7 +243,7 @@ __UE_internal__ void __UE_call__
 uDestroyVulkan();
 
 __UE_internal__ void __UE_call__
-uQueryVulkanDeviceExtensions(const VkPhysicalDevice*             restrict physical_device,
+uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physical_device,
                              const s8**              const const restrict user_device_extension_names,
                              const u16                                    num_user_device_extension_names,
                              _mut_ u16*              const       restrict num_verified_extension_names);
@@ -1508,6 +1511,10 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*        const restrict v_info,
 
     // Set image count
     *(u32*)&(image_group->num_images) = designated_image_count;
+
+    // [ cfarvin::TODO ] Use this (allocate rather than use an array) or delete it.
+    *(u32*)&(image_group->max_frames_in_flight) = min_image_count; // designated_image_count - 1;
+    uVkVerbose("\tDesignated image count: %d.\n", designated_image_count);
 }
 
 
