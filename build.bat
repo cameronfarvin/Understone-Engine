@@ -5,7 +5,7 @@
 :: Relase / Debug
 ::
 ::------------------------------
-SET /A RELEASE_BUILD=1
+SET /A RELEASE_BUILD=0
 
 
 ::------------------------------

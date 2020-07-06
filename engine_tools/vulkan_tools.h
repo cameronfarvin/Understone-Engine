@@ -132,7 +132,6 @@ typedef struct
     const VkInstance       instance;
     const VkPhysicalDevice physical_device;
     const VkDevice         logical_device;
-    const VkSwapchainKHR   swap_chain;
 } uVulkanInfo;
 __UE_singleton__ uVulkanInfo* uAPI_PRIME_VULKAN_INFO = NULL;
 __UE_internal__ __UE_inline__ const uVulkanInfo* const
@@ -155,9 +154,10 @@ uGetVulkanInfo()
 typedef struct
 {
     _mut_ VkImage*       images;
-    _mut_ VkImageView*   image_views;          // Note: To have num_images elements
-    _mut_ VkFramebuffer* frame_buffers;        // Note: To have num_images elements
+    _mut_ VkImageView*   image_views;   // Note: To have num_images elements
+    _mut_ VkFramebuffer* frame_buffers; // Note: To have num_images elements
     const u32            num_images;
+    const VkSwapchainKHR swap_chain;
 
     // [ cfarvin::TODO ] Use this (allocate rather than use array) or delete it.
     const u32            max_frames_in_flight;
@@ -298,7 +298,8 @@ uDestroyVulkanPipelineRenderObjects()
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkInstance must be non zero.\n");
     uAssertMsg_v(render_info,            "[ vulkan ] uVulkanRenderInfo ptr must be non null.\n");
 
-
+    // Destroy pipeline, pipeline layout, renderpass;
+    uDebugPrint("Destroying pipeline components...\n");
     if (v_info->logical_device)
     {
         // Destroy pipeline layout, render pass, graphics pipeline, frame buffer(s)
@@ -319,7 +320,7 @@ uDestroyVulkanRenderInfo()
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkInstance must be non zero.\n");
     uAssertMsg_v(render_info,            "[ vulkan ] uVulkanRenderInfo ptr must be non null.\n");
 
-
+    uDebugPrint("Destroying rendering components...\n");
     if (render_info)
     {
         uDestroyVulkanPipelineRenderObjects();
@@ -351,7 +352,7 @@ uDestroyVulkanQueueInfo()
     uVulkanQueueInfo* queue_info = (uVulkanQueueInfo*)uGetVulkanQueueInfo();
     uAssertMsg_v(queue_info, "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n");
 
-
+    uDebugPrint("Destroying queue components...\n");
     if (queue_info)
     {
         free(queue_info);
@@ -369,6 +370,7 @@ uDestroyVulkanCommandBuffers()
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkInstance must be non zero.\n");
     uAssertMsg_v(command_info,           "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
 
+    uDebugPrint("Destroying command buffers...\n");
     vkFreeCommandBuffers(v_info->logical_device,
                          command_info->command_pool,
                          command_info->num_command_buffers,
@@ -392,6 +394,7 @@ uDestroyVulkanCommandInfo()
     uAssertMsg_v(command_info,     "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
 
 
+    uDebugPrint("Destroying command components...\n");
     if (command_info)
     {
         uDestroyVulkanCommandBuffers();
@@ -411,8 +414,8 @@ uDestroyVulkanCommandInfo()
 __UE_internal__ __UE_inline__ void
 uDestroyVulkanSurfaceInfo()
 {
-    uVulkanSurfaceInfo* surface_info = (uVulkanSurfaceInfo*)uGetVulkanSurfaceInfo();
     uVulkanInfo*        v_info       = (uVulkanInfo*)uGetVulkanInfo();
+    uVulkanSurfaceInfo* surface_info = (uVulkanSurfaceInfo*)uGetVulkanSurfaceInfo();
 
     uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(v_info->instance,       "[ vulkan ] VkInstance must be non zero.\n");
@@ -420,12 +423,7 @@ uDestroyVulkanSurfaceInfo()
     uAssertMsg_v(surface_info,           "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
 
 
-    if (v_info->logical_device)
-    {
-        // Destroy swap chain
-        vkDestroySwapchainKHR(v_info->logical_device, v_info->swap_chain, NULL);
-    }
-
+    uDebugPrint("Destroying surface components...\n");
     if (surface_info)
     {
         if (v_info->instance)
@@ -453,9 +451,10 @@ uDestroyVulkanInfo()
 {
     uVulkanInfo* v_info = (uVulkanInfo*)uGetVulkanInfo();
 
-    uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(v_info->instance,       "[ vulkan ] VkInstance must be non zero.\n");
+    uAssertMsg_v(v_info,           "[ vulkan ] uVulkanInfo ptr must be non null.\n");
+    uAssertMsg_v(v_info->instance, "[ vulkan ] VkInstance must be non zero.\n");
 
+    uDebugPrint("Destroying primary vulkan components...\n");
     if (v_info)
     {
         if (v_info->instance)
@@ -496,7 +495,7 @@ uDestroyVulkanImageGroup()
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkDevice ptr must be non null.\n");
     uAssertMsg_v(image_group,            "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
 
-
+    uDebugPrint("Destroying image group components...\n");
     if (image_group)
     {
         if (v_info && v_info->logical_device)
@@ -518,6 +517,14 @@ uDestroyVulkanImageGroup()
                                          NULL);
                 }
             }
+        }
+
+        if (image_group->swap_chain)
+        {
+            uDebugPrint("Destroying old swap chain...\n");
+            vkDestroySwapchainKHR(v_info->logical_device,
+                                  image_group->swap_chain,
+                                  NULL);
         }
 
         if (image_group->images)
@@ -543,6 +550,8 @@ uDestroyVulkanImageGroup()
 __UE_internal__ __UE_inline__ void
 uDestroyOldSwapChain()
 {
+    uDebugPrint("Destroying old swap chain components...\n");
+
     uDestroyVulkanImageGroup();
     uDestroyVulkanCommandBuffers();
     uDestroyVulkanPipelineRenderObjects();
@@ -550,16 +559,20 @@ uDestroyOldSwapChain()
 
 
 __UE_internal__ __UE_inline__ void
-uRebuildVulkanSwapChain(VkDevice logical_device)
+uRebuildVulkanSwapChain()
 {
-    // Wait for device idle; Clean up old data
-    vkDeviceWaitIdle(logical_device);
+    uVulkanInfo* v_info = (uVulkanInfo*)uGetVulkanInfo();
+    vkDeviceWaitIdle(v_info->logical_device);
+
+    uDebugPrint("[ begin ] swap chain rebuild\n");
     uDestroyOldSwapChain();
+    uDebugPrint("[ end ] swap chain rebuild\n");
+    fflush(stdout);
 
 
     // Recreate singletons that were delted by old swap chain clean up,
     // get references to those which were not.
-    uVulkanInfo*        v_info       = (uVulkanInfo*)uGetVulkanInfo();
+    v_info                           = (uVulkanInfo*)uGetVulkanInfo();
     uVulkanQueueInfo*   queue_info   = (uVulkanQueueInfo*)uGetVulkanQueueInfo();
     uVulkanSurfaceInfo* surface_info = (uVulkanSurfaceInfo*)uGetVulkanSurfaceInfo();
     uVulkanImageGroup*  image_group  = (uVulkanImageGroup*)uGetVulkanImageGroup();
@@ -576,6 +589,9 @@ uRebuildVulkanSwapChain(VkDevice logical_device)
     uAssertMsg_v(command_info,           "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
 
 
+    // UE safeguards look for 0 on swap chain construction
+    *(VkSwapchainKHR*)&(image_group->swap_chain) = 0;
+
     // Rebuild swap chain
     uCreateVulkanSwapChain((uVulkanInfo*)v_info, surface_info, queue_info, image_group);
     uCreateVulkanImageViews(v_info, image_group, surface_info);
@@ -583,6 +599,8 @@ uRebuildVulkanSwapChain(VkDevice logical_device)
     uCreateVulkanGraphicsPipeline(v_info, surface_info, render_info);
     uCreateVulkanFrameBuffers(v_info, surface_info, image_group, render_info);
     uCreateVulkanCommandBuffers(v_info, command_info, image_group, render_info, surface_info);
+
+    uError("[ implementing ] swap chain rebuild\n");
 }
 
 
@@ -1377,7 +1395,6 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*        const restrict v_info,
 {
     uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkLogicalDevice must be non zero.\n");
-    uAssertMsg_v(!v_info->swap_chain,    "[ vulkan ] VkSwapChainKHR must be zero; will be overwritten.\n");
     uAssertMsg_v(surface_info,           "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
     uAssertMsg_v(surface_info->surface,  "[ vulkan ] VkSurfaceKHR ptr must be non null.\n");
     uAssertMsg_v(queue_info,             "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n");
@@ -1385,6 +1402,8 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*        const restrict v_info,
                  "[ vulkan ] VkSurfaceFormatKHR ptr must be non null.\n");
     uAssertMsg_v(surface_info->present_modes,
                  "[ vulkan ] VkPresentModeKHR ptr must be non null.\n");
+    uAssertMsg_v(!(image_group->swap_chain),
+                 "[ vulkan ] VkSwapChainKHR must be zero; will be overwritten.\n");
 
 
     // Select a suitable swapchain
@@ -1460,7 +1479,7 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*        const restrict v_info,
     VkResult result = vkCreateSwapchainKHR(v_info->logical_device,
                                            &swap_chain_create_info,
                                            NULL,
-                                           (VkSwapchainKHR*)&(v_info->swap_chain));
+                                           (VkSwapchainKHR*)&(image_group->swap_chain));
 
     if (result != VK_SUCCESS)
     {
@@ -1473,7 +1492,7 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*        const restrict v_info,
     // Get handles to swap chain images
     u32 reported_image_count = designated_image_count;
     result = vkGetSwapchainImagesKHR(v_info->logical_device,
-                                     v_info->swap_chain,
+                                     image_group->swap_chain,
                                      &designated_image_count,
                                      NULL);
 
@@ -1498,7 +1517,7 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*        const restrict v_info,
     image_group->images      =     (VkImage*)calloc(designated_image_count, sizeof(VkImage));
     image_group->image_views = (VkImageView*)calloc(designated_image_count, sizeof(VkImageView));
     result = vkGetSwapchainImagesKHR(v_info->logical_device,
-                                     v_info->swap_chain,
+                                     image_group->swap_chain,
                                      &designated_image_count,
                                      image_group->images);
 
@@ -1785,27 +1804,23 @@ uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice                 phy
 __UE_internal__ __UE_inline__ void
 uSelectVulkanSwapChainExtent(_mut_ uVulkanSurfaceInfo* const restrict surface_info)
 {
-    uAssertMsg_v(surface_info,       "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
-#if _WIN32
-    uAssertMsg_v(win32_info,         "[ win32 ] [ vulkan ] uWin32Info must be non null.\n");
-    uAssertMsg_v(win32_info->window, "[ win32 ] [ vulkan ] uWin32Info window must be non null.\n");
-#endif // _WIN32
+    uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
 
     VkSurfaceCapabilitiesKHR surface_capabilities = surface_info->surface_capabilities;
     VkExtent2D* non_const_extent = (VkExtent2D*)&(surface_info->surface_extent);
 
+    // [ cfarvin::REVISIT ] u32max as magic value for extent creation; errors on swap chain re-creation
     // Note: Some window managers use u32_MAX as a magic value which indicates that the extent
     // must be manually set up.
     u32 u32_MAX = ~(u32)0;
     if (surface_capabilities.currentExtent.width != u32_MAX)
     {
-
-        non_const_extent->width  = surface_capabilities.currentExtent.width;
-        non_const_extent->height = surface_capabilities.currentExtent.height;
+         non_const_extent->width  = surface_capabilities.currentExtent.width;
+         non_const_extent->height = surface_capabilities.currentExtent.height;
     }
     else
     {
-        uGetWindowSize(&non_const_extent->width, (u32*)&non_const_extent->height);
+        uGetWindowSize(&non_const_extent->width, &non_const_extent->height);
     }
 
     // Ensure we do not exceed maximums
@@ -1820,6 +1835,7 @@ uSelectVulkanSwapChainExtent(_mut_ uVulkanSurfaceInfo* const restrict surface_in
         uVkVerbose("[ vulkan ] Calculated extent height exceeded surface capabiility; capped.\n");
         non_const_extent->height = surface_capabilities.maxImageExtent.height;
     }
+
 
     // Ensure we do not fall below minimums
     if (non_const_extent->width < surface_capabilities.minImageExtent.width)
@@ -2756,7 +2772,7 @@ uInitializeVulkan(const uVulkanDrawTools* const       restrict return_draw_tools
     }
 
     non_const_draw_tools->logical_device  = v_info->logical_device;
-    non_const_draw_tools->swap_chain      = v_info->swap_chain;
+    non_const_draw_tools->swap_chain      = image_group->swap_chain;
     non_const_draw_tools->graphics_queue  = queue_info->queues[uVULKAN_GRAPHICS_QUEUE_INDEX];
     non_const_draw_tools->present_queue   = queue_info->queues[uVULKAN_PRESENT_QUEUE_INDEX];
 

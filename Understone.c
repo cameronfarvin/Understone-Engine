@@ -60,10 +60,11 @@ __UE_global__ char* required_device_extensions[] =
 __UE_internal__ __UE_inline__ void
 uHandleWindowResize()
 {
-    uDebugPrint("TODO: Handle Window Resize\n");
-    uDebugPrint("viewport.width: %ld\nviewport.height: %ld\n",
+    uDebugPrint("[ resize ] viewport.width: %ld\nviewport.height: %ld\n",
                 viewport.width,
                 viewport.height);
+
+    uRebuildVulkanSwapChain();
 }
 
 
@@ -130,7 +131,7 @@ uUpdateGraphicsInfoAndSubmit(_mut_ uVulkanDrawTools* const restrict dt,
 
 
     (dt->submit_info).pCommandBuffers   = (VkCommandBuffer*)(&dt->command_buffers[*next_frame_idx]);
-    (dt->submit_info).pWaitSemaphores   = &(dt->image_available[dt->frame]);  // what to wait on before execution
+    (dt->submit_info).pWaitSemaphores   = &(dt->image_available[dt->frame]); // what to wait on before execution
     (dt->submit_info).pSignalSemaphores = &(dt->render_finished[dt->frame]); // what to signal when execution is done
 
     uDebugStatement(VkResult result = )vkQueueSubmit(dt->graphics_queue,

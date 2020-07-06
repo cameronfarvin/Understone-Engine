@@ -9,19 +9,19 @@ There are 11 items tagged TODO:
     [ TODO ] (material_tools.h, 72): (return_color->channel.R)
     [ TODO ] (uString.h, 160): implement uString substring
     [ TODO ] (vulkan_tools.h, 162): Use this (allocate rather than use array) or delete it.
-    [ TODO ] (vulkan_tools.h, 849): When we are rendering w/ more than one attachment:
-    [ TODO ] (vulkan_tools.h, 1047): Modules below are hard coded for now
-    [ TODO ] (vulkan_tools.h, 1443): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
-    [ TODO ] (vulkan_tools.h, 1515): Use this (allocate rather than use an array) or delete it.
+    [ TODO ] (vulkan_tools.h, 867): When we are rendering w/ more than one attachment:
+    [ TODO ] (vulkan_tools.h, 1065): Modules below are hard coded for now
+    [ TODO ] (vulkan_tools.h, 1462): swap_chain_create_info.oldSwapchain     = VK_NULL_HANDLE;   handle differently on window resize
+    [ TODO ] (vulkan_tools.h, 1534): Use this (allocate rather than use an array) or delete it.
     [ TODO ] (win_platform.h, 128): scaling/ortho
 
 
 There are 1 items tagged PERF:
-    [ PERF ] (vulkan_tools.h, 894): attachment_descriptions[attachment_idx].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;   expensive or nominal?
+    [ PERF ] (vulkan_tools.h, 912): attachment_descriptions[attachment_idx].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;   expensive or nominal?
 
 
 There are 1 items tagged STUDY:
-    [ STUDY ] (vulkan_tools.h, 2810): VK_DEPENDENCY_BY_REGION_BIT, VkPipelineVertexInputStateCreateInfo, input_assembly_create_info.primitiveRestartEnable,
+    [ STUDY ] (vulkan_tools.h, 2826): VK_DEPENDENCY_BY_REGION_BIT, VkPipelineVertexInputStateCreateInfo, input_assembly_create_info.primitiveRestartEnable,
 
 
 There are 2 items tagged REMOVE:
@@ -29,8 +29,9 @@ There are 2 items tagged REMOVE:
     [ REMOVE ] (vulkan_tools.h, 41): Remove stdio.h
 
 
-There are 3 items tagged REVISIT:
+There are 4 items tagged REVISIT:
     [ REVISIT ] (entity_tools.h, 4): #include <rt_settings.h>
     [ REVISIT ] (uString.h, 125): Strlen correctness, use throughout uString
     [ REVISIT ] (vulkan_tools.h, 227): At most we want tripple buffering?
+    [ REVISIT ] (vulkan_tools.h, 1812): u32max as magic value for extent creation; errors on swap chain re-creation
 
