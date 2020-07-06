@@ -148,7 +148,7 @@ uEnsureFrameLanded(_mut_ uVulkanDrawTools* const restrict dt,
     uAssertMsg_v(dt,                   "[ render ] uVulkanDrawtools must be non zero.\n");
     uAssertMsg_v(dt->logical_device,   "[ render ] VkDevice must be non zero.\n");
     uAssertMsg_v(dt->in_flight_fences, "[ render ] VkFence ptr must be non null.\n");
-    uAssertMsg_v(next_frame_idx,      "[ render ] Next frame index ptr must be non null.\n");
+    uAssertMsg_v(next_frame_idx,       "[ render ] Next frame index ptr must be non null.\n");
 
     if (dt->in_flight_images[*next_frame_idx] != VK_NULL_HANDLE)
     {

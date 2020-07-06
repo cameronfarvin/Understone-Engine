@@ -5,7 +5,7 @@
 :: Relase / Debug
 ::
 ::------------------------------
-SET /A RELEASE_BUILD=0
+SET /A RELEASE_BUILD=1
 
 
 ::------------------------------
@@ -45,15 +45,24 @@ echo.
 :: Requires Visual Studio 2019
 ::
 ::------------------------------
-where cl >nul 2>null
-rem IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %APP_ARCH% >nul
-IF %ERRORLEVEL% NEQ 0 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall" %APP_ARCH% >nul
-IF %ERRORLEVEL% NEQ 0 GOTO :VS_NOT_FOUND
+@SET VC_VARS_2019="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat"
+@SET VC_VARS_2017="C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall.bat"
 
+where cl >nul 2>null
+IF EXIST %VC_VARS_2019% (
+    IF %ERRORLEVEL% NEQ 0 call %VC_VARS_2019% %APP_ARCH% >nul
+    IF %ERRORLEVEL% NEQ 0 GOTO :COMPILE_AND_LINK
+)
+IF EXIST %VC_VARS_2017% (
+    IF %ERRORLEVEL% NEQ 0 call %VC_VARS_2017% %APP_ARCH% >nul
+    IF %ERRORLEVEL% NEQ 0 GOTO :COMPILE_AND_LINK
+)
+GOTO :VS_NOT_FOUND
+
+:COMPILE_AND_LINK
 :: Store msvc clutter elsewhere
 mkdir msvc_landfill >nul 2>nul
 pushd msvc_landfill >nul
-
 
 :: Compile & Link Options
 ::------------------------------
@@ -135,7 +144,7 @@ GOTO :exit
 :VS_NOT_FOUND
 echo.
 echo Unable to find vcvarsall.bat. Did you install Visual Studio to the default location?
-echo This build script requries Visual Studio 2019; with the standard C/C++ toolset.
+echo This build script requries either Visual Studio 2019 or 2017; with the standard C/C++ toolset.
 echo.
 GOTO :exit
 
