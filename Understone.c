@@ -19,12 +19,6 @@ __UE_global__ bool RUNNING = true;
 #include <win/win_platform.h>
 #endif // _WIN32
 
-#if __UE_debug__ == 1
-#define uVULKAN_MAX_NANOSECOND_WAIT ~((u64)0)
-#else
-#define uVULKAN_MAX_NANOSECOND_WAIT 100000000 // 0.1 seconds
-#endif // __UE_debug__ == 1
-
 
 //
 // [ begin ] Global members
@@ -60,11 +54,12 @@ __UE_global__ char* required_device_extensions[] =
 __UE_internal__ __UE_inline__ void
 uHandleWindowResize()
 {
-    uDebugPrint("[ resize ] viewport.width: %ld\nviewport.height: %ld\n",
+    uDebugPrint("[ resize ] viewport (width, height): (%d, %d)\n",
                 viewport.width,
                 viewport.height);
 
     uRebuildVulkanSwapChain();
+    uVULKAN_DRAW_TOOLS_OUTDATED = true;
 }
 
 
@@ -113,8 +108,24 @@ uUpdatePresentInfoAndPresent(_mut_ uVulkanDrawTools* const restrict dt,
     (dt->present_info).pImageIndices   = (u32*)next_frame_idx;
     (dt->present_info).pWaitSemaphores = &(dt->render_finished[dt->frame]);
 
-    uDebugStatement(VkResult result = )vkQueuePresentKHR(dt->present_queue, &(dt->present_info));
-    uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to present.\n");
+    VkResult result = vkQueuePresentKHR(dt->present_queue, &(dt->present_info));
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        uVkVerbose("Swap chain was out of date.\n");
+        uVULKAN_DRAW_TOOLS_OUTDATED = true;
+        uRebuildVulkanSwapChain();
+    }
+    else if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        uVkVerbose("Swap chain was suboptimal.\n");
+        uVULKAN_DRAW_TOOLS_OUTDATED = true;
+        uRebuildVulkanSwapChain();
+    }
+    else
+    {
+        uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to present.\n");
+    }
 }
 
 
@@ -179,19 +190,34 @@ uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt,
     uAssertMsg_v(return_idx,         "[ render ] Return index ptr must be non null.\n");
 
 
-    uDebugStatement(VkResult result = )vkAcquireNextImageKHR(dt->logical_device,
-                                                             dt->swap_chain,
-                                                             uVULKAN_MAX_NANOSECOND_WAIT,
-                                                             dt->image_available[dt->frame],
-                                                             NULL,
-                                                             return_idx);
+    VkResult result = vkAcquireNextImageKHR(dt->logical_device,
+                                            dt->swap_chain,
+                                            uVULKAN_MAX_NANOSECOND_WAIT,
+                                            dt->image_available[dt->frame],
+                                            NULL,
+                                            return_idx);
 
-    uAssertMsg_v(result != VK_TIMEOUT,
-                 "[ render ] [ timeout ] Could not acquire next swap chain image.\n");
-    uAssertMsg_v(result == VK_SUCCESS,
-                 "[ render ] Could not acquire next swap chain image.\n");
-    uAssertMsg_v((*return_idx <= (u32)uVULKAN_MAX_FRAMES_IN_FLIGHT),
-                 "[ redner ] Acquired swap chain image index greater than frame count.\n");
+    if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        uVkVerbose("Swap chain was out of date.\n");
+        uVULKAN_DRAW_TOOLS_OUTDATED = true;
+        uRebuildVulkanSwapChain();
+    }
+    else if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        uVkVerbose("Swap chain was suboptimal.\n");
+        uVULKAN_DRAW_TOOLS_OUTDATED = true;
+        uRebuildVulkanSwapChain();
+    }
+    else
+    {
+        uAssertMsg_v(result != VK_TIMEOUT,
+                     "[ render ] [ timeout ] Could not acquire next swap chain image.\n");
+        uAssertMsg_v(result == VK_SUCCESS,
+                     "[ render ] Could not acquire next swap chain image.\n");
+        uAssertMsg_v((*return_idx <= (u32)uVULKAN_MAX_FRAMES_IN_FLIGHT),
+                     "[ redner ] Acquired swap chain image index greater than frame count.\n");
+    }
 }
 
 
@@ -213,48 +239,16 @@ uDrawFrame(_mut_ uVulkanDrawTools* const restrict dt)
     uUpdateGraphicsInfoAndSubmit(dt, &next_frame_idx);
     uUpdatePresentInfoAndPresent(dt, &next_frame_idx);
 
-        // increment frame number
-        dt->frame = (dt->frame + 1) % uVULKAN_MAX_FRAMES_IN_FLIGHT;
+    // increment frame number
+    dt->frame = (dt->frame + 1) % uVULKAN_MAX_FRAMES_IN_FLIGHT;
     uUpdateTFC;
-}
-
-
-__UE_internal__ void __UE_call__
-uDestroyDrawTools(_mut_ uVulkanDrawTools* const restrict draw_tools)
-{
-    uVulkanInfo* v_info = (uVulkanInfo*)uGetVulkanInfo();
-
-    uAssertMsg_v(v_info,                 "[ engine ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(v_info->logical_device, "[ engine ] VkDevice ptr must be non null.\n");
-    uAssertMsg_v(draw_tools,             "[ engine ] uVulkanDrawTools ptr must be non null.\n");
-    uAssertMsg_v(!RUNNING,
-                 "[ engine ] Tear down called while [  __UE_global__ RUNNING == true ].\n");
-
-
-    if (draw_tools && v_info && v_info->logical_device)
-    {
-        // Wait for device to be idle
-        vkDeviceWaitIdle(v_info->logical_device);
-
-        for (u32 sync_obj_idx = 0; sync_obj_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; sync_obj_idx++)
-        {
-            vkDestroySemaphore(v_info->logical_device, draw_tools->image_available[sync_obj_idx], NULL);
-            vkDestroySemaphore(v_info->logical_device, draw_tools->render_finished[sync_obj_idx], NULL);
-            vkDestroyFence(v_info->logical_device,     draw_tools->in_flight_fences[sync_obj_idx], NULL);
-        }
-
-        /* for (u8 fence_idx = 0; fence_idx < uVULKAN_NUM_COMMAND_BUFFERS; fence_idx++) */
-        /* { */
-        /*     vkDestroyFence(v_info->logical_device, draw_tools->swap_chain_image_fences[fence_idx], NULL); */
-        /* } */
-    }
 }
 
 
 __UE_internal__ void __UE_call__
 uDestroyEngine()
 {
-    uAssertMsg_v(!RUNNING, "[ engine ] Tear down called while [  __UE_global__ RUNNING == true ].\n");
+    uAssertMsg_v(!RUNNING, "[ engine ] Tear down called while `__UE_global__ RUNNING == true`.\n");
     uDestroyVulkan();
 
 #if _WIN32
@@ -291,7 +285,7 @@ int main(int argc, char** argv)
     printf("[ engine ] - release -\n");
 #endif
 
-    uVulkanDrawTools draw_tools = { 0 };
+    _mut_ uVulkanDrawTools draw_tools = { 0 };
 
     uInitializeVulkan(&draw_tools,
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
@@ -305,11 +299,16 @@ int main(int argc, char** argv)
 
     while(RUNNING)
     {
+        if (uVULKAN_DRAW_TOOLS_OUTDATED)
+        {
+            uRebuidlDrawTools(&draw_tools);
+        }
+
         uDrawFrame(&draw_tools);
         uRefreshInputState();
     }
 
-    uDestroyDrawTools((uVulkanDrawTools*)&draw_tools);
+    uDestroyDrawTools((uVulkanDrawTools*)&draw_tools, false);
     uDestroyEngine();
 
     printf("[ engine ] Graceful exit.\n");
