@@ -16,8 +16,8 @@
 #include <engine_tools/type_tools.h>
 
 
-__UE_global__ uSystemEvent win32_sys_event;
-__UE_global__ POINT win32_mouse_coords;
+__UE_global__ uSystemEvent win32_sys_event = { 0 };
+__UE_global__ POINT win32_mouse_coords     = { 0 };
 
 
 //
@@ -234,14 +234,15 @@ uWin32HandleEvents()
 
 
 __UE_internal__ void __UE_call__
-uDestroyWin32(_mut_ uWin32Info* const restrict win32_info)
+uDestroyWin32()
 {
-    uAssertMsg_v(win32_info, "Received null win32_info ptr.\n");
+    const uWin32Info* win32_info = uGetWin32Info();
+    uAssertMsg_v(win32_info, "uWin32Info ptr must not be null.\n");
 
 
     if(win32_info)
     {
-        free(win32_info);
+        free((void*)win32_info);
     }
 }
 

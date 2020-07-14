@@ -5,9 +5,10 @@ __UE_global__ bool RUNNING = true;
 // -- msvc: /D__UE_debug__ == 1#1
 #include <engine_tools/debug_tools.h>
 
+#include <engine_tools/vulkan_tools/vulkan_tools.h>
+#include <engine_tools/vulkan_tools/shader_tools.h>
 #include <engine_tools/memory_tools.h>
 #include <engine_tools/event_tools.h>
-#include <engine_tools/vulkan_tools.h>
 #include <data_structures/data_structures.h>
 
 // Set __uTESTS_ENABLED__ == 0 in tests.h to disable tests on startup
@@ -252,7 +253,7 @@ uDestroyEngine()
     uDestroyVulkan();
 
 #if _WIN32
-    uDestroyWin32((uWin32Info* const)win32_info);
+    uDestroyWin32();
 #endif // _WIN32
 }
 

@@ -86,7 +86,7 @@ pushd msvc_landfill >nul
 :: /LIBPATH:<arg>       Specify library directory/directories.
 
 :: General Parameters
-SET GeneralParameters=/Oi /Qpar /EHsc /GL /nologo /Ot
+SET GeneralParameters=/Oi /Qpar /EHsc /GL /nologo /Ot /TC
 
 :: Debug Paramters
 SET DebugParameters=/Od /MTd /W4 /WX /D__UE_debug__#1
@@ -97,6 +97,7 @@ SET ReleaseParameters=/MT /O2 /W4 /WX /Ob2
 :: Include Parameters
 SET IncludeParameters=/I%cd%\.. ^
 /I%cd%\..\engine_tools ^
+/I%cd%\..\engine_tools\vulkan_tools ^
 /I%cd%\..\win ^
 /I%cd%\..\data_structures ^
 /I%cd%\..\tests ^

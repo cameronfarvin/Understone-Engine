@@ -1,395 +1,21 @@
 #ifndef __UE_VULKAN_TOOLS_H__
 #define __UE_VULKAN_TOOLS_H__
 
-#ifndef __UE_VK_VERBOSE__
-#define __UE_VK_VERBOSE__ 1
-#endif // __UE_VK_VERBOSE__
-
-#ifndef __UE_VkForceValidation__
-#define __UE_vkForceValidation__ 1
-#endif // __UE_VkForceValidation__ 1
-
-#if __UE_debug__ == 1
-#define uVULKAN_MAX_NANOSECOND_WAIT ~((u64)0)
-#else
-#define uVULKAN_MAX_NANOSECOND_WAIT 100000000 // 0.1 seconds
-#endif // __UE_debug__ == 1
-
-#if __UE_VK_VERBOSE__
-#define MAX_VKVERBOSE_LEN 256
-char _vkverbose_buffer[MAX_VKVERBOSE_LEN];
-char _vkMessage_buffer[MAX_VKVERBOSE_LEN];
-#define uVkVerbose(...)                                                 \
-    snprintf(_vkMessage_buffer, MAX_VKVERBOSE_LEN, __VA_ARGS__);        \
-    snprintf(_vkverbose_buffer,                                         \
-             MAX_VKVERBOSE_LEN,                                         \
-             "[ vulkan ] %s",                                           \
-             _vkMessage_buffer);                                        \
-    fputs(_vkverbose_buffer, stdout);                                   \
-    fflush(stdout);
-#else
-#define uVkVerbose(...) /* uVKVerbose() REMOVED */
-#endif // __UE_VK_VERBOSE__
-
-
 #if _WIN32
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <win/win_platform.h>
-
-const uWin32Info* win32_info = NULL;
 #endif // _WIN32
 
 #include <vulkan/vulkan.h>
+#include <engine_tools/vulkan_tools/vulkan_macros.h>
+#include <engine_tools/vulkan_tools/vulkan_types.h>
+#include <engine_tools/vulkan_tools/shader_tools.h>
 #include <engine_tools/memory_tools.h>
 #include <engine_tools/window_tools.h>
 #include <data_structures/data_structures.h>
 
 // [ cfarvin::REMOVE ] Remove stdio.h
 #include <stdio.h>
-
-
-#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-VkDebugUtilsMessengerEXT           vulkan_main_debug_messenger;
-VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger_info  = { 0 };
-VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = { 0 };
-#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-
-
-//
-// [ begin ] Prime uVulkanCommandInfo
-typedef struct
-{
-    const VkCommandBuffer* command_buffers;
-    const VkCommandPool    command_pool;
-    const u32              num_command_buffers;
-} uVulkanCommandInfo;
-__UE_singleton__ uVulkanCommandInfo* uAPI_PRIME_VULKAN_COMMAND_INFO = NULL;
-__UE_internal__ __UE_inline__ const uVulkanCommandInfo* const
-uGetVulkanCommandInfo()
-{
-    if (!uAPI_PRIME_VULKAN_COMMAND_INFO)
-    {
-        *(uVulkanCommandInfo**)&uAPI_PRIME_VULKAN_COMMAND_INFO =
-            calloc(1, sizeof(uVulkanCommandInfo));
-    }
-
-    return uAPI_PRIME_VULKAN_COMMAND_INFO;
-}
-// [ end ] Prime uVulkanCommandInfo
-//
-
-
-//
-// [ begin ] Prime uVulkanSurfaceInfo
-typedef struct
-{
-    const VkSurfaceFormatKHR*      surface_formats;
-    const VkPresentModeKHR*        present_modes;
-    const VkSurfaceCapabilitiesKHR surface_capabilities;
-    const VkExtent2D               surface_extent;
-    const VkSurfaceKHR             surface;
-    const u32                      num_surface_formats;
-    const u32                      designated_format_index;
-    const u32                      designated_present_index;
-    const u32                      num_present_modes;
-} uVulkanSurfaceInfo;
-__UE_singleton__ uVulkanSurfaceInfo* uAPI_PRIME_VULKAN_SURFACE_INFO = NULL;
-__UE_internal__ __UE_inline__ const uVulkanSurfaceInfo* const
-uGetVulkanSurfaceInfo()
-{
-    if (!uAPI_PRIME_VULKAN_SURFACE_INFO)
-    {
-        *(uVulkanSurfaceInfo**)&uAPI_PRIME_VULKAN_SURFACE_INFO =
-            calloc(1, sizeof(uVulkanSurfaceInfo));
-    }
-
-    return uAPI_PRIME_VULKAN_SURFACE_INFO;
-}
-// [ end ] Prime uVulkanSurfaceInfo
-//
-
-
-//
-// [ begin ] Prime uVulkanQueueInfo
-// Note: as queue indices are added, ensure that unique value extraction
-//       in uCreateVulkanLogicalDevice() is updated as well.
-#define uVULKAN_NUM_QUEUES           2
-#define uVULKAN_GRAPHICS_QUEUE_INDEX 0
-#define uVULKAN_PRESENT_QUEUE_INDEX  1
-typedef struct
-{
-    const VkQueue          queues[uVULKAN_NUM_QUEUES];
-    const u32              designated_graphics_index;
-    const u32              designated_present_index;
-} uVulkanQueueInfo;
-__UE_singleton__ uVulkanQueueInfo* uAPI_PRIME_VULKAN_QUEUE_INFO = NULL;
-__UE_internal__ __UE_inline__ const uVulkanQueueInfo* const
-uGetVulkanQueueInfo()
-{
-    if (!uAPI_PRIME_VULKAN_QUEUE_INFO)
-    {
-        *(uVulkanQueueInfo**)&uAPI_PRIME_VULKAN_QUEUE_INFO =
-            (uVulkanQueueInfo*)calloc(1, sizeof(uVulkanQueueInfo));
-    }
-
-    return uAPI_PRIME_VULKAN_QUEUE_INFO;
-}
-// [ end ] Prime uVulkanQueueInfo
-//
-
-
-//
-// [ begin ] Prime uVulkanInfo
-typedef struct
-{
-    const VkInstance       instance;
-    const VkPhysicalDevice physical_device;
-    const VkDevice         logical_device;
-} uVulkanInfo;
-__UE_singleton__ uVulkanInfo* uAPI_PRIME_VULKAN_INFO = NULL;
-__UE_internal__ __UE_inline__ const uVulkanInfo* const
-uGetVulkanInfo()
-{
-    if (!uAPI_PRIME_VULKAN_INFO)
-    {
-        *(uVulkanInfo**)&uAPI_PRIME_VULKAN_INFO =
-            (uVulkanInfo*)calloc(1, sizeof(uVulkanInfo));
-    }
-
-    return uAPI_PRIME_VULKAN_INFO;
-}
-// [ end ] Prime uVulkanInfo
-//
-
-
-//
-// [ begin ] Prime uVulkanImageGroup
-typedef struct
-{
-    _mut_ VkImage*       images;
-    _mut_ VkImageView*   image_views;   // Note: To have num_images elements
-    _mut_ VkFramebuffer* frame_buffers; // Note: To have num_images elements
-    const u32            num_images;
-    const VkSwapchainKHR swap_chain;
-} uVulkanImageGroup;
-__UE_singleton__ uVulkanImageGroup* uAPI_PRIME_VULKAN_IMAGE_GROUP = NULL;
-__UE_internal__ __UE_inline__ const uVulkanImageGroup* const
-uGetVulkanImageGroup()
-{
-    if(!uAPI_PRIME_VULKAN_IMAGE_GROUP)
-    {
-        *(uVulkanImageGroup**)&uAPI_PRIME_VULKAN_IMAGE_GROUP =
-            (uVulkanImageGroup*)calloc(1, sizeof(uVulkanImageGroup));
-    }
-
-    return uAPI_PRIME_VULKAN_IMAGE_GROUP;
-}
-// [ end ] Prime uVulkanImageGroup
-//
-
-
-//
-// [ begin ] Prime uVulkanRenderInfo
-typedef struct
-{
-    const VkAttachmentDescription* attachment_descriptions;
-    const VkAttachmentReference*   attachment_references;
-    const VkPipelineLayout         pipeline_layout;
-    const VkRenderPass             render_pass;
-    const VkPipeline               graphics_pipeline;
-    const u32                      num_attachments;
-} uVulkanRenderInfo;
-__UE_singleton__ uVulkanRenderInfo* uAPI_PRIME_VULKAN_RENDER_INFO = NULL;
-__UE_internal__ __UE_inline__ const uVulkanRenderInfo* const
-uGetVulkanRenderInfo()
-{
-    if(!uAPI_PRIME_VULKAN_RENDER_INFO)
-    {
-        *(uVulkanRenderInfo**)&uAPI_PRIME_VULKAN_RENDER_INFO =
-            (uVulkanRenderInfo*)calloc(1, sizeof(uVulkanRenderInfo));
-    }
-
-    return uAPI_PRIME_VULKAN_RENDER_INFO;
-}
-// [ end ] Prime uVulkanRenderInfo
-//
-
-
-//
-// [ begin ] Draw Tools
-__UE_global__ bool uVULKAN_DRAW_TOOLS_OUTDATED = false;
-#define uVULKAN_NUM_COMMAND_BUFFERS   3
-#define uVULKAN_MAX_FRAMES_IN_FLIGHT  2
-typedef struct
-{
-    VkSemaphore          image_available[uVULKAN_MAX_FRAMES_IN_FLIGHT];
-    VkSemaphore          render_finished[uVULKAN_MAX_FRAMES_IN_FLIGHT];
-    VkFence              in_flight_fences[uVULKAN_MAX_FRAMES_IN_FLIGHT];
-    VkFence              in_flight_images[uVULKAN_NUM_COMMAND_BUFFERS];
-    VkCommandBuffer      command_buffers[uVULKAN_NUM_COMMAND_BUFFERS];
-    VkPipelineStageFlags stage_flags[1]; // Note: act as a sync primitive
-    VkDevice             logical_device;
-    VkSwapchainKHR       swap_chain;
-    VkSubmitInfo         submit_info;
-    VkQueue              graphics_queue;
-    VkQueue              present_queue;
-    VkPresentInfoKHR     present_info;
-    u32                  frame;
-} uVulkanDrawTools;
-
-
-__UE_internal__ __UE_inline__ void
-uCreateDrawTools(_mut_ uVulkanDrawTools* const restrict draw_tools)
-{
-    uVulkanInfo*        v_info           = (uVulkanInfo*)uGetVulkanInfo();
-    uVulkanQueueInfo*   queue_info       = (uVulkanQueueInfo*)uGetVulkanQueueInfo();
-    uVulkanImageGroup*  image_group      = (uVulkanImageGroup*)uGetVulkanImageGroup();
-    uVulkanCommandInfo* command_info     = (uVulkanCommandInfo*)uGetVulkanCommandInfo();
-
-    uAssertMsg_v(v_info,       "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(queue_info,   "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n");
-    uAssertMsg_v(image_group,  "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
-    uAssertMsg_v(command_info, "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
-
-    for (u8 frame_idx = 0; frame_idx < 1; frame_idx++)
-    {
-        draw_tools->stage_flags[frame_idx] =
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    }
-
-    draw_tools->logical_device  = v_info->logical_device;
-    draw_tools->swap_chain      = image_group->swap_chain;
-    draw_tools->graphics_queue  = queue_info->queues[uVULKAN_GRAPHICS_QUEUE_INDEX];
-    draw_tools->present_queue   = queue_info->queues[uVULKAN_PRESENT_QUEUE_INDEX];
-
-    VkSubmitInfo submit_info = { 0 };
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.waitSemaphoreCount   = 1;
-    submit_info.pWaitDstStageMask    = draw_tools->stage_flags;
-    submit_info.commandBufferCount   = 1;
-    submit_info.signalSemaphoreCount = 1;
-
-    draw_tools->submit_info = submit_info;
-    memcpy(&(draw_tools->command_buffers[0]),
-           command_info->command_buffers,
-           uVULKAN_NUM_COMMAND_BUFFERS * sizeof(VkCommandBuffer));
-
-    VkPresentInfoKHR present_info = { 0 };
-    present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    present_info.waitSemaphoreCount = 1;
-    present_info.swapchainCount     = 1;
-    present_info.pSwapchains        = &(draw_tools->swap_chain);
-    present_info.pResults           = NULL;
-
-    draw_tools->present_info = present_info;
-
-    VkSemaphoreCreateInfo semaphore_create_info = { 0 };
-    semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-    VkFenceCreateInfo fence_create_info = { 0 };
-    fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT; // Done state
-
-#if _WIN32
-#pragma warning( push )
-#pragma warning( disable : 4127 )
-#endif // _WIN32
-    uAssertMsg_v((uVULKAN_MAX_FRAMES_IN_FLIGHT == (uVULKAN_NUM_COMMAND_BUFFERS - 1)),
-                 "[ api ] Max in-flight frames must be exactly one less than number command buffers.\n");
-#if _WIN32
-#pragma warning( pop )
-#endif // _WIN32
-
-    VkResult result = VK_SUCCESS;
-    const char* sync_create_error_msg = "[ vulkan ] Unable to create draw syn objects.\n";
-
-    for (u8 sync_obj_idx = 0; sync_obj_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; sync_obj_idx++)
-    {
-        // Create image acquired semaphores
-        result = vkCreateSemaphore(v_info->logical_device,
-                                   &semaphore_create_info,
-                                   NULL,
-                                   &(draw_tools->image_available[sync_obj_idx]));
-
-        if (result != VK_SUCCESS)
-        {
-            RUNNING = false;
-            uFatal(sync_create_error_msg);
-        }
-
-        // Create present ready semaphores
-        result = vkCreateSemaphore(v_info->logical_device,
-                                   &semaphore_create_info,
-                                   NULL,
-                                   &(draw_tools->render_finished[sync_obj_idx]));
-
-        if (result != VK_SUCCESS)
-        {
-            RUNNING = false;
-            uFatal(sync_create_error_msg);
-        }
-
-        // Create in-flight fences
-        result = vkCreateFence(v_info->logical_device,
-                               &fence_create_info,
-                               NULL,
-                               &(draw_tools->in_flight_fences[sync_obj_idx]));
-
-        if (result != VK_SUCCESS)
-        {
-            RUNNING = false;
-            uFatal(sync_create_error_msg);
-        }
-    }
-
-    for (u8 cmd_buff_idx = 0; cmd_buff_idx < uVULKAN_NUM_COMMAND_BUFFERS; cmd_buff_idx++)
-    {
-        draw_tools->in_flight_images[cmd_buff_idx] = VK_NULL_HANDLE;
-    }
-}
-
-
-__UE_internal__ void __UE_inline__
-uDestroyDrawTools(_mut_ uVulkanDrawTools* const restrict draw_tools, bool is_rebuilding_swap_chain)
-{
-    uVulkanInfo* v_info = (uVulkanInfo*)uGetVulkanInfo();
-
-    if (is_rebuilding_swap_chain) {}     // Silence release build warnings
-    uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkDevice ptr must be non null.\n");
-    uAssertMsg_v(draw_tools,             "[ vulkan ] uVulkanDrawTools ptr must be non null.\n");
-    uAssertMsg_v(is_rebuilding_swap_chain || !RUNNING,
-                 "[ vulkan ] Tear down called while `__UE_global__ RUNNING == true`.\n");
-
-
-    if (draw_tools && v_info && v_info->logical_device)
-    {
-        // Wait for device to be idle
-        vkDeviceWaitIdle(v_info->logical_device);
-
-        for (u32 sync_obj_idx = 0; sync_obj_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; sync_obj_idx++)
-        {
-            vkDestroySemaphore(v_info->logical_device, draw_tools->image_available[sync_obj_idx], NULL);
-            vkDestroySemaphore(v_info->logical_device, draw_tools->render_finished[sync_obj_idx], NULL);
-            vkDestroyFence(v_info->logical_device,     draw_tools->in_flight_fences[sync_obj_idx], NULL);
-        }
-    }
-}
-
-
-__UE_internal__ __UE_inline__ void
-uRebuidlDrawTools(_mut_ uVulkanDrawTools* const restrict draw_tools)
-{
-    uAssertMsg_v(draw_tools, "[ vulkan ] uVulkanDrawTools ptr must be non null.\n");
-
-
-    uDestroyDrawTools(draw_tools, true);
-    uCreateDrawTools(draw_tools);
-
-    uVULKAN_DRAW_TOOLS_OUTDATED = false;
-}
-// [ end ] Draw Tools
-//
 
 
 //
@@ -427,7 +53,8 @@ uCreateVulkanRenderPass(const uVulkanInfo*        const restrict v_info,
 __UE_internal__ void __UE_call__
 uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
                               const uVulkanSurfaceInfo* const restrict surface_info,
-                              _mut_ uVulkanRenderInfo*  const restrict render_info);
+                              _mut_ uVulkanRenderInfo*  const restrict render_info,
+                              bool                                     is_rebuilding_swap_chain);
 
 __UE_internal__ void __UE_call__
 uCreateVulkanFrameBuffers(const uVulkanInfo*        const restrict v_info,
@@ -450,304 +77,6 @@ uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice          
                                                 bool                                     is_rebuilding_swapchain);
 // [ end ] Forward decls
 //
-
-
-
-__UE_internal__ __UE_inline__ void
-uDestroyVulkanRenderInfo()
-{
-    uVulkanInfo*       v_info      = (uVulkanInfo*)uGetVulkanInfo();
-    uVulkanRenderInfo* render_info = (uVulkanRenderInfo*)uGetVulkanRenderInfo();
-
-    uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkInstance must be non zero.\n");
-    uAssertMsg_v(render_info,            "[ vulkan ] uVulkanRenderInfo ptr must be non null.\n");
-
-    // Destroy pipeline, pipeline layout, renderpass;
-    uVkVerbose("Destroying pipeline components...\n");
-    if (render_info)
-    {
-        if (v_info->logical_device)
-        {
-            // Destroy pipeline layout, render pass, graphics pipeline, frame buffer(s)
-            vkDestroyPipeline(v_info->logical_device, render_info->graphics_pipeline, NULL);
-            vkDestroyPipelineLayout(v_info->logical_device, render_info->pipeline_layout, NULL);
-            vkDestroyRenderPass(v_info->logical_device, render_info->render_pass, NULL);
-        }
-
-        if (render_info->attachment_descriptions)
-        {
-            free((VkAttachmentDescription*)render_info->attachment_descriptions);
-        }
-
-        if (render_info->attachment_references)
-        {
-            free((VkAttachmentReference*)render_info->attachment_references);
-        }
-
-        if (RUNNING)
-        {
-            memset(render_info, 0, sizeof(uVulkanRenderInfo));
-        }
-        else
-        {
-            free(render_info);
-        }
-    }
-}
-
-
-
-__UE_internal__ __UE_inline__ void
-uDestroyVulkanQueueInfo()
-{
-    uVulkanQueueInfo* queue_info = (uVulkanQueueInfo*)uGetVulkanQueueInfo();
-    uAssertMsg_v(queue_info, "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n");
-
-    uVkVerbose("Destroying queue components...\n");
-
-    if (queue_info)
-    {
-        if (RUNNING)
-        {
-            memset(queue_info, 0, sizeof(uVulkanQueueInfo));
-        }
-        else
-        {
-            free(queue_info);
-        }
-    }
-}
-
-
-__UE_internal__ __UE_inline__ void
-uDestroyVulkanCommandBuffers()
-{
-    uVulkanInfo*        v_info       = (uVulkanInfo*)uGetVulkanInfo();
-    uVulkanCommandInfo* command_info = (uVulkanCommandInfo*)uGetVulkanCommandInfo();
-
-    uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkInstance must be non zero.\n");
-    uAssertMsg_v(command_info,           "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
-
-    uVkVerbose("Destroying command buffers...\n");
-    if (command_info)
-    {
-        if (v_info)
-        {
-            vkFreeCommandBuffers(v_info->logical_device,
-                                 command_info->command_pool,
-                                 command_info->num_command_buffers,
-                                 command_info->command_buffers);
-        }
-
-        if (command_info->command_buffers)
-        {
-            free(command_info->command_buffers);
-        }
-    }
-}
-
-
-__UE_internal__ __UE_inline__ void
-uDestroyVulkanCommandInfo()
-{
-    uVulkanInfo*        v_info       = (uVulkanInfo*)uGetVulkanInfo();
-    uVulkanCommandInfo* command_info = (uVulkanCommandInfo*)uGetVulkanCommandInfo();
-
-    uAssertMsg_v(v_info,           "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(v_info->instance, "[ vulkan ] VkInstance must be non zero.\n");
-    uAssertMsg_v(command_info,     "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
-
-
-    uVkVerbose("Destroying command components...\n");
-    if (command_info)
-    {
-        uDestroyVulkanCommandBuffers();
-
-        if(v_info)
-        {
-            vkDestroyCommandPool(v_info->logical_device,
-                                 command_info->command_pool,
-                                 NULL);
-        }
-
-        if (RUNNING)
-        {
-            memset(command_info, 0, sizeof(uVulkanCommandInfo));
-        }
-        else
-        {
-            free(command_info);
-        }
-    }
-}
-
-
-__UE_internal__ __UE_inline__ void
-uDestroyVulkanSurfaceInfo()
-{
-    uVulkanInfo*        v_info       = (uVulkanInfo*)uGetVulkanInfo();
-    uVulkanSurfaceInfo* surface_info = (uVulkanSurfaceInfo*)uGetVulkanSurfaceInfo();
-
-    uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(v_info->instance,       "[ vulkan ] VkInstance must be non zero.\n");
-    uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkInstance must be non zero.\n");
-    uAssertMsg_v(surface_info,           "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
-
-
-    uVkVerbose("Destroying surface components...\n");
-    if (surface_info)
-    {
-        if (v_info->instance)
-        {
-            vkDestroySurfaceKHR(v_info->instance, surface_info->surface, NULL);
-        }
-
-        if (surface_info->surface_formats)
-        {
-            free((VkSurfaceFormatKHR*)surface_info->surface_formats);
-        }
-
-        if (surface_info->present_modes)
-        {
-            free((VkPresentModeKHR*)surface_info->present_modes);
-        }
-
-        if (RUNNING)
-        {
-            memset(surface_info, 0, sizeof(uVulkanSurfaceInfo));
-        }
-        else if (surface_info)
-        {
-            free(surface_info);
-        }
-
-    }
-}
-
-
-__UE_internal__ __UE_inline__ void
-uDestroyVulkanInfo()
-{
-    uVulkanInfo* v_info = (uVulkanInfo*)uGetVulkanInfo();
-
-    uAssertMsg_v(v_info,           "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(v_info->instance, "[ vulkan ] VkInstance must be non zero.\n");
-
-    uVkVerbose("Destroying primary vulkan components...\n");
-    if (v_info)
-    {
-        if (v_info->instance)
-        {
-#if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-            // Destroy debug messenger
-            PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT =
-                (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(v_info->instance,
-                                                                           "vkDestroyDebugUtilsMessengerEXT");
-            uAssertMsg_v(vkDestroyDebugUtilsMessengerEXT,
-                         "[ vulkan ] Unable to acquire fnptr: vkDestroyDebugUtilsMessengerEXT().\n");
-            if (vkDestroyDebugUtilsMessengerEXT && vulkan_main_debug_messenger)
-            {
-                vkDestroyDebugUtilsMessengerEXT(v_info->instance,
-                                                vulkan_main_debug_messenger,
-                                                NULL);
-            }
-#endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-        }
-
-        if (v_info->logical_device)
-        {
-            vkDestroyDevice(v_info->logical_device, NULL);
-        }
-
-        if (v_info->instance)
-        {
-            vkDestroyInstance(v_info->instance, NULL);
-        }
-    }
-
-
-    if (RUNNING)
-    {
-        memset(v_info, 0, sizeof(uVulkanInfo));
-    }
-    else if (v_info)
-    {
-        free(v_info);
-    }
-}
-
-
-__UE_internal__ __UE_inline__ void
-uDestroyVulkanImageGroup()
-{
-    uVulkanInfo*       v_info      = (uVulkanInfo*)uGetVulkanInfo();
-    uVulkanImageGroup* image_group = (uVulkanImageGroup*)uGetVulkanImageGroup();
-
-    uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkDevice ptr must be non null.\n");
-    uAssertMsg_v(image_group,            "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
-
-    uVkVerbose("Destroying image group components...\n");
-    if (image_group)
-    {
-        if (v_info && v_info->logical_device)
-        {
-            // Destroy image views, frame buffers
-            for (u32 image_idx = 0; image_idx < image_group->num_images; image_idx++)
-            {
-                if (image_group->image_views)
-                {
-                    vkDestroyImageView(v_info->logical_device,
-                                       image_group->image_views[image_idx],
-                                       NULL);
-                }
-
-                if (image_group->frame_buffers)
-                {
-                    vkDestroyFramebuffer(v_info->logical_device,
-                                         image_group->frame_buffers[image_idx],
-                                         NULL);
-                }
-
-            }
-        }
-
-        if (image_group->swap_chain)
-        {
-            uVkVerbose("Destroying old swap chain...\n");
-            vkDestroySwapchainKHR(v_info->logical_device,
-                                  image_group->swap_chain,
-                                  NULL);
-        }
-
-        if (image_group->images)
-        {
-            free(image_group->images);
-        }
-
-        if (image_group->image_views)
-        {
-            free(image_group->image_views);
-        }
-
-        if (image_group->frame_buffers)
-        {
-            free(image_group->frame_buffers);
-        }
-    }
-
-
-    if (RUNNING)
-    {
-        memset(image_group, 0, sizeof(uVulkanImageGroup));
-    }
-    else if (image_group)
-    {
-        free(image_group);
-    }
-}
 
 
 __UE_internal__ __UE_inline__ void
@@ -806,7 +135,7 @@ uRebuildVulkanSwapChain()
     uCreateVulkanSwapChain((uVulkanInfo*)v_info, surface_info, queue_info, image_group, true);
     uCreateVulkanImageViews(v_info, image_group, surface_info);
     uCreateVulkanRenderPass(v_info, surface_info, render_info, true);
-    uCreateVulkanGraphicsPipeline(v_info, surface_info, render_info);
+    uCreateVulkanGraphicsPipeline(v_info, surface_info, render_info, true);
     uCreateVulkanFrameBuffers(v_info, surface_info, image_group, render_info, true);
     uCreateVulkanCommandBuffers(v_info, command_info, image_group, render_info, surface_info, true);
 
@@ -1111,98 +440,10 @@ uCreateVulkanRenderPass(const uVulkanInfo*        const restrict v_info,
 
 
 __UE_internal__ void __UE_call__
-uCreateVulkanShaderModule(const char*           const restrict spir_v_file_data,
-                          const size_t                         spir_v_file_size,
-                          _mut_ VkShaderModule* const restrict shader_module)
-{
-    const uVulkanInfo* const v_info = uGetVulkanInfo();
-
-    uAssertMsg_v(v_info->logical_device, "[ vulkan ] SPIR-V file data must be non null.\n");
-    uAssertMsg_v(spir_v_file_data,       "[ vulkan ] SPIR-V file data must be non null.\n");
-    uAssertMsg_v(spir_v_file_size,       "[ vulkan ] SPIR-V file size must be non zero.\n");
-    uAssertMsg_v(shader_module,          "[ vulkan ] VkShaderModule ptr must not be null.\n");
-
-
-    VkShaderModuleCreateInfo smodule_create_info = { 0 };
-    smodule_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    smodule_create_info.codeSize = spir_v_file_size;
-    smodule_create_info.pCode    = (const u32*)spir_v_file_data;
-
-    VkResult result = vkCreateShaderModule(v_info->logical_device,
-                                           &smodule_create_info,
-                                           NULL,
-                                           shader_module);
-    if (result != VK_SUCCESS)
-    {
-        free((void*)spir_v_file_data);
-        uDestroyVulkan();
-        uFatal("[ vulkan ] Unable to create shader module.\n");
-    }
-}
-
-
-__UE_internal__ void __UE_call__
-uReadSpirvFile(const char*   const       restrict file_name,
-               _mut_ char**  _mut_ const restrict return_file_data,
-               _mut_ size_t*             restrict return_file_size)
-{
-    uAssertMsg_v(file_name,            "[ vulkan ] File name ptr must be non null.\n");
-    uAssertMsg_v(!(*return_file_data), "[ vulkan ] Return file bytes ptr must be null; will be overwritten.\n");
-    uAssertMsg_v(return_file_size,     "[ vulkan ] Return file size ptr must be non null.\n");
-
-
-    FILE* spir_v_file = NULL;
-    fopen_s(&spir_v_file, file_name, "rb");
-    if (!spir_v_file)
-    {
-        uDestroyVulkan();
-        uFatal("[ vulkan ] Unable to open SPIR-V file: %s\n", file_name);
-    }
-
-    s32 fseek_success = fseek(spir_v_file, 0L, SEEK_END);
-    if (fseek_success) // Success == 0
-    {
-        uDestroyVulkan();
-        uFatal("[ vulkan ] Unable to seek within SPIR-V file: %s\n", file_name);
-    }
-
-    *return_file_size = (size_t)ftell(spir_v_file);
-    if (!(*return_file_size))
-    {
-        uDestroyVulkan();
-        uFatal("[ vulkan ] SPIR-V file: %s has zero size.\n", file_name);
-    }
-
-    size_t allocation_size = *return_file_size * sizeof(char);
-    *return_file_data = (char*)calloc(1, allocation_size);
-    if (!(*return_file_data))
-    {
-        uDestroyVulkan();
-        uFatal("[ vulkan ] Unable to allocate host memory for SPIR-V file: %s.\n" , file_name);
-    }
-
-    rewind(spir_v_file);
-    size_t items_read = fread_s((void*)(*return_file_data), // buffer
-                                allocation_size,            // buffer size
-                                1,                          // element size
-                                (*return_file_size),        // element count
-                                spir_v_file);               // FILE*
-
-    if (items_read != *return_file_size)
-    {
-        uDestroyVulkan();
-        uFatal("[ vulkan ] Unable to verify reading of SPIR-V file: %s.\n" , file_name);
-    }
-
-    fclose(spir_v_file);
-    uVkVerbose("\tLoaded shader: %s\n", file_name);
-}
-
-
-__UE_internal__ void __UE_call__
 uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
                               const uVulkanSurfaceInfo* const restrict surface_info,
-                              _mut_ uVulkanRenderInfo*  const restrict render_info)
+                              _mut_ uVulkanRenderInfo*  const restrict render_info,
+                              bool                                     is_rebuilding_swap_chain)
 {
     uAssertMsg_v(v_info,                 "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkPhysical device must be non zero.\n");
@@ -1210,51 +451,87 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
     uAssertMsg_v(render_info,            "[ vulkan ] uVulkanRenderInfo ptr must be non null.\n");
 
 
-    // [ cfarvin::TODO ] Modules below are hard coded for now
-    uVkVerbose("Loading shader files...\n");
+    // [ cfarvin::RESTORE ]
+    /* VkPipelineShaderStageCreateInfo* shader_stage_create_infos = NULL; */
+    /* uVulkanShader*                   loaded_shaders            = NULL; */
+    /* u32                              num_loaded_shaders        = 0; */
 
-    // Vertex module
-    VkShaderModule vkTriangle_vert_module = NULL;
-    char*          vkTriangle_vert_data   = NULL;
-    size_t         vkTriangle_vert_size   = 0;
+    if (!is_rebuilding_swap_chain)
+    {
+        // Note: shader files currently hard-coded
+        //       see vulkan_tools/shader_tools.h
 
-    uReadSpirvFile(".\\shaders\\bin\\vkTriangle_vert.spv",
-                   &vkTriangle_vert_data,
-                   &vkTriangle_vert_size);
+        // [ cfarvin::RESTORE ]
+        // Load all shader files
+        /* uLoadSpirvModules(&loaded_shaders, */
+        /*                   &num_loaded_shaders); */
+        // [ cfarvin::REMOVE ]
+        uLoadSpirvModules(&(REMOVE_ME.shaders),
+                          &(REMOVE_ME.num_shaders));
 
-    uCreateVulkanShaderModule(vkTriangle_vert_data,
-                              vkTriangle_vert_size,
-                              &vkTriangle_vert_module);
 
-    // Fragment module
-    VkShaderModule vkTriangle_frag_module = NULL;
-    char*          vkTriangle_frag_data   = NULL;
-    size_t         vkTriangle_frag_size   = 0;
+        // [ cfarvin::RESTORE ]
+        /* const char* shader_load_err_msg = "[ vulkan ] No shaders were loaded.\n"; */
+        /* uAssertMsg_v(num_loaded_shaders, shader_load_err_msg); */
+        /* if (!num_loaded_shaders) */
+        /* { */
+        /*     uDestroyVulkan(); */
+        /*     uFatal(shader_load_err_msg); */
+        /* } */
 
-    uReadSpirvFile(".\\shaders\\bin\\vkTriangle_frag.spv",
-                   &vkTriangle_frag_data,
-                   &vkTriangle_frag_size);
 
-    uCreateVulkanShaderModule(vkTriangle_frag_data,
-                              vkTriangle_frag_size,
-                              &vkTriangle_frag_module);
+        // [ cfarvin::RESTORE ]
+        /* const char* shader_array_err_msg = "[ vulkan ] uVulkanShader ptr must not be null.\n"; */
+        /* uAssertMsg_v(loaded_shaders, shader_array_err_msg); */
+        /* if (!loaded_shaders) */
+        /* { */
+        /*     uDestroyVulkan(); */
+        /*     uFatal(shader_array_err_msg); */
+        /* } */
 
-    // Create shader stages
-    VkPipelineShaderStageCreateInfo shader_stage_array[2] = { 0 };
+        // Store shader stage create infos
+        // [ cfarvin::TODO ] Free later
+        // [ cfarvin::RESTORE ]
+        /* shader_stage_create_infos = (VkPipelineShaderStageCreateInfo*)calloc(num_loaded_shaders, */
+        /*                                                                     sizeof(VkPipelineShaderStageCreateInfo)); */
+        // [ cfarvin::REMOVE ]
+        REMOVE_ME.shader_stage_create_infos = (VkPipelineShaderStageCreateInfo*)calloc(REMOVE_ME.num_shaders,
+                                                                                          sizeof(VkPipelineShaderStageCreateInfo));
 
-    // Vert
-    shader_stage_array[0].sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    shader_stage_array[0].stage               = VK_SHADER_STAGE_VERTEX_BIT;
-    shader_stage_array[0].module              = vkTriangle_vert_module;
-    shader_stage_array[0].pName               = "main"; // entry point
-    shader_stage_array[0].pSpecializationInfo = NULL;   // optional: set shader constants
 
-    // Frag
-    shader_stage_array[1].sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    shader_stage_array[1].stage               = VK_SHADER_STAGE_FRAGMENT_BIT;
-    shader_stage_array[1].module              = vkTriangle_frag_module;
-    shader_stage_array[1].pName               = "main"; // entry point
-    shader_stage_array[1].pSpecializationInfo = NULL;   // optional: set shader constants
+        // [ cfarvin::RESTORE ]
+        /* for (size_t shader_idx = 0; shader_idx < num_loaded_shaders; shader_idx++) */
+        // [ cfarvin::REMOVE ]
+        for (size_t shader_idx = 0; shader_idx < REMOVE_ME.num_shaders; shader_idx++)
+        {
+            // [ cfarvin::RESTORE ]
+            /* const uVulkanShader shader = loaded_shaders[shader_idx]; */
+            // [ cfarvin::REMOVE ]
+            const uVulkanShader shader = REMOVE_ME.shaders[shader_idx];
+            uAssertMsg_v(shader.shader_module,         "[ vulkan ] VkShaderModule must be non zero.\n");
+            uAssertMsg_v(shader.shader_data,           "[ vulkan ] Shader data ptr must be non null\n.");
+            uAssertMsg_v(shader.num_shader_data_bytes, "[ vulkan ] Shader byte count must be non zero\n.");
+            uAssertMsg_v(uValidateVulkanShaderType(shader.shader_type),
+                         "[ vulkan ] Shader type must be valid.\n");
+
+
+            // [ cfarvin::RESTORE ]
+            /* shader_stage_create_infos[shader_idx].sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO; */
+            /* shader_stage_create_infos[shader_idx].stage               = uVulkanShaderTypeToStageBit(shader.shader_type); */
+            /* shader_stage_create_infos[shader_idx].module              = shader.shader_module; */
+            /* shader_stage_create_infos[shader_idx].pName               = "main"; // entry point */
+            /* shader_stage_create_infos[shader_idx].pSpecializationInfo = NULL;   // optional: set shader constants */
+
+            // [ cfarvin::REMOVE ]
+            REMOVE_ME.shader_stage_create_infos[shader_idx].sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            REMOVE_ME.shader_stage_create_infos[shader_idx].stage               = uVulkanShaderTypeToStageBit(shader.shader_type);
+            REMOVE_ME.shader_stage_create_infos[shader_idx].module              = shader.shader_module;
+            REMOVE_ME.shader_stage_create_infos[shader_idx].pName               = "main"; // entry point
+            REMOVE_ME.shader_stage_create_infos[shader_idx].pSpecializationInfo = NULL;   // optional: set shader constants
+
+        }
+    }
+
 
     // Vertex input
     VkPipelineVertexInputStateCreateInfo vertex_input_create_info = { 0 };
@@ -1374,15 +651,24 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
 
     if (result != VK_SUCCESS)
     {
-        if (vkTriangle_vert_data)
+        if (!is_rebuilding_swap_chain)
         {
-            free(vkTriangle_vert_data);
+            // [ cfarvin::RESTORE ]
+            /* for (size_t shader_idx = 0; shader_idx < num_loaded_shaders; shader_idx++) */
+            // [ cfarvin::REMOVE ]
+            for (size_t shader_idx = 0; shader_idx < REMOVE_ME.num_shaders; shader_idx++)
+            {
+                // [ cfarvin::RESTORE ]
+                /* uVulkanShader shader = loaded_shaders[shader_idx]; */
+                // [ cfarvin::REMOVE ]
+                uVulkanShader shader = REMOVE_ME.shaders[shader_idx];
+                if (shader.shader_data)
+                {
+                    free((void*)shader.shader_data);
+                }
+            }
         }
 
-        if (vkTriangle_vert_data)
-        {
-            free(vkTriangle_vert_data);
-        }
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create pipeline layout.\n");
     }
@@ -1390,8 +676,22 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
     // Create graphics pipeline
     VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = { 0 };
     graphics_pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    graphics_pipeline_create_info.stageCount          = 2;
-    graphics_pipeline_create_info.pStages             = shader_stage_array;
+
+    // [ cfarvin::TODO ] This needs to be coupled with a better way to store shader data
+    //                   such that on pipeline re-creation, we do not have to go to disk.
+    //                   The two questions: 1) Do we really want to store this? 2) If so,
+    //                   how to we do this effectively?
+    //
+    //                   Change graphics_pipeline_create_info.stageCount when we figure
+    //                   this out. Hard-coded for vert/frag triangle for now.
+    graphics_pipeline_create_info.stageCount          = REMOVE_ME.num_stages;
+    /* graphics_pipeline_create_info.stageCount          = 2; */
+
+
+    // [ cfarvin::RESTORE ]
+    /* graphics_pipeline_create_info.pStages             = shader_stage_create_infos; */
+    // [ cfarvin::REMOVE ]
+    graphics_pipeline_create_info.pStages             = REMOVE_ME.shader_stage_create_infos;
     graphics_pipeline_create_info.pVertexInputState   = &vertex_input_create_info;
     graphics_pipeline_create_info.pInputAssemblyState = &input_assembly_create_info;
     graphics_pipeline_create_info.pViewportState      = &frame_buffer_viewport_create_info;
@@ -1399,10 +699,10 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
     graphics_pipeline_create_info.pMultisampleState   = &multi_sample_create_info;
     graphics_pipeline_create_info.pDepthStencilState  = depth_stencil_create_info; // Currently off
     graphics_pipeline_create_info.pColorBlendState    = &color_blend_create_info;
-    graphics_pipeline_create_info.pDynamicState       = NULL;                      // Filled out, not using.
+    graphics_pipeline_create_info.pDynamicState       = NULL; // Filled out, not using.
     graphics_pipeline_create_info.layout              = render_info->pipeline_layout;
     graphics_pipeline_create_info.renderPass          = render_info->render_pass;
-    graphics_pipeline_create_info.subpass             = 0;                         // Read: "Subpass index"
+    graphics_pipeline_create_info.subpass             = 0; // Read: "Subpass index"
     graphics_pipeline_create_info.basePipelineHandle  = NULL;
     graphics_pipeline_create_info.basePipelineIndex   = -1;
 
@@ -1419,18 +719,37 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo*        const restrict v_info,
         uFatal("[ vulkan ] Unable to create graphics pipeline.\n");
     }
 
-    // Cleanup
-    vkDestroyShaderModule(v_info->logical_device, vkTriangle_vert_module, NULL);
-    vkDestroyShaderModule(v_info->logical_device, vkTriangle_frag_module, NULL);
 
-    if (vkTriangle_vert_data)
+    // Clean up
+    if (!is_rebuilding_swap_chain)
     {
-        free(vkTriangle_vert_data);
-    }
+        // [ cfarvin::RESTORE ]
+        /* for (size_t shader_idx = 0; shader_idx < num_loaded_shaders; shader_idx++) */
+        // [ cfarvin::REMOVE ]
+        for (size_t shader_idx = 0; shader_idx < REMOVE_ME.num_shaders; shader_idx++)
+        {
+            // [ cfarvin::RESTORE ]
+            /* uVulkanShader shader = loaded_shaders[shader_idx]; */
+            /* // [ cfarvin::REVISIT ] You'll need to destroy shader modules on tear-down if you keep */
+            /* //                      them loaded. */
+            /* vkDestroyShaderModule(v_info->logical_device, */
+            /*                       shader.shader_module, */
+            /*                       NULL); */
 
-    if (vkTriangle_frag_data)
-    {
-        free(vkTriangle_frag_data);
+            /* if (shader.shader_data) */
+            /* { */
+            /*     free((void*)shader.shader_data); */
+            /* } */
+
+            // [ begin ]
+            // [ cfarvin::REMOVE ]
+            uVulkanShader shader = REMOVE_ME.shaders[shader_idx];
+            if (shader.shader_data)
+            {
+                free((void*)shader.shader_data);
+            }
+            // [ end ]
+        }
     }
 }
 
@@ -2335,13 +1654,6 @@ uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bi
 
         RUNNING = false;
     }
-#if __UE_VK_VERBOSE__ == 1
-    else
-    {
-        printf("[ vulkan verbose validation ] %s.\n", callback_data->pMessage);
-        fflush(stdout);
-    }
-#endif // __UE_VK_VERBOSE__== 1
 
     return should_abort_calling_process;
 }
@@ -2416,9 +1728,8 @@ uCreateWin32Surface(_mut_ uVulkanInfo*        const restrict v_info,
                  "[ vulkan ] uVulkanSurfaceInfo ptr must be null; will be overwritten.\n");
 
 
-    uWin32Info** non_const_win32_info = (uWin32Info**)&win32_info;
-    *non_const_win32_info = (uWin32Info*)uWin32CreateWindow();
-    uAssertMsg_v(win32_info, "[ vulkan ] [ win32 ] Unable to create Win32 window.\n");
+    const uWin32Info* win32_info = uGetWin32Info();
+    uAssertMsg_v(win32_info && win32_info->window, "[ vulkan ] [ win32 ] Unable to create Win32 window.\n");
     if (!win32_info)
     {
         return;
@@ -2911,7 +2222,7 @@ uInitializeVulkan(_mut_ uVulkanDrawTools* const       restrict draw_tools,
     uCreateVulkanRenderPass(v_info, surface_info, render_info, false);
 
     // render_info partially built
-    uCreateVulkanGraphicsPipeline(v_info, surface_info, render_info);
+    uCreateVulkanGraphicsPipeline(v_info, surface_info, render_info, false);
 
     uCreateVulkanFrameBuffers(v_info, surface_info, image_group, render_info, false);
 
@@ -2939,6 +2250,26 @@ uDestroyVulkan()
     {
         vkDeviceWaitIdle(v_info->logical_device);
     }
+
+    // [ begin ]
+    // [ cfarvin::REMOVE ]
+    for(size_t shader_idx = 0; shader_idx < REMOVE_ME.num_shaders; shader_idx++)
+    {
+        vkDestroyShaderModule(v_info->logical_device,
+                              REMOVE_ME.shaders[shader_idx].shader_module,
+                              NULL);
+    }
+
+    if (REMOVE_ME.shader_stage_create_infos)
+    {
+        free(REMOVE_ME.shader_stage_create_infos);
+    }
+
+    if (REMOVE_ME.shaders)
+    {
+        free(REMOVE_ME.shaders);
+    }
+    // [ end ]
 
     uDestroyVulkanImageGroup();
     uDestroyVulkanSurfaceInfo();

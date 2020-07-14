@@ -2,11 +2,9 @@
 #define __UE_MACRO_TOOLS_H___
 
 
-
 //
-// Decorators
-//
-#ifndef __UE_call__ 
+// [ begin ] Decorators
+#ifndef __UE_call__
 #define __UE_call__ __cdecl
 #endif // __UE_call__
 
@@ -14,31 +12,39 @@
 #define _mut_ /* NOTICE: MUTABLE */
 #endif // _mut_
 
+// Scopes functions to the current translation unit
 #ifndef __UE_internal__
 #define __UE_internal__ static
 #endif // __UE_internal__
 
+// Scopes functions globally
 #ifndef __UE_external__
 #define __UE_external__ extern
 #endif // __UE_external__
 
+// Scopes variables to the current translation unit scope
 #ifndef __UE_global__
-#define __UE_global__ static
+#define __UE_global__ extern
 #endif // __UE_global__
 
+// Scopes variables to the local file
+#ifndef __UE_local__
+#define __UE_local__ static
+#endif // __UE_local__
+
+// scopes Singletons to global scope
 #ifndef __UE_singleton__
-#define __UE_singleton__ static const
+#define __UE_singleton__ const
 #endif // __UE_singleton__
-
-
-
-
+// [ end ] Decorators
+//
 
 //
-// Passifiers
-//
+// [ begin ]Passifiers
 #ifdef _WIN32
 #define restrict __restrict
 #endif // WIN32
+// [ end ]Passifiers
+//
 
 #endif // __UE_MACRO_TOOLS_H___
