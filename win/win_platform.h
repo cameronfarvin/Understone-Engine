@@ -16,8 +16,8 @@
 #include "type_tools.h"
 
 
-__UE_global__ uSystemEvent win32_sys_event;
-__UE_global__ POINT win32_mouse_coords;
+__UE_global__ uSystemEvent win32_sys_event = { 0 };
+__UE_global__ POINT win32_mouse_coords = { 0 };
 
 
 //
@@ -28,7 +28,7 @@ typedef struct
     int         command_show;
     HWND        window;
     HDC         device_context;
-    const char* class_name;
+    const s8*   class_name;
 } uWin32Info;
 
 // Forward declare creation method
@@ -152,15 +152,12 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 __UE_internal__ const uWin32Info* __UE_call__
 uWin32CreateWin32Info()
 {
-    memset(&win32_sys_event, 0, sizeof(win32_sys_event));
-    memset(&win32_mouse_coords, 0, sizeof(win32_mouse_coords));
-
     if (uAPI_PRIME_WIN32_INFO)
     {
         return uAPI_PRIME_WIN32_INFO;
     }
 
-    const char* window_class_name = uGetEngineName();
+    const s8* window_class_name = uGetEngineName();
 
     *(uWin32Info**)&uAPI_PRIME_WIN32_INFO = (uWin32Info*)calloc(1, sizeof(uWin32Info));
     (*(uWin32Info**)&uAPI_PRIME_WIN32_INFO)->class_name    = window_class_name;
@@ -171,7 +168,7 @@ uWin32CreateWin32Info()
     window_class.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     window_class.lpfnWndProc   = uEngineWindowProc;
     window_class.hInstance     = uAPI_PRIME_WIN32_INFO->instance;
-    window_class.lpszClassName = uAPI_PRIME_WIN32_INFO->class_name;
+    window_class.lpszClassName = (const char*)uAPI_PRIME_WIN32_INFO->class_name;
     window_class.cbSize        = sizeof(WNDCLASSEX);
     /*
       window_class.hIcon = NULL;
@@ -189,7 +186,7 @@ uWin32CreateWin32Info()
 
     (*(uWin32Info**)&uAPI_PRIME_WIN32_INFO)->window = CreateWindowEx(0,
                                                                      window_class.lpszClassName,
-                                                                     window_class_name,
+                                                                     (const char*)window_class_name,
                                                                      WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                                                                      CW_USEDEFAULT,
                                                                      CW_USEDEFAULT,
@@ -217,11 +214,12 @@ uWin32CreateWin32Info()
 }
 
 
-__UE_internal__ __UE_inline__ const uWin32Info*
-uWin32CreateWindow()
-{
-    return uWin32CreateWin32Info();
-}
+// [ cfarvin::RESTORE ] Unused fn warning
+/* __UE_internal__ __UE_inline__ const uWin32Info* */
+/* uWin32CreateWindow() */
+/* { */
+/*     return uWin32CreateWin32Info(); */
+/* } */
 
 
 __UE_internal__ __UE_inline__ uSystemEvent

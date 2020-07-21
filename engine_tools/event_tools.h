@@ -87,11 +87,12 @@ uSetInputReleased(const uint64_t key)
 }
 
 
-__UE_internal__ __UE_inline__ uint64_t
-uGetInputPressed(const  uint64_t key)
-{
-    return input_state & key;
-}
+// [ cfarvin::RESTORE ] Unused fn warning
+/* __UE_internal__ __UE_inline__ uint64_t */
+/* uGetInputPressed(const  uint64_t key) */
+/* { */
+/*     return input_state & key; */
+/* } */
 
 
 #endif // __event_tools__

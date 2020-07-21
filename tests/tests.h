@@ -1,11 +1,11 @@
 #ifndef __UE_TESTS_H__
 #define __UE_TESTS_H__
 
-#include <engine_tools/type_tools.h>
-#include <engine_tools/maths_tools.h>
-#include <engine_tools/debug_tools.h>
-#include <engine_tools/memory_tools.h>
-#include <data_structures/data_structures.h>
+#include "type_tools.h"
+#include "maths_tools.h"
+#include "debug_tools.h"
+#include "memory_tools.h"
+#include "data_structures.h"
 #include <assert.h>
 #include <stdio.h>
 #include <inttypes.h>

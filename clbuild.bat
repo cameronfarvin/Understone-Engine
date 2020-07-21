@@ -5,7 +5,7 @@
 :: Relase / Debug
 ::
 ::------------------------------
-SET /A RELEASE_BUILD=0
+SET /A RELEASE_BUILD=1
 
 
 ::------------------------------
@@ -42,7 +42,7 @@ echo.
 ::------------------------------
 ::
 :: Compile Engine
-:: Requires Visual Studio 2019
+:: Requires Clang
 ::
 ::------------------------------
 
@@ -57,7 +57,7 @@ echo.
 :: /Z7	                Full symbolic debug info. No pdb. (See /Zi, /Zl).
 :: /GS	                Detect buffer overruns.
 :: /MD	                Multi-thread specific, DLL-specific runtime lib. (See /MDd, /MT, /MTd, /LD, /LDd).
-:: /EHsc                No exception handling (Unwind semantics requrie vstudio env). (See /W1).
+:: /EHsc                No exception handling. (See /W1).
 :: /I<arg>              Specify include directory.
 :: /link                Invoke microsoft linker options.
 :: /NXCOMPAT            Comply with Windows Data Execution Prevention.
@@ -66,7 +66,7 @@ echo.
 :: /LIBPATH:<arg>       Specify library directory/directories.
 
 :: General Parameters
-SET GeneralParameters=/Oi /EHsc /nologo /Ot /TC
+SET GeneralParameters=/Oi /EHsc /nologo /Ot /TC -fuse-ld=lld -flto -fsanitize=undefined,cfi
 
 :: Debug Paramters
 SET DebugParameters=/Od /MTd /W4 /WX /D__UE_debug__#1
@@ -80,6 +80,7 @@ SET IncludeParameters=/Iengine_tools ^
 /Idata_structures ^
 /Iwin ^
 /Inix ^
+/Itests ^
 /I%VULKAN_SDK_PATH%\Include
 
 :: Link Parameters
@@ -102,17 +103,8 @@ IF /I "%RELEASE_BUILD%" EQU "1" (%INVOKE_RELEASE%) else (%INVOKE_DEBUG%)
 IF %ERRORLEVEL% NEQ 0 GOTO :exit
 echo Done.
 echo.
-
-::------------------------------
-::
-:: Tag Analysis
-::
-::------------------------------
-echo Performing tag analysis...
-python TagAnalysis.py --emacs
-echo Done.
-echo.
 GOTO :exit
+
 
 :SHADER_COMP_ERR
 echo.

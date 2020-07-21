@@ -60,18 +60,19 @@ typedef enum
 uEndianness uSystemEndianness;
 
 
-__UE_internal__ void __UE_call__
-uDetermineSystemEndianness()
-{
-    uEndiannessUnion.dword = 1;
-    if (uEndiannessUnion.word[0])
-    {
-        uSystemEndianness = uLITTLE_ENDIAN;
-        return;
-    }
+// [ cfarvin::RESTORE ] Unused fn warning
+/* __UE_internal__ void __UE_call__ */
+/* uDetermineSystemEndianness() */
+/* { */
+/*     uEndiannessUnion.dword = 1; */
+/*     if (uEndiannessUnion.word[0]) */
+/*     { */
+/*         uSystemEndianness = uLITTLE_ENDIAN; */
+/*         return; */
+/*     } */
 
-    uSystemEndianness = uBIG_ENDIAN;
-}
+/*     uSystemEndianness = uBIG_ENDIAN; */
+/* } */
 
 
 

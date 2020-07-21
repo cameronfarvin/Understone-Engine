@@ -24,7 +24,7 @@
 
 // Scopes variables to the current translation unit scope
 #ifndef __UE_global__
-#define __UE_global__ extern
+#define __UE_global__ /* NOTICE: GLOBAL */
 #endif // __UE_global__
 
 // Scopes variables to the local file

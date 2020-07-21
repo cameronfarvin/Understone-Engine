@@ -1,10 +1,10 @@
 #ifndef __UE_WINDOW_TOOLS_H__
 #define __UE_WINDOW_TOOLS_H__
 
-#include <engine_tools/type_tools.h>
-#include <engine_tools/macro_tools.h>
-#include <engine_tools/debug_tools.h>
-#include <win/win_platform.h>
+#include "type_tools.h"
+#include "macro_tools.h"
+#include "debug_tools.h"
+#include "win_platform.h"
 
 __UE_internal__ __UE_inline__ void
 uGetWindowSize(_mut_ u32* const restrict width,

@@ -63,10 +63,10 @@ uAPI_uDAInit(const size_t datatypesize_in)
     return da;
 }
 
-#define uDAPush(da, data_in) uAPI_uDAPush(da, VPPC_STR_LITERAL(void** const) data_in)
+#define uDAPush(da, data_in) uAPI_uDAPush(da, VPPC_STR_LITERAL(void**) data_in)
 __UE_internal__ __UE_inline__ bool
 uAPI_uDAPush(_mut_ uDynamicArray* const restrict da,
-             const void**         const restrict data_in)
+             _mut_ void**         const restrict data_in)
 {
     uAssertMsg_v(da,      "Null uDynamicArray ptr provided.\n");
     uAssertMsg_v(data_in, "Null data ptr pvoided.\n");
@@ -138,45 +138,47 @@ uDAPop(_mut_ uDynamicArray* const restrict da)
 }
 
 
-__UE_internal__ __UE_inline__ bool
-uDAFitToSize(_mut_ uDynamicArray* const restrict da)
-{
-    uAssertMsg_v(da, "Null uDynamicArray ptr provided.\n");
+// [ cfarvin::RESTORE ] Unused fn warning
+/* __UE_internal__ __UE_inline__ bool */
+/* uDAFitToSize(_mut_ uDynamicArray* const restrict da) */
+/* { */
+/*     uAssertMsg_v(da, "Null uDynamicArray ptr provided.\n"); */
 
-    if (da && (da->length > da->scaling_factor))
-    {
-        size_t* non_const_max_length = (size_t*) &(da->max_length);
-        *non_const_max_length = da->length;
-        void* realloc_return = realloc(da->data, (da->datatype_size * da->max_length));
-        if (realloc_return)
-        {
-            da->data = realloc_return;
-            return true;
-        }
-    }
+/*     if (da && (da->length > da->scaling_factor)) */
+/*     { */
+/*         size_t* non_const_max_length = (size_t*) &(da->max_length); */
+/*         *non_const_max_length = da->length; */
+/*         void* realloc_return = realloc(da->data, (da->datatype_size * da->max_length)); */
+/*         if (realloc_return) */
+/*         { */
+/*             da->data = realloc_return; */
+/*             return true; */
+/*         } */
+/*     } */
 
-    return false;
-}
+/*     return false; */
+/* } */
 
 
-__UE_internal__ __UE_inline__ bool
-uDASetScalingFactor(_mut_ uDynamicArray* const restrict da,
-                    const size_t scaling_factor_in)
-{
-    uAssertMsg_v(da, "Null uDynamicArray ptr provided.\n");
-    uAssertMsg_v(scaling_factor_in > 1,
-                 "Scaling factor must be greater than 1.\n");
+// [ cfarvin::RESTORE ] Unused fn warning
+/* __UE_internal__ __UE_inline__ bool */
+/* uDASetScalingFactor(_mut_ uDynamicArray* const restrict da, */
+/*                     const size_t scaling_factor_in) */
+/* { */
+/*     uAssertMsg_v(da, "Null uDynamicArray ptr provided.\n"); */
+/*     uAssertMsg_v(scaling_factor_in > 1, */
+/*                  "Scaling factor must be greater than 1.\n"); */
 
-    if (da && scaling_factor_in > 1)
-    {
-        size_t* non_const_scaling_factor = (size_t*) &da->scaling_factor;
-        *non_const_scaling_factor = scaling_factor_in;
+/*     if (da && scaling_factor_in > 1) */
+/*     { */
+/*         size_t* non_const_scaling_factor = (size_t*) &da->scaling_factor; */
+/*         *non_const_scaling_factor = scaling_factor_in; */
 
-        return true;
-    }
+/*         return true; */
+/*     } */
 
-    return false;
-}
+/*     return false; */
+/* } */
 
 
 __UE_internal__ __UE_inline__ bool

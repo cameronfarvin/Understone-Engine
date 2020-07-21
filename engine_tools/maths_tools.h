@@ -4,8 +4,8 @@
 #include <math.h>
 #include <float.h>
 
-#include <engine_tools/macro_tools.h>
-#include <engine_tools/type_tools.h>
+#include "macro_tools.h"
+#include "type_tools.h"
 
 
 
@@ -208,30 +208,33 @@ NormalBoundedXorShift32()
 }
 
 
-__UE_internal__ __UE_inline__ r32
-NormalRayDistLerp(const r32 old_value)
-{
-    uAssert(MAX_RAY_MAG > MIN_RAY_MAG);
-    return (r32)((old_value - MIN_RAY_MAG) * (1.0f / FLT_MAX));
-}
+// [ cfarvin::RESTORE ] Unused fn warning
+/* __UE_internal__ __UE_inline__ r32 */
+/* NormalRayDistLerp(const r32 old_value) */
+/* { */
+/*     uAssert(MAX_RAY_MAG > MIN_RAY_MAG); */
+/*     return (r32)((old_value - MIN_RAY_MAG) * (1.0f / FLT_MAX)); */
+/* } */
 
 
-__UE_internal__ __UE_inline__ void
-DegreesToRadians(const r32 degrees,
-                 _mut_ r32* restrict const result)
-{
-    uAssert(result);
-    *result = (r32)(degrees * (_PI_ / 180.0f));
-}
+// [ cfarvin::RESTORE ] Unused fn warning
+/* __UE_internal__ __UE_inline__ void */
+/* DegreesToRadians(const r32 degrees, */
+/*                  _mut_ r32* restrict const result) */
+/* { */
+/*     uAssert(result); */
+/*     *result = (r32)(degrees * (_PI_ / 180.0f)); */
+/* } */
 
 
-__UE_internal__ __UE_inline__ void
-RadiansToDegrees(const r32 radians,
-                 _mut_ r32* restrict const result)
-{
-    uAssert(result);
-    *result = (r32)(radians * (180.0f / _PI_));
-}
+// [ cfarvin::RESTORE ] Unused fn warning
+/* __UE_internal__ __UE_inline__ void */
+/* RadiansToDegrees(const r32 radians, */
+/*                  _mut_ r32* restrict const result) */
+/* { */
+/*     uAssert(result); */
+/*     *result = (r32)(radians * (180.0f / _PI_)); */
+/* } */
 
 
 
@@ -376,15 +379,16 @@ v3Cross(const v3* restrict const a,
 }
 
 
-__UE_internal__ __UE_inline__ void
-v3CrossAndNorm(const v3* restrict const a,
-               const v3* restrict const b,
-               _mut_ v3* restrict const result)
-{
-    uAssert(a && b && result);
-    v3Cross(a, b, result);
-    v3Norm(result);
-}
+// [ cfarvin::RESTORE ] Unused fn warning
+/* __UE_internal__ __UE_inline__ void */
+/* v3CrossAndNorm(const v3* restrict const a, */
+/*                const v3* restrict const b, */
+/*                _mut_ v3* restrict const result) */
+/* { */
+/*     uAssert(a && b && result); */
+/*     v3Cross(a, b, result); */
+/*     v3Norm(result); */
+/* } */
 
 
 
@@ -543,15 +547,16 @@ m3Set(_mut_ m3* restrict const a,
 }
 
 
-__UE_internal__ bool
-m3IsEqual(const m3* restrict const a,
-          const m3* restrict const b)
-{
-    uAssert(a && b);
-    return( (v3IsEqual(&a->i, &b->i)) &&
-            (v3IsEqual(&a->j, &b->j)) &&
-            (v3IsEqual(&a->k, &b->k)) );
-}
+// [ cfarvin::RESTORE ] Unused fn warning
+/* __UE_internal__ bool */
+/* m3IsEqual(const m3* restrict const a, */
+/*           const m3* restrict const b) */
+/* { */
+/*     uAssert(a && b); */
+/*     return( (v3IsEqual(&a->i, &b->i)) && */
+/*             (v3IsEqual(&a->j, &b->j)) && */
+/*             (v3IsEqual(&a->k, &b->k)) ); */
+/* } */
 
 
 __UE_internal__ void
@@ -604,15 +609,16 @@ m4Set(_mut_ m4* const a, const r32 b)
 }
 
 
-__UE_internal__ bool
-m4IsEqual(const m4* const a, const m4* const b)
-{
-    uAssert(a && b);
-    return( (v4IsEqual(&a->i, &b->i)) &&
-            (v4IsEqual(&a->j, &b->j)) &&
-            (v4IsEqual(&a->k, &b->k)) &&
-            (v4IsEqual(&a->n, &b->n)) );
-}
+// [ cfarvin::RESTORE ] Unused fn warning
+/* __UE_internal__ bool */
+/* m4IsEqual(const m4* const a, const m4* const b) */
+/* { */
+/*     uAssert(a && b); */
+/*     return( (v4IsEqual(&a->i, &b->i)) && */
+/*             (v4IsEqual(&a->j, &b->j)) && */
+/*             (v4IsEqual(&a->k, &b->k)) && */
+/*             (v4IsEqual(&a->n, &b->n)) ); */
+/* } */
 
 
 __UE_internal__ void

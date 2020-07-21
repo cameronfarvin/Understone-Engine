@@ -24,10 +24,10 @@ __UE_internal__ void __UE_call__
 uDestroyVulkan();
 
 __UE_internal__ void __UE_call__
-uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physical_device,
-                             const s8**              const const restrict user_device_extension_names,
-                             const u16                                    num_user_device_extension_names,
-                             _mut_ u16*              const       restrict num_verified_extension_names);
+uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const restrict physical_device,
+                             const s8**              const restrict user_device_extension_names,
+                             const u16                              num_user_device_extension_names,
+                             _mut_ u16*              const restrict num_verified_extension_names);
 
 __UE_internal__ __UE_inline__ bool
 uSelectVulkanSwapChain(_mut_ uVulkanSurfaceInfo* const restrict surface_info);
@@ -121,7 +121,7 @@ uRebuildVulkanSwapChain()
                                                                                          surface_info,
                                                                                          true);
 
-    const char* swap_chain_surface_error = "[ vulkan ] The swap chain and surface were found to be incompatible.\n";
+    const char swap_chain_surface_error[] = "[ vulkan ] The swap chain and surface were found to be incompatible.\n";
     uAssertMsg_v(swap_chain_surface_compatible, swap_chain_surface_error);
     if(!swap_chain_surface_compatible)
     {
@@ -223,7 +223,7 @@ uCreateVulkanCommandBuffers(const uVulkanInfo*        const restrict v_info,
         }
 
         // Begin render passs
-        VkClearValue clear_value = { 0.0f };
+        VkClearValue clear_value = { };
         clear_value.color.float32[3]= 1.0f;
 
         VkRenderPassBeginInfo rp_begin_info = { 0 };
@@ -1012,14 +1012,14 @@ uCreateVulkanSwapChain(_mut_ uVulkanInfo*        const restrict v_info,
 
 
 __UE_internal__ void __UE_call__
-uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
-                           const uVulkanQueueInfo* const       restrict queue_info,
+uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const restrict v_info,
+                           const uVulkanQueueInfo* const restrict queue_info,
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-                           const s8**              const const restrict instance_validation_layer_names,
-                           const u16                                    num_instance_validation_layer_names,
+                           const s8**              const  restrict instance_validation_layer_names,
+                           const u16                              num_instance_validation_layer_names,
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-                           const s8**              const const restrict user_device_extension_names,
-                           const u16                                    num_user_device_extension_names)
+                           const s8**              const restrict user_device_extension_names,
+                           const u16                              num_user_device_extension_names)
 {
     uAssertMsg_v(v_info,                   "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(v_info->physical_device,  "[ vulkan ] VkPhysicalDevice must be non zero.\n");
@@ -1078,10 +1078,10 @@ uCreateVulkanLogicalDevice(_mut_ uVulkanInfo*      const       restrict v_info,
     logical_device_create_info.pEnabledFeatures        = &physical_device_features;
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     logical_device_create_info.enabledLayerCount       = num_instance_validation_layer_names;
-    logical_device_create_info.ppEnabledLayerNames     = instance_validation_layer_names;
+    logical_device_create_info.ppEnabledLayerNames     = (const char** const)instance_validation_layer_names;
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     logical_device_create_info.enabledExtensionCount   = num_user_device_extension_names;
-    logical_device_create_info.ppEnabledExtensionNames = user_device_extension_names;
+    logical_device_create_info.ppEnabledExtensionNames = (const char** const)user_device_extension_names;
 
     VkResult device_creation_success = vkCreateDevice(v_info->physical_device,
                                                       &logical_device_create_info,
@@ -1145,9 +1145,9 @@ uValidateVulkanDevicePropertiesReqruirement(const VkPhysicalDevice physical_devi
 
 
 __UE_internal__ bool __UE_call__
-uValidateVulkanDeviceExtensionsReqruirement(const VkPhysicalDevice                      physical_device,
-                                            const s8**             const const restrict user_device_extension_names,
-                                            const u16                                   num_user_device_extension_names)
+uValidateVulkanDeviceExtensionsReqruirement(const VkPhysicalDevice          physical_device,
+                                            const s8**             restrict user_device_extension_names,
+                                            const u16                       num_user_device_extension_names)
 {
     if (user_device_extension_names)
     {
@@ -1162,7 +1162,7 @@ uValidateVulkanDeviceExtensionsReqruirement(const VkPhysicalDevice              
                                  num_user_device_extension_names,
                                  &num_validated_extension_names);
 
-    const char* extension_name_err_msg = "[ vulkan ] Unable to verify user extension names.\n";
+    const char extension_name_err_msg[] = "[ vulkan ] Unable to verify user extension names.\n";
     uAssertMsg_v(num_validated_extension_names == num_user_device_extension_names, extension_name_err_msg);
     if (num_validated_extension_names != num_user_device_extension_names)
     {
@@ -1504,13 +1504,13 @@ uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice          
 
 
 __UE_internal__ void __UE_call__
-uSelectVulkanPhysicalDevice(const VkPhysicalDevice**  const const restrict physical_device_list,
-                            _mut_ VkPhysicalDevice*   const       restrict return_device,
-                            _mut_ uVulkanQueueInfo*   const       restrict queue_info,
-                            const u32                                      num_physical_devices,
-                            const s8**                const const restrict user_device_extension_names,
-                            const u16                                      num_user_device_extension_names,
-                            _mut_ uVulkanSurfaceInfo* const       restrict surface_info)
+uSelectVulkanPhysicalDevice(const VkPhysicalDevice**  const restrict physical_device_list,
+                            _mut_ VkPhysicalDevice*   const restrict return_device,
+                            _mut_ uVulkanQueueInfo*   const restrict queue_info,
+                            const u32                                num_physical_devices,
+                            const s8**                const restrict user_device_extension_names,
+                            const u16                                num_user_device_extension_names,
+                            _mut_ uVulkanSurfaceInfo* const restrict surface_info)
 {
     uAssertMsg_v(physical_device_list,  "[ vulkan ] VkPhysicalDevice ptr ptr must be non null.\n");
     uAssertMsg_v(!(*return_device),     "[ vulkan ] VkPhysicalDevice ptr must be null; will be overwritten\n");
@@ -1569,11 +1569,11 @@ uSelectVulkanPhysicalDevice(const VkPhysicalDevice**  const const restrict physi
 
 
 __UE_internal__ void __UE_call__
-uCreateVulkanPhysicalDevice(_mut_ uVulkanInfo*        const       restrict v_info,
-                            _mut_ uVulkanQueueInfo*   const       restrict queue_info,
-                            const s8**                const const restrict user_device_extension_names,
-                            const u16                                      num_user_device_extension_names,
-                            _mut_ uVulkanSurfaceInfo* const       restrict return_surface_info)
+uCreateVulkanPhysicalDevice(_mut_ uVulkanInfo*        const restrict v_info,
+                            _mut_ uVulkanQueueInfo*   const restrict queue_info,
+                            const s8**                const restrict user_device_extension_names,
+                            const u16                                num_user_device_extension_names,
+                            _mut_ uVulkanSurfaceInfo* const restrict return_surface_info)
 {
     uAssertMsg_v(v_info,                       "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(!v_info->physical_device,     "[ vulkan ] VkPhysicalDevice must be zero; will be overwritten.\n");
@@ -1605,7 +1605,7 @@ uCreateVulkanPhysicalDevice(_mut_ uVulkanInfo*        const       restrict v_inf
     uVkVerbose("Found %d physical devices.\n", num_physical_devices);
 
     VkPhysicalDevice candidate_device = NULL;
-    uSelectVulkanPhysicalDevice(&physical_device_list,
+    uSelectVulkanPhysicalDevice((const VkPhysicalDevice**)&physical_device_list,
                                 &candidate_device,
                                 queue_info,
                                 num_physical_devices,
@@ -1771,10 +1771,10 @@ uCreateVulkanSurface(_mut_ uVulkanInfo*        const restrict v_info,
 
 
 __UE_internal__ void __UE_call__
-uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physical_device,
-                             const s8**              const const restrict user_device_extension_names,
-                             const u16                                    num_user_device_extension_names,
-                             _mut_ u16*              const       restrict num_verified_extension_names)
+uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const restrict physical_device,
+                             const s8**              const restrict user_device_extension_names,
+                             const u16                              num_user_device_extension_names,
+                             _mut_ u16*              const restrict num_verified_extension_names)
 {
     uAssertMsg_v(physical_device,              "[ vulkan ] VkPhysicalDevice ptr must be non null.\n");
     uAssertMsg_v(num_verified_extension_names, "[ vulkan ] Verified extension count ptr must be non null.\n");
@@ -1831,8 +1831,8 @@ uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physic
              user_device_extension_name_idx < num_user_device_extension_names;
              user_device_extension_name_idx++)
         {
-            if (strcmp((device_extension_properties[device_extension_name_idx]).extensionName,
-                       user_device_extension_names[user_device_extension_name_idx]) == 0)
+            if (strcmp(((const char*)(device_extension_properties[device_extension_name_idx]).extensionName),
+                       (const char*)user_device_extension_names[user_device_extension_name_idx]) == 0)
             {
                 (*num_verified_extension_names)++;
             }
@@ -1848,11 +1848,11 @@ uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const       restrict physic
 
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 __UE_internal__ void __UE_call__
-uQueryVulkanInstanceValidationLayers(_mut_ s8***                 _mut_ _mut_ const restrict instance_validation_layer_names,
-                                     _mut_ VkLayerProperties**   const _mut_       restrict instance_validation_layer_properties,
-                                     _mut_ VkInstanceCreateInfo* const             restrict instance_create_info,
-                                     const s8**                  const       const restrict user_instance_validation_layer_names,
-                                     const u32                                              num_user_instance_validation_layer_names)
+uQueryVulkanInstanceValidationLayers(_mut_ s8***                 _mut_ _mut_ restrict instance_validation_layer_names,
+                                     _mut_ VkLayerProperties**   const _mut_ restrict instance_validation_layer_properties,
+                                     _mut_ VkInstanceCreateInfo* const       restrict instance_create_info,
+                                     const s8**                  const       restrict user_instance_validation_layer_names,
+                                     const u32                                        num_user_instance_validation_layer_names)
 {
     uAssertMsg_v(instance_create_info,                     "[ vulkan ] VkInstanceCreateInfo ptr must be non null.\n");
     uAssertMsg_v(!(*instance_validation_layer_names),      "[ vulkan ] Layer names ptr must be null; will be overwritten.\n");
@@ -1872,8 +1872,8 @@ uQueryVulkanInstanceValidationLayers(_mut_ s8***                 _mut_ _mut_ con
 
     // Query Layer Count
     VkResult success = VK_SUCCESS;
-    size_t num_available_layers = 0;
-    success = vkEnumerateInstanceLayerProperties(&((u32)num_available_layers), NULL);
+    u32 num_available_layers = 0;
+    success = vkEnumerateInstanceLayerProperties(&num_available_layers, NULL);
 
     if (success != VK_SUCCESS)
     {
@@ -1881,7 +1881,7 @@ uQueryVulkanInstanceValidationLayers(_mut_ s8***                 _mut_ _mut_ con
     }
 
     uAssertMsg_v((num_available_layers >= num_user_instance_validation_layer_names),
-                 "[ vulkan ] Number of requested validation layers [ %d ] exceeds total avaialbe count [ %zd ].\n",
+                 "[ vulkan ] Number of requested validation layers [ %d ] exceeds total avaialbe count [ %d ].\n",
                  num_user_instance_validation_layer_names,
                  num_available_layers);
 
@@ -1889,7 +1889,7 @@ uQueryVulkanInstanceValidationLayers(_mut_ s8***                 _mut_ _mut_ con
         (VkLayerProperties*)malloc(num_available_layers * sizeof(VkLayerProperties));
 
     // Query Layer Names
-    success = vkEnumerateInstanceLayerProperties(&(u32)num_available_layers,
+    success = vkEnumerateInstanceLayerProperties(&num_available_layers,
                                                  *instance_validation_layer_properties);
     if (success != VK_SUCCESS)
     {
@@ -1913,7 +1913,7 @@ uQueryVulkanInstanceValidationLayers(_mut_ s8***                 _mut_ _mut_ con
                        (const char*)(*instance_validation_layer_properties)[available_layer_idx].layerName) == 0)
             {
                 (*instance_validation_layer_names)[num_added_layers] =
-                    (*instance_validation_layer_properties)[available_layer_idx].layerName;
+                    (s8*)(*instance_validation_layer_properties)[available_layer_idx].layerName;
                 num_added_layers++;
             }
         }
@@ -1926,16 +1926,16 @@ uQueryVulkanInstanceValidationLayers(_mut_ s8***                 _mut_ _mut_ con
     }
 
     instance_create_info->enabledLayerCount   = num_added_layers;
-    instance_create_info->ppEnabledLayerNames = *instance_validation_layer_names;
+    instance_create_info->ppEnabledLayerNames = (const char**)*instance_validation_layer_names;
 }
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 
 __UE_internal__ void __UE_call__
-uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const restrict instance_extension_names,
-                               _mut_ VkExtensionProperties** _mut_ const       restrict instance_extension_properties,
-                               _mut_ VkInstanceCreateInfo*   const             restrict instance_create_info,
-                               const s8**                    const       const restrict user_instance_extension_names,
-                               const u16                                                num_user_instance_extension_names)
+uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ restrict instance_extension_names,
+                               _mut_ VkExtensionProperties** _mut_ const restrict instance_extension_properties,
+                               _mut_ VkInstanceCreateInfo*   const       restrict instance_create_info,
+                               const s8**                    const       restrict user_instance_extension_names,
+                               const u16                                          num_user_instance_extension_names)
 {
     uAssertMsg_v(instance_create_info,              "[ vulkan ] VkInstanceCreateInfo ptr must be non null.\n");
     uAssertMsg_v(!(*instance_extension_names),      "[ vulkan ] Extension names ptr must be null; will be overwritten.\n");
@@ -1984,7 +1984,7 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
     // Set Extension Names
     uVkVerbose("Searching for extensions...\n");
     u32 num_added_extensions = 0;
-    *instance_extension_names = (s8**)malloc(instance_create_info->enabledExtensionCount * sizeof(s8**));
+    *instance_extension_names = (const s8**)malloc(instance_create_info->enabledExtensionCount * sizeof(s8**));
     for (u32 ext_idx = 0; ext_idx < instance_create_info->enabledExtensionCount; ext_idx++)
     {
         uVkVerbose("\tExtension found: %s\n", (*instance_extension_properties)[ext_idx].extensionName);
@@ -1995,7 +1995,7 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
             if (strcmp((const char*)user_instance_extension_names[user_ext_idx],
                        (const char*)(*instance_extension_properties)[ext_idx].extensionName) == 0)
             {
-                (*instance_extension_names)[num_added_extensions] = (*instance_extension_properties)[ext_idx].extensionName;
+                (*instance_extension_names)[num_added_extensions] = (const s8*)(*instance_extension_properties)[ext_idx].extensionName;
                 num_added_extensions++;
             }
         }
@@ -2012,19 +2012,19 @@ uQueryVulkanInstanceExtensions(const s8***                   _mut_ _mut_ const r
     }
 
     instance_create_info->enabledExtensionCount   = num_added_extensions;
-    instance_create_info->ppEnabledExtensionNames = *instance_extension_names;
+    instance_create_info->ppEnabledExtensionNames = (const char**)*instance_extension_names;
 }
 
 
 __UE_internal__ void __UE_call__
-uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
-                      const VkApplicationInfo* const       restrict application_info,
+uCreateVulkanInstance(const uVulkanInfo*       const restrict v_info,
+                      const VkApplicationInfo* const restrict application_info,
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-                      const s8**               const const restrict user_instance_validation_layer_names,
-                      const u16                                     num_user_instance_validation_layer_names,
+                      const s8**               const restrict user_instance_validation_layer_names,
+                      const u16                               num_user_instance_validation_layer_names,
 #endif //__UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-                      const s8**               const const restrict user_instance_extension_names,
-                      const u16                                     num_user_instance_extension_names)
+                      const s8**               const restrict user_instance_extension_names,
+                      const u16                               num_user_instance_extension_names)
 
 {
     uAssertMsg_v(v_info,           "[ vulkan ] uVulkanInfo ptr must be non null.\n");
@@ -2056,7 +2056,7 @@ uCreateVulkanInstance(const uVulkanInfo*       const       restrict v_info,
     VkInstanceCreateInfo instance_create_info = { 0 };
 
     // Query extensions; store in VkInstanceCreateInfo
-    uQueryVulkanInstanceExtensions(&instance_extension_names,
+    uQueryVulkanInstanceExtensions((const s8***)&instance_extension_names,
                                    &instance_extension_properties,
                                    &instance_create_info,
                                    user_instance_extension_names,
@@ -2123,23 +2123,23 @@ uCreateVulkanApplicationInfo(const s8*                const restrict application
 
 
     application_info->sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    application_info->pApplicationName   = application_name;
+    application_info->pApplicationName   = (const char*)application_name;
     application_info->applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    application_info->pEngineName        = uGetEngineName();
+    application_info->pEngineName        = (const char*)uGetEngineName();
     application_info->apiVersion         = VK_API_VERSION_1_0;
 }
 
 
 __UE_internal__ void __UE_call__
-uInitializeVulkan(_mut_ uVulkanDrawTools* const       restrict draw_tools,
+uInitializeVulkan(_mut_ uVulkanDrawTools* const restrict draw_tools,
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-                  const s8**              const const restrict user_instance_validation_layer_names,
-                  const u16                                    num_user_instance_validation_layer_names,
+                  const s8**              const restrict user_instance_validation_layer_names,
+                  const u16                              num_user_instance_validation_layer_names,
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-                  const s8**              const const restrict user_instance_extension_names,
-                  const u16                                    num_user_instance_extension_names,
-                  const s8**              const const restrict user_device_extension_names,
-                  const u16                                    num_user_device_extension_names)
+                  const s8**              const restrict user_instance_extension_names,
+                  const u16                              num_user_instance_extension_names,
+                  const s8**              const restrict user_device_extension_names,
+                  const u16                              num_user_device_extension_names)
 {
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     if (num_user_instance_validation_layer_names)

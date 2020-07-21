@@ -172,7 +172,7 @@ uGetVulkanRenderInfo()
 
 //
 // [ begin ] Draw Tools
-__UE_global__ bool uVULKAN_DRAW_TOOLS_OUTDATED;
+__UE_global__ bool uVULKAN_DRAW_TOOLS_OUTDATED = false;
 #define uVULKAN_NUM_COMMAND_BUFFERS   3
 #define uVULKAN_MAX_FRAMES_IN_FLIGHT  2
 typedef struct

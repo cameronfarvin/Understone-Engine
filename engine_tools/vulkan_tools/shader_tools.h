@@ -47,7 +47,7 @@ typedef struct
     u32                              num_shaders;
     u8                               num_stages;
 } uVulkanGraphicsPipelineRecreateInfo;
-__UE_global__ uVulkanGraphicsPipelineRecreateInfo REMOVE_ME;
+__UE_global__ uVulkanGraphicsPipelineRecreateInfo REMOVE_ME = { 0 };
 
 // Note: loaded by uLoadSpirvModules()
 //       consumed by uCreateVulkanGraphicsPipeline()
@@ -66,26 +66,32 @@ __UE_global__ uVulkanShaderInfo shaders_to_load[] =
 //
 
 
-__UE_internal__ bool __UE_call__
-uValidateVulkanShaderType(uVulkanShaderType shader_type)
-{
-    bool retVal = false;
-    switch(shader_type)
-    {
-        case uVK_VERTEX_SHADER:
-        {
-            retVal = true;
-            break;
-        }
-        case uVK_FRAGMENT_SHADER:
-        {
-            retVal = true;
-            break;
-        }
-    };
+// [ cfarvin::RESTORE ]
+/* __UE_internal__ bool __UE_call__ */
+/* uValidateVulkanShaderType(uVulkanShaderType shader_type) */
+/* { */
+/*     bool retVal = false; */
+/*     switch(shader_type) */
+/*     { */
+/*         case uVK_VERTEX_SHADER: */
+/*         { */
+/*             retVal = true; */
+/*             break; */
+/*         } */
+/*         case uVK_FRAGMENT_SHADER: */
+/*         { */
+/*             retVal = true; */
+/*             break; */
+/*         } */
+/*         case uVK_SHADER_COUNT: */
+/*         { */
+/*             retVal = false; */
+/*             break; */
+/*         } */
+/*     }; */
 
-    return retVal;
-}
+/*     return retVal; */
+/* } */
 
 
 __UE_internal__ VkShaderStageFlagBits __UE_call__
@@ -103,6 +109,11 @@ uVulkanShaderTypeToStageBit(uVulkanShaderType shader_type)
         case uVK_FRAGMENT_SHADER:
         {
             retVal = VK_SHADER_STAGE_FRAGMENT_BIT;
+            break;
+        }
+        case uVK_SHADER_COUNT:
+        {
+            retVal = 0;
             break;
         }
     };
@@ -199,8 +210,8 @@ uCreateVulkanShaderModule(const uVulkanShader* const shader)
 
 // [ cfarvin::TODO ] Load glslangvalidator lib and validate spirv's
 __UE_internal__ void __UE_call__
-uLoadSpirvModules(_mut_ uVulkanShader** const const restrict return_shaders,
-                  _mut_ u32*            const       restrict num_return_shaders)
+uLoadSpirvModules(_mut_ uVulkanShader** const restrict return_shaders,
+                  _mut_ u32*            const restrict num_return_shaders)
 {
     const size_t num_shader_infos = sizeof(shaders_to_load)/sizeof(uVulkanShaderInfo);
 
@@ -213,7 +224,7 @@ uLoadSpirvModules(_mut_ uVulkanShader** const const restrict return_shaders,
 
     // Note: not freed in this scope
     *return_shaders = (uVulkanShader*)calloc(num_shader_infos, sizeof(uVulkanShader));
-    const char* return_shader_alloc_err = "[ shaders ] Unable to allocate uVulkanShader array.\n";
+    const char return_shader_alloc_err[] = "[ shaders ] Unable to allocate uVulkanShader array.\n";
     uAssertMsg_v(return_shaders, return_shader_alloc_err);
     if (!return_shaders)
     {
@@ -241,6 +252,9 @@ uLoadSpirvModules(_mut_ uVulkanShader** const const restrict return_shaders,
 
         // Create vulkan shader module
         uCreateVulkanShaderModule(return_shader);
+
+        // [ cfarvin::REMOVE ]
+        if (num_return_shaders) {}
 
         // [ cfarvin::RESTORE
         /* (*num_return_shaders)++; */

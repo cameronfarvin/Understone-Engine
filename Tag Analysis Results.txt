@@ -9,8 +9,8 @@ There are 12 items tagged TODO:
     [ TODO ] (material_tools.h, 72): (return_color->channel.R)
     [ TODO ] (shader_tools.h, 38): Figure out a good way to load and keep shaders without
     [ TODO ] (shader_tools.h, 42): This needs a graphics pipeline unique ID member, if
-    [ TODO ] (shader_tools.h, 200): Load glslangvalidator lib and validate spirv's
-    [ TODO ] (uString.h, 160): implement uString substring
+    [ TODO ] (shader_tools.h, 210): Load glslangvalidator lib and validate spirv's
+    [ TODO ] (uString.h, 161): implement uString substring
     [ TODO ] (vulkan_tools.h, 342): When we are rendering w/ more than one attachment:
     [ TODO ] (vulkan_tools.h, 493): Free later
     [ TODO ] (vulkan_tools.h, 680): This needs to be coupled with a better way to store shader data
@@ -30,10 +30,11 @@ There are 1 items tagged STUDY:
     [ STUDY ] (vulkan_tools.h, 2286): VK_DEPENDENCY_BY_REGION_BIT, VkPipelineVertexInputStateCreateInfo, input_assembly_create_info.primitiveRestartEnable,
 
 
-There are 15 items tagged REMOVE:
+There are 16 items tagged REMOVE:
     [ REMOVE ] (event_tools.h, 6): Remove stdio.h
-    [ REMOVE ] (shader_tools.h, 223): 
-    [ REMOVE ] (shader_tools.h, 247): 
+    [ REMOVE ] (shader_tools.h, 233): 
+    [ REMOVE ] (shader_tools.h, 257): 
+    [ REMOVE ] (uString.h, 4): #include <string.h>
     [ REMOVE ] (vulkan_tools.h, 17): Remove stdio.h
     [ REMOVE ] (vulkan_tools.h, 468): 
     [ REMOVE ] (vulkan_tools.h, 497): 
@@ -50,13 +51,25 @@ There are 15 items tagged REMOVE:
 
 There are 4 items tagged REVISIT:
     [ REVISIT ] (entity_tools.h, 4): #include <rt_settings.h>
-    [ REVISIT ] (shader_tools.h, 250): Stage count needs to be accounted for outside of this test code,
-    [ REVISIT ] (uString.h, 125): Strlen correctness, use throughout uString
+    [ REVISIT ] (shader_tools.h, 260): Stage count needs to be accounted for outside of this test code,
+    [ REVISIT ] (uString.h, 126): Strlen correctness, use throughout uString
     [ REVISIT ] (vulkan_tools.h, 733): You'll need to destroy shader modules on tear-down if you keep
 
 
-There are 14 items tagged RESTORE:
-    [ RESTORE ] (shader_tools.h, 245): [ cfarvin::RESTORE
+There are 27 items tagged RESTORE:
+    [ RESTORE ] (event_tools.h, 90): Unused fn warning
+    [ RESTORE ] (maths_tools.h, 211): Unused fn warning
+    [ RESTORE ] (maths_tools.h, 220): Unused fn warning
+    [ RESTORE ] (maths_tools.h, 230): Unused fn warning
+    [ RESTORE ] (maths_tools.h, 382): Unused fn warning
+    [ RESTORE ] (maths_tools.h, 550): Unused fn warning
+    [ RESTORE ] (maths_tools.h, 612): Unused fn warning
+    [ RESTORE ] (memory_tools.h, 40): Unused fn warning
+    [ RESTORE ] (memory_tools.h, 53): Unused fn warning
+    [ RESTORE ] (shader_tools.h, 255): [ cfarvin::RESTORE
+    [ RESTORE ] (type_tools.h, 63): Unused fn warning
+    [ RESTORE ] (uDynamicArray.h, 141): Unused fn warning
+    [ RESTORE ] (uDynamicArray.h, 163): Unused fn warning
     [ RESTORE ] (vulkan_tools.h, 454): 
     [ RESTORE ] (vulkan_tools.h, 464): 
     [ RESTORE ] (vulkan_tools.h, 473): 
@@ -70,4 +83,5 @@ There are 14 items tagged RESTORE:
     [ RESTORE ] (vulkan_tools.h, 691): 
     [ RESTORE ] (vulkan_tools.h, 726): 
     [ RESTORE ] (vulkan_tools.h, 731): 
+    [ RESTORE ] (win_platform.h, 217): Unused fn warning
 

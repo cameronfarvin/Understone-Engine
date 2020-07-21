@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <engine_tools/type_tools.h>
-#include <engine_tools/debug_tools.h>
+#include "type_tools.h"
+#include "debug_tools.h"
 
 
 // Optimize for 64 byte cache line size,
@@ -37,33 +37,35 @@ uMAInit(const u16 arena_bytes)
     return memory_arena;
 }
 
-__UE_internal__ __UE_inline__ void*
-uMANext(const uMemoryArena* restrict const memory_arena)
-{
-    if(!(memory_arena && memory_arena->data && memory_arena->arena_size))
-    {
-        return NULL;
-    }
+// [ cfarvin::RESTORE ] Unused fn warning
+/* __UE_internal__ __UE_inline__ void* */
+/* uMANext(const uMemoryArena* restrict const memory_arena) */
+/* { */
+/*     if(!(memory_arena && memory_arena->data && memory_arena->arena_size)) */
+/*     { */
+/*         return NULL; */
+/*     } */
 
-    return (void*)(memory_arena->data + memory_arena->offset);
-}
+/*     return (void*)(memory_arena->data + memory_arena->offset); */
+/* } */
 
 
-#define uMAAllocate(arena, type, num_bytes)     \
-    (type*)uMAAllocate_API__(arena, num_bytes)
-__UE_internal__ __UE_inline__ void*
-uMAAllocate_API__(_mut_ uMemoryArena* restrict const memory_arena,
-                  const u16                          num_bytes)
-{
-    if (!(num_bytes && memory_arena && memory_arena->data))
-    {
-        return NULL;
-    }
+// [ cfarvin::RESTORE ] Unused fn warning
+/* #define uMAAllocate(arena, type, num_bytes)     \ */
+/*     (type*)uMAAllocate_API__(arena, num_bytes) */
+/* __UE_internal__ __UE_inline__ void* */
+/* uMAAllocate_API__(_mut_ uMemoryArena* restrict const memory_arena, */
+/*                   const u16                          num_bytes) */
+/* { */
+/*     if (!(num_bytes && memory_arena && memory_arena->data)) */
+/*     { */
+/*         return NULL; */
+/*     } */
 
-    void* return_ptr = (memory_arena->data + memory_arena->offset);
-    memory_arena->offset += num_bytes;
-    return return_ptr;
-}
+/*     void* return_ptr = (memory_arena->data + memory_arena->offset); */
+/*     memory_arena->offset += num_bytes; */
+/*     return return_ptr; */
+/* } */
 
 
 #define uMAPushData( arena, new_data, type )                            \
