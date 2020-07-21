@@ -17,7 +17,7 @@
 #ifndef __uDynamicArray__
 #define __uDynamicArray__ 1
 
-#include <engine_tools/type_tools.h>
+#include "type_tools.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -65,8 +65,8 @@ uAPI_uDAInit(const size_t datatypesize_in)
 
 #define uDAPush(da, data_in) uAPI_uDAPush(da, VPPC_STR_LITERAL(void** const) data_in)
 __UE_internal__ __UE_inline__ bool
-uAPI_uDAPush(_mut_ uDynamicArray* const       restrict da,
-             const void**         const const restrict data_in)
+uAPI_uDAPush(_mut_ uDynamicArray* const restrict da,
+             const void**         const restrict data_in)
 {
     uAssertMsg_v(da,      "Null uDynamicArray ptr provided.\n");
     uAssertMsg_v(data_in, "Null data ptr pvoided.\n");

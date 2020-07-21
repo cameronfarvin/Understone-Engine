@@ -3,16 +3,16 @@
 
 #if _WIN32
 #define VK_USE_PLATFORM_WIN32_KHR
-#include <win/win_platform.h>
+#include "win_platform.h"
 #endif // _WIN32
 
 #include <vulkan/vulkan.h>
-#include <engine_tools/vulkan_tools/vulkan_macros.h>
-#include <engine_tools/vulkan_tools/vulkan_types.h>
-#include <engine_tools/vulkan_tools/shader_tools.h>
-#include <engine_tools/memory_tools.h>
-#include <engine_tools/window_tools.h>
-#include <data_structures/data_structures.h>
+#include "vulkan_macros.h"
+#include "vulkan_types.h"
+#include "shader_tools.h"
+#include "memory_tools.h"
+#include "window_tools.h"
+#include "data_structures.h"
 
 // [ cfarvin::REMOVE ] Remove stdio.h
 #include <stdio.h>

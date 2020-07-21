@@ -3,10 +3,10 @@
 
 
 #include <vulkan/vulkan.h>
-#include <engine_tools/vulkan_tools/vulkan_macros.h>
-#include <engine_tools/vulkan_tools/vulkan_types.h>
-#include <engine_tools/macro_tools.h>
-#include <engine_tools/debug_tools.h>
+#include "vulkan_macros.h"
+#include "vulkan_types.h"
+#include "macro_tools.h"
+#include "debug_tools.h"
 
 
 typedef enum
@@ -47,7 +47,7 @@ typedef struct
     u32                              num_shaders;
     u8                               num_stages;
 } uVulkanGraphicsPipelineRecreateInfo;
-__UE_global__ uVulkanGraphicsPipelineRecreateInfo REMOVE_ME = { 0 };
+__UE_global__ uVulkanGraphicsPipelineRecreateInfo REMOVE_ME;
 
 // Note: loaded by uLoadSpirvModules()
 //       consumed by uCreateVulkanGraphicsPipeline()

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <engine_tools/macro_tools.h>
+#include "macro_tools.h"
 
 // vppc = void pointer pointer const
 #define VPPC_STR_LITERAL(vppc) (vppc)

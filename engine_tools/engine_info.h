@@ -1,9 +1,9 @@
 #ifndef __UE_ENGINE_INFO_H__
 #define __UE_ENGINE_INFO_H__
 
-#include <engine_tools/type_tools.h>
-#include <engine_tools/macro_tools.h>
-#include <engine_tools/debug_tools.h>
+#include "type_tools.h"
+#include "macro_tools.h"
+#include "debug_tools.h"
 
 #define UE_ENGINE_NAME "Understone Engine"
 #define UE_GAME_TITLE  "Understone"

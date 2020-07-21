@@ -8,16 +8,16 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include <data_structures/data_structures.h>
-#include <engine_tools/macro_tools.h>
-#include <engine_tools/debug_tools.h>
-#include <engine_tools/event_tools.h>
-#include <engine_tools/engine_info.h>
-#include <engine_tools/type_tools.h>
+#include "data_structures.h"
+#include "macro_tools.h"
+#include "debug_tools.h"
+#include "event_tools.h"
+#include "engine_info.h"
+#include "type_tools.h"
 
 
-__UE_global__ uSystemEvent win32_sys_event = { 0 };
-__UE_global__ POINT win32_mouse_coords     = { 0 };
+__UE_global__ uSystemEvent win32_sys_event;
+__UE_global__ POINT win32_mouse_coords;
 
 
 //
@@ -32,11 +32,11 @@ typedef struct
 } uWin32Info;
 
 // Forward declare creation method
-__UE_internal__ const uWin32Info* const __UE_call__
+__UE_internal__ const uWin32Info* __UE_call__
 uWin32CreateWin32Info();
 
 __UE_singleton__ uWin32Info* uAPI_PRIME_WIN32_INFO = NULL;
-__UE_internal__ __UE_inline__ const uWin32Info* const
+__UE_internal__ __UE_inline__ const uWin32Info*
 uGetWin32Info()
 {
     if (!uAPI_PRIME_WIN32_INFO)
@@ -66,7 +66,7 @@ uWin32GetWindowSize(_mut_ u32* const restrict width,
     BOOL win32_rect_success = GetWindowRect(win32_info->window, &window_rect);
     if (!win32_rect_success)
     {
-        uFatal("[ win32 ] [ vulkan ] Unable to determine window rect with win32 error: %d.\n", GetLastError());
+        uFatal("[ win32 ] [ vulkan ] Unable to determine window rect with win32 error: %lu.\n", GetLastError());
     }
 
     uAssert(window_rect.right > window_rect.left);
@@ -149,9 +149,12 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 
-__UE_internal__ const uWin32Info* const __UE_call__
+__UE_internal__ const uWin32Info* __UE_call__
 uWin32CreateWin32Info()
 {
+    memset(&win32_sys_event, 0, sizeof(win32_sys_event));
+    memset(&win32_mouse_coords, 0, sizeof(win32_mouse_coords));
+
     if (uAPI_PRIME_WIN32_INFO)
     {
         return uAPI_PRIME_WIN32_INFO;
@@ -181,7 +184,7 @@ uWin32CreateWin32Info()
     if (!RegisterClassEx(&window_class))
     {
         free(*(uWin32Info**)&uAPI_PRIME_WIN32_INFO);
-        uFatal("[ win32 ] Could not register window class; last error code: %d\n", GetLastError());
+        uFatal("[ win32 ] Could not register window class; last error code: %lu\n", GetLastError());
     }
 
     (*(uWin32Info**)&uAPI_PRIME_WIN32_INFO)->window = CreateWindowEx(0,
@@ -214,7 +217,7 @@ uWin32CreateWin32Info()
 }
 
 
-__UE_internal__ __UE_inline__ const uWin32Info* const
+__UE_internal__ __UE_inline__ const uWin32Info*
 uWin32CreateWindow()
 {
     return uWin32CreateWin32Info();

@@ -2,8 +2,8 @@
 #define __UE_DATA_STRUCTURES_H__
 
 
-#include <data_structures/uDynamicArray.h>
-#include <data_structures/uString.h>
+#include "uDynamicArray.h"
+#include "uString.h"
 
 
 #endif // __UE_DATA_STRUCTURES_H__

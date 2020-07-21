@@ -45,24 +45,6 @@ echo.
 :: Requires Visual Studio 2019
 ::
 ::------------------------------
-@SET VC_VARS_2019="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat"
-@SET VC_VARS_2017="C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall.bat"
-
-where cl >nul 2>null
-IF EXIST %VC_VARS_2019% (
-    IF %ERRORLEVEL% NEQ 0 call %VC_VARS_2019% %APP_ARCH% >nul
-    IF %ERRORLEVEL% NEQ 0 GOTO :COMPILE_AND_LINK
-)
-IF EXIST %VC_VARS_2017% (
-    IF %ERRORLEVEL% NEQ 0 call %VC_VARS_2017% %APP_ARCH% >nul
-    IF %ERRORLEVEL% NEQ 0 GOTO :COMPILE_AND_LINK
-)
-GOTO :VS_NOT_FOUND
-
-:COMPILE_AND_LINK
-:: Store msvc clutter elsewhere
-mkdir msvc_landfill >nul 2>nul
-pushd msvc_landfill >nul
 
 :: Compile & Link Options
 ::------------------------------
@@ -70,13 +52,11 @@ pushd msvc_landfill >nul
 :: /TP                  Compile as C++ code.
 :: /Oi                  Enable intrinsic functions.
 :: /Od 	                Disables optimization.
-:: /Qpar                Enable parallel code generation.
 :: /Ot                  Favor fast code (over small code).
 :: /Ob2                 Enable full inline expansion. [ cfarvin::NOTE ] Debugging impact.
 :: /Z7	                Full symbolic debug info. No pdb. (See /Zi, /Zl).
 :: /GS	                Detect buffer overruns.
 :: /MD	                Multi-thread specific, DLL-specific runtime lib. (See /MDd, /MT, /MTd, /LD, /LDd).
-:: /GL	                Whole program optimization.
 :: /EHsc                No exception handling (Unwind semantics requrie vstudio env). (See /W1).
 :: /I<arg>              Specify include directory.
 :: /link                Invoke microsoft linker options.
@@ -86,7 +66,7 @@ pushd msvc_landfill >nul
 :: /LIBPATH:<arg>       Specify library directory/directories.
 
 :: General Parameters
-SET GeneralParameters=/Oi /Qpar /EHsc /GL /nologo /Ot /TC
+SET GeneralParameters=/Oi /EHsc /nologo /Ot /TC
 
 :: Debug Paramters
 SET DebugParameters=/Od /MTd /W4 /WX /D__UE_debug__#1
@@ -95,13 +75,11 @@ SET DebugParameters=/Od /MTd /W4 /WX /D__UE_debug__#1
 SET ReleaseParameters=/MT /O2 /W4 /WX /Ob2
 
 :: Include Parameters
-SET IncludeParameters=/I%cd%\.. ^
-/I%cd%\..\engine_tools ^
-/I%cd%\..\engine_tools\vulkan_tools ^
-/I%cd%\..\win ^
-/I%cd%\..\data_structures ^
-/I%cd%\..\tests ^
-/I%cd%\..\practice ^
+SET IncludeParameters=/Iengine_tools ^
+/Iengine_tools/vulkan_tools ^
+/Idata_structures ^
+/Iwin ^
+/Inix ^
 /I%VULKAN_SDK_PATH%\Include
 
 :: Link Parameters
@@ -116,14 +94,12 @@ vulkan-1.lib
 
 :: Compiler Invocation
 ::------------------------------
-@SET "INVOKE_RELEASE=cl %ReleaseParameters% %SCRIPT_DIR%\\%APP_NAME%.c %GeneralParameters% %IncludeParameters% /link %LinkParameters%"
-@SET "INVOKE_DEBUG=cl %DebugParameters% %SCRIPT_DIR%\\%APP_NAME%.c %GeneralParameters% %IncludeParameters% /link %LinkParameters%"
+@SET "INVOKE_RELEASE=clang-cl %ReleaseParameters% %SCRIPT_DIR%\\%APP_NAME%.c %GeneralParameters% %IncludeParameters% /link %LinkParameters%"
+@SET "INVOKE_DEBUG=clang-cl %DebugParameters% %SCRIPT_DIR%\\%APP_NAME%.c %GeneralParameters% %IncludeParameters% /link %LinkParameters%"
 
 IF /I "%RELEASE_BUILD%" EQU "1" (echo UE Release build...) else (echo UE Debug build...)
 IF /I "%RELEASE_BUILD%" EQU "1" (%INVOKE_RELEASE%) else (%INVOKE_DEBUG%)
 IF %ERRORLEVEL% NEQ 0 GOTO :exit
-xcopy /y Understone.exe ..\ >null
-popd >null
 echo Done.
 echo.
 
@@ -137,14 +113,6 @@ python TagAnalysis.py --emacs
 echo Done.
 echo.
 GOTO :exit
-
-:VS_NOT_FOUND
-echo.
-echo Unable to find vcvarsall.bat. Did you install Visual Studio to the default location?
-echo This build script requries either Visual Studio 2019 or 2017; with the standard C/C++ toolset.
-echo.
-GOTO :exit
-
 
 :SHADER_COMP_ERR
 echo.

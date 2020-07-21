@@ -19,7 +19,7 @@ typedef struct
     const u32              num_command_buffers;
 } uVulkanCommandInfo;
 __UE_singleton__ uVulkanCommandInfo* uAPI_PRIME_VULKAN_COMMAND_INFO = NULL;
-__UE_internal__ __UE_inline__ const uVulkanCommandInfo* const
+__UE_internal__ __UE_inline__ const uVulkanCommandInfo*
 uGetVulkanCommandInfo()
 {
     if (!uAPI_PRIME_VULKAN_COMMAND_INFO)
@@ -49,7 +49,7 @@ typedef struct
     const u32                      num_present_modes;
 } uVulkanSurfaceInfo;
 __UE_singleton__ uVulkanSurfaceInfo* uAPI_PRIME_VULKAN_SURFACE_INFO = NULL;
-__UE_internal__ __UE_inline__ const uVulkanSurfaceInfo* const
+__UE_internal__ __UE_inline__ const uVulkanSurfaceInfo*
 uGetVulkanSurfaceInfo()
 {
     if (!uAPI_PRIME_VULKAN_SURFACE_INFO)
@@ -78,7 +78,7 @@ typedef struct
     const u32              designated_present_index;
 } uVulkanQueueInfo;
 __UE_singleton__ uVulkanQueueInfo* uAPI_PRIME_VULKAN_QUEUE_INFO = NULL;
-__UE_internal__ __UE_inline__ const uVulkanQueueInfo* const
+__UE_internal__ __UE_inline__ const uVulkanQueueInfo*
 uGetVulkanQueueInfo()
 {
     if (!uAPI_PRIME_VULKAN_QUEUE_INFO)
@@ -102,7 +102,7 @@ typedef struct
     const VkDevice         logical_device;
 } uVulkanInfo;
 __UE_singleton__ uVulkanInfo* uAPI_PRIME_VULKAN_INFO = NULL;
-__UE_internal__ __UE_inline__ const uVulkanInfo* const
+__UE_internal__ __UE_inline__ const uVulkanInfo*
 uGetVulkanInfo()
 {
     if (!uAPI_PRIME_VULKAN_INFO)
@@ -128,7 +128,7 @@ typedef struct
     const VkSwapchainKHR swap_chain;
 } uVulkanImageGroup;
 __UE_singleton__ uVulkanImageGroup* uAPI_PRIME_VULKAN_IMAGE_GROUP = NULL;
-__UE_internal__ __UE_inline__ const uVulkanImageGroup* const
+__UE_internal__ __UE_inline__ const uVulkanImageGroup*
 uGetVulkanImageGroup()
 {
     if(!uAPI_PRIME_VULKAN_IMAGE_GROUP)
@@ -155,7 +155,7 @@ typedef struct
     const u32                      num_attachments;
 } uVulkanRenderInfo;
 __UE_singleton__ uVulkanRenderInfo* uAPI_PRIME_VULKAN_RENDER_INFO = NULL;
-__UE_internal__ __UE_inline__ const uVulkanRenderInfo* const
+__UE_internal__ __UE_inline__ const uVulkanRenderInfo*
 uGetVulkanRenderInfo()
 {
     if(!uAPI_PRIME_VULKAN_RENDER_INFO)
@@ -172,7 +172,7 @@ uGetVulkanRenderInfo()
 
 //
 // [ begin ] Draw Tools
-__UE_global__ bool uVULKAN_DRAW_TOOLS_OUTDATED = false;
+__UE_global__ bool uVULKAN_DRAW_TOOLS_OUTDATED;
 #define uVULKAN_NUM_COMMAND_BUFFERS   3
 #define uVULKAN_MAX_FRAMES_IN_FLIGHT  2
 typedef struct
@@ -256,7 +256,7 @@ uCreateDrawTools(_mut_ uVulkanDrawTools* const restrict draw_tools)
 #endif // _WIN32
 
     VkResult result = VK_SUCCESS;
-    const char* sync_create_error_msg = "[ vulkan ] Unable to create draw syn objects.\n";
+    const char sync_create_error_msg[] = "[ vulkan ] Unable to create draw syn objects.\n";
 
     for (u8 sync_obj_idx = 0; sync_obj_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; sync_obj_idx++)
     {
@@ -437,7 +437,7 @@ uDestroyVulkanCommandBuffers()
 
         if (command_info->command_buffers)
         {
-            free(command_info->command_buffers);
+            free((void*)command_info->command_buffers);
         }
     }
 }

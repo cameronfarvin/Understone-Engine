@@ -1,7 +1,7 @@
 #ifndef __event_tools__
 #define __event_tools__ 1
 
-#include <engine_tools/type_tools.h>
+#include "type_tools.h"
 
 // [ cfarvin::REMOVE ] Remove stdio.h
 #include <stdio.h>

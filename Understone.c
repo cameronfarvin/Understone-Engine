@@ -1,23 +1,23 @@
-#include <engine_tools/type_tools.h>
-__UE_global__ bool RUNNING = true;
+#include "type_tools.h"
+__UE_global__ bool RUNNING;
 
 // Set __uDEBUG_SYSTEM__ == 1 in compiler invocation to enable system debugging
 // -- msvc: /D__UE_debug__ == 1#1
-#include <engine_tools/debug_tools.h>
+#include "debug_tools.h"
 
-#include <engine_tools/vulkan_tools/vulkan_tools.h>
+#include "vulkan_tools.h"
 #include <engine_tools/vulkan_tools/shader_tools.h>
 #include <engine_tools/memory_tools.h>
 #include <engine_tools/event_tools.h>
 #include <data_structures/data_structures.h>
 
 // Set __uTESTS_ENABLED__ == 0 in tests.h to disable tests on startup
-#include <tests/tests.h>
+#include "tests.h"
 
 #if __linux__
-#include <nix/nix_platform.h>
+#include "nix_platform.h"
 #elif _WIN32
-#include <win/win_platform.h>
+#include "win_platform.h"
 #endif // _WIN32
 
 
@@ -279,6 +279,11 @@ int main(int argc, char** argv)
 #endif // __UE_debug__ == 1
 
     if (argc && argv) {}
+
+    // Set globals
+    RUNNING = true;
+    uVULKAN_DRAW_TOOLS_OUTDATED = false;
+    memset(&REMOVE_ME, 0, sizeof(REMOVE_ME));
 
 #if __UE_debug__ == 1
     printf("[ engine ] - debug -\n");
