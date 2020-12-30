@@ -28,7 +28,10 @@ typedef struct
     const VkShaderModule    shader_module; // unique ID
     const uVulkanShaderType shader_type;
     const char*             shader_data;
-    const u32               num_shader_data_bytes;
+
+    // [ cfarvin::TODO ] Determine if this is too large/small, and detect
+    //                   possible overflows
+    const u16 num_shader_data_bytes;
 } uVulkanShader;
 
 //
@@ -155,7 +158,6 @@ uReadSpirvFile(const char* const restrict file_name,
 
 static void
 uCreateVulkanShaderModule(const uVulkanShader* const shader)
-
 {
     const uVulkanInfo* const v_info = uGetVulkanInfo();
 
