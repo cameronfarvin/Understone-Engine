@@ -1,7 +1,7 @@
 //
 // Understone Engine Build Tools
 //
-// This appliction autogenerates source files and baked data, compiles
+// This application autogenerates source files and baked data, compiles
 // Understone Engine, and performs code analysis. It is shipped as a single C++
 // source file for simple building. The only requirement to build the Understone
 // Engine, including this tool, is a C++ compiler with >= std::c++20 features.
