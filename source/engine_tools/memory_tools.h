@@ -17,8 +17,8 @@ typedef struct
     const u16 arena_size;
 } uMemoryArena;
 
-__UE_internal__ __UE_inline__ uMemoryArena*
-                              uMAInit(const u16 arena_bytes)
+static __UE_inline__ uMemoryArena*
+                     uMAInit(const u16 arena_bytes)
 {
     if(!arena_bytes) { return NULL; }
 
@@ -32,7 +32,7 @@ __UE_internal__ __UE_inline__ uMemoryArena*
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* __UE_internal__ __UE_inline__ void* */
+/* static __UE_inline__ void* */
 /* uMANext(const uMemoryArena* restrict const memory_arena) */
 /* { */
 /*     if(!(memory_arena && memory_arena->data && memory_arena->arena_size)) */
@@ -46,8 +46,8 @@ __UE_internal__ __UE_inline__ uMemoryArena*
 // [ cfarvin::RESTORE ] Unused fn warning
 /* #define uMAAllocate(arena, type, num_bytes)     \ */
 /*     (type*)uMAAllocate_API__(arena, num_bytes) */
-/* __UE_internal__ __UE_inline__ void* */
-/* uMAAllocate_API__(_mut_ uMemoryArena* restrict const memory_arena, */
+/* static __UE_inline__ void* */
+/* uMAAllocate_API__( uMemoryArena* restrict const memory_arena, */
 /*                   const u16                          num_bytes) */
 /* { */
 /*     if (!(num_bytes && memory_arena && memory_arena->data)) */
@@ -61,10 +61,8 @@ __UE_internal__ __UE_inline__ uMemoryArena*
 /* } */
 
 #define uMAPushData(arena, new_data, type) ( type* )uMAPushData_API(arena, ( type* )&(new_data), sizeof(type))
-__UE_internal__ __UE_inline__ void*
-                uMAPushData_API(_mut_ uMemoryArena* restrict const memory_arena,
-                                const void* restrict const         new_data,
-                                const u16                          new_data_size)
+static __UE_inline__ void*
+uMAPushData_API(uMemoryArena* restrict const memory_arena, const void* restrict const new_data, const u16 new_data_size)
 {
     if(!(memory_arena && new_data && new_data_size)) { return NULL; }
 
@@ -82,8 +80,8 @@ __UE_internal__ __UE_inline__ void*
 }
 
 #define uMAPushArray(arena, new_data, type, num_bytes) ( type* )uMAPushArray_API(arena, new_data, num_bytes)
-__UE_internal__ __UE_inline__ void*
-                uMAPushArray_API(uMemoryArena* memory_arena, void* new_data, u16 new_data_size)
+static __UE_inline__ void*
+uMAPushArray_API(uMemoryArena* memory_arena, void* new_data, u16 new_data_size)
 {
     if(!(memory_arena && new_data && new_data_size)) { return NULL; }
 
@@ -100,7 +98,7 @@ __UE_internal__ __UE_inline__ void*
     return ( void* )(dest_ptr);
 }
 
-__UE_internal__ __UE_inline__ bool
+static __UE_inline__ bool
 uMADestroy(uMemoryArena* memory_arena)
 {
     if(!(memory_arena && memory_arena->data)) { return false; }

@@ -8,14 +8,14 @@
 #define UE_ENGINE_NAME "Understone Engine"
 #define UE_GAME_TITLE  "Understone"
 
-__UE_internal__ __UE_inline__ const s8*
-                                    uGetEngineName()
+static __UE_inline__ const s8*
+                           uGetEngineName()
 {
     return ( const s8* )UE_ENGINE_NAME;
 }
 
-__UE_internal__ __UE_inline__ const s8*
-                                    uGetGameTitle()
+static __UE_inline__ const s8*
+                           uGetGameTitle()
 {
     return ( const s8* )UE_GAME_TITLE;
 }

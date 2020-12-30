@@ -9,12 +9,12 @@
 
 typedef struct
 {
-    _mut_ char*  data;
+    char*        data;
     const size_t length;
     const size_t bytes;
 } uString;
 
-__UE_internal__ __UE_inline__ size_t
+static __UE_inline__ size_t
 uStringLen(const char* const uStr)
 {
     uAssertMsg_v(uStr, "String must be non null.");
@@ -43,7 +43,7 @@ uStringLen(const char* const uStr)
 // Verifies that the uString members have reasonable values,
 // and that the uString represents a char stream of non-zero
 // length.
-__UE_internal__ __UE_inline__ bool
+static __UE_inline__ bool
 uStringVerify(const uString* const uStr)
 {
     bool retVal = true;
@@ -111,8 +111,8 @@ uStringVerify(const uString* const uStr)
     return retVal;
 }
 
-__UE_internal__ __UE_inline__ uString*
-                              uStringInit(const char* str)
+static __UE_inline__ uString*
+                     uStringInit(const char* str)
 {
     // [ cfarvin::REVISIT ] Strlen correctness, use throughout uString
     if(str)
@@ -135,7 +135,7 @@ __UE_internal__ __UE_inline__ uString*
     return NULL;
 }
 
-__UE_internal__ __UE_inline__ bool
+static __UE_inline__ bool
 uStringDestroy(uString* const uStr)
 {
     if(uStr && uStr->data)

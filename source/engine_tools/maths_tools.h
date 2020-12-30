@@ -18,8 +18,8 @@ static const double _C_AIR_               = 299700000.0;
 static const double _C_VACCUME_           = 299792458.0;
 
 #ifdef _WIN32
-#    pragma warning(push)
-#    pragma warning(disable : 4201)
+#pragma warning(push)
+#pragma warning(disable : 4201)
 #endif // WIN32
 typedef union
 {
@@ -54,12 +54,12 @@ typedef union
     r32 arr[3];
 } v3;
 #ifdef _WIN32
-#    pragma warning(pop)
+#pragma warning(pop)
 #endif // WIN32
 
 #if _WIN32
-#    pragma warning(push)
-#    pragma warning(disable : 4201)
+#pragma warning(push)
+#pragma warning(disable : 4201)
 #endif // WIN32
 typedef union
 {
@@ -97,12 +97,12 @@ typedef union
     r32 arr[4];
 } v4;
 #if _WIN32
-#    pragma warning(pop)
+#pragma warning(pop)
 #endif // WIN32
 
 #if _WIN32
-#    pragma warning(push)
-#    pragma warning(disable : 4201)
+#pragma warning(push)
+#pragma warning(disable : 4201)
 #endif // WIN32
 typedef union
 {
@@ -117,12 +117,12 @@ typedef union
     r32 arr2d[3][3];
 } m3;
 #if _WIN32
-#    pragma warning(pop)
+#pragma warning(pop)
 #endif // WIN32
 
 #if _WIN32
-#    pragma warning(push)
-#    pragma warning(disable : 4201)
+#pragma warning(push)
+#pragma warning(disable : 4201)
 #endif // WIN32
 typedef union
 {
@@ -138,10 +138,10 @@ typedef union
     r32 arr2d[4][4];
 } m4;
 #if _WIN32
-#    pragma warning(pop)
+#pragma warning(pop)
 #endif // WIN32
 
-__UE_internal__ __UE_inline__ bool
+static __UE_inline__ bool
 IsWithinTolerance(const r32 value, const r32 target_value)
 {
     r32 min = (r32)(value - _TOLERANCE_);
@@ -152,7 +152,7 @@ IsWithinTolerance(const r32 value, const r32 target_value)
 // Note: XorShift32State must be initialized to some value
 //       before using XorShift32()
 static u32 XorShift32State;
-__UE_internal__ __UE_inline__ u32
+static __UE_inline__ u32
 XorShift32()
 {
     u32 x = XorShift32State;
@@ -163,7 +163,7 @@ XorShift32()
     return x;
 }
 
-__UE_internal__ __UE_inline__ r32
+static __UE_inline__ r32
 NormalizeToRange(r32 min_source_range,
                  r32 max_source_range,
                  r32 min_target_range,
@@ -184,7 +184,7 @@ NormalizeToRange(r32 min_source_range,
 
 // Note: XorShift32State must be initialized to some value
 //       before using NormalBoundedXorShift32()
-__UE_internal__ __UE_inline__ r32
+static __UE_inline__ r32
 NormalBoundedXorShift32()
 {
     u32 max32 = ~( u32 )0;
@@ -193,7 +193,7 @@ NormalBoundedXorShift32()
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* __UE_internal__ __UE_inline__ r32 */
+/* static __UE_inline__ r32 */
 /* NormalRayDistLerp(const r32 old_value) */
 /* { */
 /*     uAssert(MAX_RAY_MAG > MIN_RAY_MAG); */
@@ -201,18 +201,18 @@ NormalBoundedXorShift32()
 /* } */
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* __UE_internal__ __UE_inline__ void */
+/* static __UE_inline__ void */
 /* DegreesToRadians(const r32 degrees, */
-/*                  _mut_ r32* restrict const result) */
+/*                   r32* restrict const result) */
 /* { */
 /*     uAssert(result); */
 /*     *result = (r32)(degrees * (_PI_ / 180.0f)); */
 /* } */
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* __UE_internal__ __UE_inline__ void */
+/* static __UE_inline__ void */
 /* RadiansToDegrees(const r32 radians, */
-/*                  _mut_ r32* restrict const result) */
+/*                   r32* restrict const result) */
 /* { */
 /*     uAssert(result); */
 /*     *result = (r32)(radians * (180.0f / _PI_)); */
@@ -221,8 +221,8 @@ NormalBoundedXorShift32()
 //
 // v3
 //
-__UE_internal__ __UE_inline__ void
-v3Set(_mut_ v3* restrict const result, const r32 x, const r32 y, const r32 z)
+static __UE_inline__ void
+v3Set(v3* restrict const result, const r32 x, const r32 y, const r32 z)
 {
     uAssert(result);
     result->x = x;
@@ -230,14 +230,14 @@ v3Set(_mut_ v3* restrict const result, const r32 x, const r32 y, const r32 z)
     result->z = z;
 }
 
-__UE_internal__ __UE_inline__ bool
+static __UE_inline__ bool
 v3IsEqual(const v3* restrict const a, const v3* restrict const b)
 {
     uAssert(a && b);
     return (IsWithinTolerance(a->x, b->x) && IsWithinTolerance(a->y, b->y) && IsWithinTolerance(a->z, b->z));
 }
 
-__UE_internal__ __UE_inline__ r32
+static __UE_inline__ r32
 v3Mag(const v3* restrict const a)
 {
     uAssert(a);
@@ -248,13 +248,13 @@ v3Mag(const v3* restrict const a)
     return ( r32 )sqrt(sum2);
 }
 
-__UE_internal__ __UE_inline__ bool
+static __UE_inline__ bool
 v3IsNorm(const v3* restrict const a)
 {
     return (IsWithinTolerance(v3Mag(a), 1.0f));
 }
 
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 v3Norm(v3* restrict const a)
 {
     uAssert(a);
@@ -272,8 +272,8 @@ v3Norm(v3* restrict const a)
     }
 }
 
-__UE_internal__ __UE_inline__ void
-v3SetAndNorm(_mut_ v3* restrict const result, const r32 x, const r32 y, const r32 z)
+static __UE_inline__ void
+v3SetAndNorm(v3* restrict const result, const r32 x, const r32 y, const r32 z)
 {
     uAssert(result);
     result->x = x;
@@ -282,8 +282,8 @@ v3SetAndNorm(_mut_ v3* restrict const result, const r32 x, const r32 y, const r3
     v3Norm(result);
 }
 
-__UE_internal__ __UE_inline__ void
-v3Add(const v3* restrict const a, const v3* restrict const b, _mut_ v3* restrict const result)
+static __UE_inline__ void
+v3Add(const v3* restrict const a, const v3* restrict const b, v3* restrict const result)
 {
     uAssert(a && b && result);
     result->x = a->x + b->x;
@@ -291,8 +291,8 @@ v3Add(const v3* restrict const a, const v3* restrict const b, _mut_ v3* restrict
     result->z = a->z + b->z;
 }
 
-__UE_internal__ __UE_inline__ void
-v3Sub(const v3* restrict const a, const v3* restrict const b, _mut_ v3* restrict const result)
+static __UE_inline__ void
+v3Sub(const v3* restrict const a, const v3* restrict const b, v3* restrict const result)
 {
     uAssert(a && b && result);
     result->x = a->x - b->x;
@@ -300,8 +300,8 @@ v3Sub(const v3* restrict const a, const v3* restrict const b, _mut_ v3* restrict
     result->z = a->z - b->z;
 }
 
-__UE_internal__ __UE_inline__ void
-v3ScalarMul(const v3* restrict const a, const r32 scalar, _mut_ v3* restrict const result)
+static __UE_inline__ void
+v3ScalarMul(const v3* restrict const a, const r32 scalar, v3* restrict const result)
 {
     uAssert(a && result);
     result->x = a->x * scalar;
@@ -309,7 +309,7 @@ v3ScalarMul(const v3* restrict const a, const r32 scalar, _mut_ v3* restrict con
     result->z = a->z * scalar;
 }
 
-__UE_internal__ __UE_inline__ r32
+static __UE_inline__ r32
 v3Dot(const v3* restrict const a, const v3* restrict const b)
 {
     uAssert(a && b);
@@ -320,8 +320,8 @@ v3Dot(const v3* restrict const a, const v3* restrict const b)
     return result;
 }
 
-__UE_internal__ __UE_inline__ void
-v3Cross(const v3* restrict const a, const v3* restrict const b, _mut_ v3* restrict const result)
+static __UE_inline__ void
+v3Cross(const v3* restrict const a, const v3* restrict const b, v3* restrict const result)
 {
     uAssert(a && b && result);
     r32 i = ((a->y * b->z) - (a->z * b->y));
@@ -331,10 +331,10 @@ v3Cross(const v3* restrict const a, const v3* restrict const b, _mut_ v3* restri
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* __UE_internal__ __UE_inline__ void */
+/* static __UE_inline__ void */
 /* v3CrossAndNorm(const v3* restrict const a, */
 /*                const v3* restrict const b, */
-/*                _mut_ v3* restrict const result) */
+/*                 v3* restrict const result) */
 /* { */
 /*     uAssert(a && b && result); */
 /*     v3Cross(a, b, result); */
@@ -344,7 +344,7 @@ v3Cross(const v3* restrict const a, const v3* restrict const b, _mut_ v3* restri
 //
 // v4
 //
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 v4Set(v4* restrict const result, const r32 x, const r32 y, const r32 z, const r32 w)
 {
     uAssert(result);
@@ -354,7 +354,7 @@ v4Set(v4* restrict const result, const r32 x, const r32 y, const r32 z, const r3
     result->w = w;
 }
 
-__UE_internal__ __UE_inline__ bool
+static __UE_inline__ bool
 v4IsEqual(const v4* restrict const a, const v4* restrict const b)
 {
     uAssert(a && b);
@@ -362,7 +362,7 @@ v4IsEqual(const v4* restrict const a, const v4* restrict const b)
             IsWithinTolerance(a->w, b->w));
 }
 
-__UE_internal__ __UE_inline__ r32
+static __UE_inline__ r32
 v4Mag(const v4* const a)
 {
     uAssert(a);
@@ -374,14 +374,14 @@ v4Mag(const v4* const a)
     return ( r32 )sqrt(sum2);
 }
 
-__UE_internal__ __UE_inline__ bool
+static __UE_inline__ bool
 v4IsNorm(const v4* restrict const a)
 {
     return (IsWithinTolerance(v4Mag(a), 1.0f));
 }
 
-__UE_internal__ __UE_inline__ void
-v4Norm(_mut_ v4* restrict const a)
+static __UE_inline__ void
+v4Norm(v4* restrict const a)
 {
     uAssert(a);
     r32 magnitude = v4Mag(a);
@@ -399,8 +399,8 @@ v4Norm(_mut_ v4* restrict const a)
     }
 }
 
-__UE_internal__ __UE_inline__ void
-v4SetAndNorm(_mut_ v4* restrict const result, const r32 x, const r32 y, const r32 z, const r32 w)
+static __UE_inline__ void
+v4SetAndNorm(v4* restrict const result, const r32 x, const r32 y, const r32 z, const r32 w)
 {
     uAssert(result);
     result->x = x;
@@ -410,8 +410,8 @@ v4SetAndNorm(_mut_ v4* restrict const result, const r32 x, const r32 y, const r3
     v4Norm(result);
 }
 
-__UE_internal__ __UE_inline__ void
-v4Add(const v4* restrict const a, const v4* restrict const b, _mut_ v4* restrict const result)
+static __UE_inline__ void
+v4Add(const v4* restrict const a, const v4* restrict const b, v4* restrict const result)
 {
     uAssert(a && b && result);
     result->x = a->x + b->x;
@@ -420,8 +420,8 @@ v4Add(const v4* restrict const a, const v4* restrict const b, _mut_ v4* restrict
     result->w = a->w + b->w;
 }
 
-__UE_internal__ __UE_inline__ void
-v4Sub(const v4* restrict const a, const v4* restrict const b, _mut_ v4* restrict const result)
+static __UE_inline__ void
+v4Sub(const v4* restrict const a, const v4* restrict const b, v4* restrict const result)
 {
     uAssert(a && b && result);
     result->x = a->x - b->x;
@@ -430,8 +430,8 @@ v4Sub(const v4* restrict const a, const v4* restrict const b, _mut_ v4* restrict
     result->w = a->w - b->w;
 }
 
-__UE_internal__ __UE_inline__ void
-v4ScalarMul(const v4* restrict const a, const r32 scalar, _mut_ v4* restrict const result)
+static __UE_inline__ void
+v4ScalarMul(const v4* restrict const a, const r32 scalar, v4* restrict const result)
 {
     uAssert(a && result);
     result->x = a->x * scalar;
@@ -440,7 +440,7 @@ v4ScalarMul(const v4* restrict const a, const r32 scalar, _mut_ v4* restrict con
     result->w = a->w * scalar;
 }
 
-__UE_internal__ __UE_inline__ r32
+static __UE_inline__ r32
 v4Dot(const v4* restrict const a, const v4* restrict const b)
 {
     uAssert(a && b);
@@ -455,15 +455,15 @@ v4Dot(const v4* restrict const a, const v4* restrict const b)
 //
 // m3
 //
-__UE_internal__ void
-m3Set(_mut_ m3* restrict const a, const r32 b)
+static void
+m3Set(m3* restrict const a, const r32 b)
 {
     uAssert(a);
     for(uint8_t idx = 0; idx < 9; idx++) { a->arr[idx] = b; }
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* __UE_internal__ bool */
+/* static bool */
 /* m3IsEqual(const m3* restrict const a, */
 /*           const m3* restrict const b) */
 /* { */
@@ -473,8 +473,8 @@ m3Set(_mut_ m3* restrict const a, const r32 b)
 /*             (v3IsEqual(&a->k, &b->k)) ); */
 /* } */
 
-__UE_internal__ void
-m3Ident(_mut_ m3* restrict const result)
+static void
+m3Ident(m3* restrict const result)
 {
     uAssert(result);
     for(uint8_t idx = 0; idx < 9; idx++) { result->arr[idx] = 0; }
@@ -482,8 +482,8 @@ m3Ident(_mut_ m3* restrict const result)
     for(uint8_t idx = 0; idx < 3; idx++) { result->arr2d[idx][idx] = 1; }
 }
 
-__UE_internal__ __UE_inline__ void
-m3Mult(const m3* restrict const a, const m3* restrict const b, _mut_ m3* restrict const result)
+static __UE_inline__ void
+m3Mult(const m3* restrict const a, const m3* restrict const b, m3* restrict const result)
 {
     uAssert(a && b && result);
     for(uint8_t col = 0; col < 3; col++)
@@ -499,15 +499,15 @@ m3Mult(const m3* restrict const a, const m3* restrict const b, _mut_ m3* restric
 //
 // m4
 //
-__UE_internal__ void
-m4Set(_mut_ m4* const a, const r32 b)
+static void
+m4Set(m4* const a, const r32 b)
 {
     uAssert(a);
     for(uint8_t idx = 0; idx < 16; idx++) { a->arr[idx] = b; }
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* __UE_internal__ bool */
+/* static bool */
 /* m4IsEqual(const m4* const a, const m4* const b) */
 /* { */
 /*     uAssert(a && b); */
@@ -517,8 +517,8 @@ m4Set(_mut_ m4* const a, const r32 b)
 /*             (v4IsEqual(&a->n, &b->n)) ); */
 /* } */
 
-__UE_internal__ void
-m4Ident(_mut_ m4* const result)
+static void
+m4Ident(m4* const result)
 {
     uAssert(result);
     for(uint8_t idx = 0; idx < 16; idx++) { result->arr[idx] = 0; }
@@ -526,8 +526,8 @@ m4Ident(_mut_ m4* const result)
     for(uint8_t idx = 0; idx < 4; idx++) { result->arr2d[idx][idx] = 1; }
 }
 
-__UE_internal__ __UE_inline__ void
-m4Mult(const m4* restrict const a, const m4* restrict const b, _mut_ m4* restrict const result)
+static __UE_inline__ void
+m4Mult(const m4* restrict const a, const m4* restrict const b, m4* restrict const result)
 {
     uAssert(a && b && result);
     for(uint8_t col = 0; col < 4; col++)

@@ -45,11 +45,11 @@ typedef struct
     u32                              num_shaders;
     u8                               num_stages;
 } uVulkanGraphicsPipelineRecreateInfo;
-__UE_global__ uVulkanGraphicsPipelineRecreateInfo REMOVE_ME = {};
+uVulkanGraphicsPipelineRecreateInfo kRemoveMe = {};
 
 // Note: loaded by uLoadSpirvModules()
 //       consumed by uCreateVulkanGraphicsPipeline()
-__UE_global__ uVulkanShaderInfo shaders_to_load[] = {
+uVulkanShaderInfo kShadersToLoad[] = {
     { .shader_file_path = "shaders/vkTriangle_vert.spv", .shader_type = uVK_VERTEX_SHADER },
     { .shader_file_path = "shaders/vkTriangle_frag.spv", .shader_type = uVK_FRAGMENT_SHADER }
 };
@@ -57,7 +57,7 @@ __UE_global__ uVulkanShaderInfo shaders_to_load[] = {
 //
 
 #if __UE_debug__ == 1
-__UE_internal__ bool __UE_call__
+static bool
 uValidateVulkanShaderType(uVulkanShaderType shader_type)
 {
     bool retVal = false;
@@ -84,7 +84,7 @@ uValidateVulkanShaderType(uVulkanShaderType shader_type)
 }
 #endif
 
-__UE_internal__ VkShaderStageFlagBits __UE_call__
+static VkShaderStageFlagBits
 uVulkanShaderTypeToStageBit(uVulkanShaderType shader_type)
 {
     // Note: As of this writing, 0 is an invalid stage bit.
@@ -111,10 +111,10 @@ uVulkanShaderTypeToStageBit(uVulkanShaderType shader_type)
     return retVal;
 }
 
-__UE_internal__ void __UE_call__
-uReadSpirvFile(const char* const restrict        file_name,
-               _mut_ char** _mut_ const restrict return_file_data,
-               _mut_ size_t* restrict return_file_size)
+static void
+uReadSpirvFile(const char* const restrict file_name,
+               char** const restrict      return_file_data,
+               size_t* restrict           return_file_size)
 {
     uAssertMsg_v(file_name, "[ vulkan ] File name ptr must be non null.\n");
     uAssertMsg_v(!(*return_file_data), "[ vulkan ] Return file bytes ptr must be null; will be overwritten.\n");
@@ -126,7 +126,9 @@ uReadSpirvFile(const char* const restrict        file_name,
 
     s32 fseek_success = fseek(spir_v_file, 0L, SEEK_END);
     if(fseek_success) // Success == 0
-    { uFatal("[ vulkan ] Unable to seek within SPIR-V file: %s\n", file_name); }
+    {
+        uFatal("[ vulkan ] Unable to seek within SPIR-V file: %s\n", file_name);
+    }
 
     *return_file_size = ( size_t )ftell(spir_v_file);
     if(!(*return_file_size)) { uFatal("[ vulkan ] SPIR-V file: %s has zero size.\n", file_name); }
@@ -144,12 +146,14 @@ uReadSpirvFile(const char* const restrict        file_name,
                                 spir_v_file);                 // FILE*
 
     if(items_read != *return_file_size)
-    { uFatal("[ vulkan ] Unable to verify reading of SPIR-V file: %s.\n", file_name); }
+    {
+        uFatal("[ vulkan ] Unable to verify reading of SPIR-V file: %s.\n", file_name);
+    }
 
     fclose(spir_v_file);
 }
 
-__UE_internal__ void __UE_call__
+static void
 uCreateVulkanShaderModule(const uVulkanShader* const shader)
 
 {
@@ -180,10 +184,10 @@ uCreateVulkanShaderModule(const uVulkanShader* const shader)
 }
 
 // [ cfarvin::TODO ] Load glslangvalidator lib and validate spirv's
-__UE_internal__ void __UE_call__
-uLoadSpirvModules(_mut_ uVulkanShader** const restrict return_shaders, _mut_ u32* const restrict num_return_shaders)
+static void
+uLoadSpirvModules(uVulkanShader** const restrict return_shaders, u32* const restrict num_return_shaders)
 {
-    const size_t num_shader_infos = sizeof(shaders_to_load) / sizeof(uVulkanShaderInfo);
+    const size_t num_shader_infos = sizeof(kShadersToLoad) / sizeof(uVulkanShaderInfo);
 
     uAssertMsg_v(num_shader_infos, "[ shaders ] Number of shaders must be non zero.\n");
     uAssertMsg_v(return_shaders, "[ shaders ] uVulkanShader ptr must be non null.\n");
@@ -200,21 +204,21 @@ uLoadSpirvModules(_mut_ uVulkanShader** const restrict return_shaders, _mut_ u32
     if(!return_shaders) { uFatal(return_shader_alloc_err); }
 
     // [ cfarvin::REMOVE ]
-    REMOVE_ME.num_stages = 0;
+    kRemoveMe.num_stages = 0;
     uDebugPrint("Loading %zd SPIR-V files...\n", num_shader_infos);
     for(u32 shader_idx = 0; shader_idx < num_shader_infos; shader_idx++)
     {
         // Validate incoming shader info
-        const uVulkanShaderInfo shader_info = shaders_to_load[shader_idx];
+        const uVulkanShaderInfo shader_info = kShadersToLoad[shader_idx];
         uAssertMsg_v(shader_info.shader_file_path, "[ shaders ] Shader file path must not be null.\n");
         uAssertMsg_v(uValidateVulkanShaderType(shader_info.shader_type), "[ shaders ] Shader type must be valid.\n");
 
         // Copy shader info to return shaders
         const uVulkanShader* return_shader                   = &((*return_shaders)[shader_idx]);
         *( uVulkanShaderType* )&(return_shader->shader_type) = shader_info.shader_type;
-        uReadSpirvFile(( const char* )(shader_info.shader_file_path),             // File path (disk)
-                       ( _mut_ char** )&(return_shader->shader_data),             // Data bytes
-                       ( _mut_ size_t* )&(return_shader->num_shader_data_bytes)); // Num data bytes read
+        uReadSpirvFile(( const char* )(shader_info.shader_file_path),       // File path (disk)
+                       ( char** )&(return_shader->shader_data),             // Data bytes
+                       ( size_t* )&(return_shader->num_shader_data_bytes)); // Num data bytes read
 
         // Create vulkan shader module
         uCreateVulkanShaderModule(return_shader);
@@ -225,13 +229,15 @@ uLoadSpirvModules(_mut_ uVulkanShader** const restrict return_shaders, _mut_ u32
         // [ cfarvin::RESTORE ]
         /* (*num_return_shaders)++; */
         // [ cfarvin::REMOVE ]
-        REMOVE_ME.num_shaders++;
+        kRemoveMe.num_shaders++;
 
         // [ cfarvin::REVISIT ] Stage count needs to be accounted for outside of
         // this test code,
         //                      and updated as futher stages are added.
         if(return_shader->shader_type == uVK_VERTEX_SHADER || return_shader->shader_type == uVK_FRAGMENT_SHADER)
-        { REMOVE_ME.num_stages++; }
+        {
+            kRemoveMe.num_stages++;
+        }
     }
 }
 

@@ -14,12 +14,11 @@
 // For now, run tests on startup for every debug build,
 // Otherwise, don't run.
 #if __UE_debug__ == 1
-#    define __uTESTS_ENABLED__ 1
+#define __uTESTS_ENABLED__ 1
 #endif // __UE_debug__ == 1
 
 #define arrayTestFailMessage "Failed dynamic array tests\n"
-void __UE_internal__ __UE_call__
-runDynamicArrayTests()
+void static runDynamicArrayTests()
 {
     puts("\tRunning dynamic array tests...");
 
@@ -117,7 +116,7 @@ runDynamicArrayTests()
 }
 
 #define memoryArenaTestFailMessage "Failed memory arena tests\n"
-__UE_internal__ void __UE_call__
+static void
 runMemoryArenaTests()
 {
     puts("\tRunning memory arena tests...");
@@ -245,10 +244,10 @@ runMemoryArenaTests()
     uTesetAssert(uMADestroy(memory_arena_array_test), "Failed to deallocate on uMemoryArena array test");
 }
 
-__UE_internal__ void __UE_call__
+static void
 runMathsTests()
 {
-    puts("\tRunning memory arena tests...");
+    puts("\tRunning maths tests...");
 
     //
     // v3 Tests
@@ -531,13 +530,14 @@ runStringTests()
 void
 runAllTests()
 {
-    puts("[ TESTING ] Running All Tests...");
-    fflush(stdout);
+    puts("[ tests ] Running All Tests...");
+
     runDynamicArrayTests();
     runMemoryArenaTests();
     runMathsTests();
     runStringTests();
-    puts("[ TESTING::SUCCESS ]");
+
+    puts("[ tests ] All pass");
     fflush(stdout);
 }
 

@@ -2,7 +2,7 @@
 #define __win_platform__ 1
 
 #ifndef WIN32
-#    define WIN32
+#define WIN32
 #endif // WIN32
 #include "data_structures.h"
 #include "debug_tools.h"
@@ -10,13 +10,16 @@
 #include "event_tools.h"
 #include "macro_tools.h"
 #include "type_tools.h"
+#include "window_tools.h"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <windows.h>
 
-__UE_global__ uSystemEvent win32_sys_event    = {};
-__UE_global__ POINT        win32_mouse_coords = {};
+uSystemEvent kWin32SystemEvent      = {};
+POINT        kWin32MouseCoordinates = {};
+
+extern uGameWindow kGameWindow;
 
 //
 // [ begin ] Prime uWin32Info
@@ -28,14 +31,14 @@ typedef struct
     HDC       device_context;
     const s8* class_name;
 } uWin32Info;
+const uWin32Info* uAPI_PRIME_WIN32_INFO = NULL;
 
 // Forward declare creation method
-__UE_internal__ const uWin32Info* __UE_call__
-                      uWin32CreateWin32Info();
+static const uWin32Info*
+uWin32CreateWin32Info();
 
-__UE_singleton__ uWin32Info*        uAPI_PRIME_WIN32_INFO = NULL;
-__UE_internal__ __UE_inline__ const uWin32Info*
-                                    uGetWin32Info()
+__UE_inline__ static const uWin32Info*
+uGetWin32Info()
 {
     if(!uAPI_PRIME_WIN32_INFO) { *( uWin32Info** )&uAPI_PRIME_WIN32_INFO = ( uWin32Info* )uWin32CreateWin32Info(); }
 
@@ -44,33 +47,37 @@ __UE_internal__ __UE_inline__ const uWin32Info*
 // [ end ] Prime uWin32Info
 //
 
-__UE_internal__ __UE_inline__ void
-uWin32GetWindowSize(_mut_ u32* const restrict width, _mut_ u32* const restrict height)
-{
-    const uWin32Info* win32_info = uGetWin32Info();
+// [ cfarvin::REMOVE ] There is a lot of "RESTORE" tags, I am worried that removing this now will end up
+//                     doing away with something I needed for one of them. Finish those first, then remove
+//                     this if necessary.
+/* static __UE_inline__ void */
+/* uWin32GetWindowSize(u32* const restrict width, u32* const restrict height) */
+/* { */
+/*     const uWin32Info* win32_info = uGetWin32Info(); */
 
-    uAssertMsg_v(width, "[ win32 ] Width ptr must be non null.\n");
-    uAssertMsg_v(height, "[ win32 ] Height ptr must be non null.\n");
-    uAssertMsg_v(IsWindow(win32_info->window),
-                 "[ win32 ] Windows reports that the win32_info->window member "
-                 "is invalid.\n");
+/*     uAssertMsg_v(width, "[ win32 ] Width ptr must be non null.\n"); */
+/*     uAssertMsg_v(height, "[ win32 ] Height ptr must be non null.\n"); */
+/*     uAssertMsg_v(IsWindow(win32_info->window), */
+/*                  "[ win32 ] Windows reports that the win32_info->window member " */
+/*                  "is invalid.\n"); */
 
-    RECT window_rect        = {};
-    BOOL win32_rect_success = GetWindowRect(win32_info->window, &window_rect);
-    if(!win32_rect_success)
-    { uFatal("[ win32 ] Unable to determine window rect with win32 error: %lu.\n", GetLastError()); }
+/*     RECT window_rect        = {}; */
+/*     BOOL win32_rect_success = GetWindowRect(win32_info->window, &window_rect); */
+/*     if(!win32_rect_success) */
+/*     { */
+/*         uFatal("[ win32 ] Unable to determine window rect with win32 error: %lu.\n", GetLastError()); */
+/*     } */
 
-    uAssert(window_rect.right > window_rect.left);
-    uAssert(window_rect.bottom > window_rect.top);
+/*     uAssert(window_rect.right > window_rect.left); */
+/*     uAssert(window_rect.bottom > window_rect.top); */
 
-    *width  = window_rect.right - window_rect.left;
-    *height = window_rect.bottom - window_rect.top;
+/*     *width  = window_rect.right - window_rect.left; */
+/*     *height = window_rect.bottom - window_rect.top; */
 
-    uAssert(*width);
-    uAssert(*height);
-}
+/*     uAssert(*width); */
+/*     uAssert(*height); */
+/* } */
 
-// Note: no function decorators as to conform with Win32 specification.
 LRESULT CALLBACK
 uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -78,13 +85,13 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         case WM_CLOSE:
         {
-            win32_sys_event = uEventClose;
+            kWin32SystemEvent = uEventClose;
             break;
         }
 
         case WM_DESTROY:
         {
-            win32_sys_event = uEventClose;
+            kWin32SystemEvent = uEventClose;
             PostQuitMessage(0);
             break;
         }
@@ -116,20 +123,27 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_SIZE:
         {
             // [ cfarvin::TODO ] scaling/ortho
-            viewport.width  = ( u16 )LOWORD(lParam);
-            viewport.height = ( u16 )HIWORD(lParam);
-            win32_sys_event = uEventResize;
+            kGameWindow.width  = ( u16 )LOWORD(lParam);
+            kGameWindow.height = ( u16 )HIWORD(lParam);
+            kWin32SystemEvent  = uEventResize;
+
+            if(wParam == SIZE_MINIMIZED) { kGameWindow.is_minimized = true; }
+            else if(wParam == SIZE_RESTORED)
+            {
+                kGameWindow.is_minimized = false;
+            }
+
             break;
         }
 
         case WM_MOUSEMOVE:
         {
-            GetCursorPos(&win32_mouse_coords);
-            ScreenToClient(hwnd, &win32_mouse_coords);
+            GetCursorPos(&kWin32MouseCoordinates);
+            ScreenToClient(hwnd, &kWin32MouseCoordinates);
 
             // Note: uMousePos has origin @ lower left == (0, 0, 0)
-            mouse_pos.x = ( u16 )win32_mouse_coords.x;
-            mouse_pos.y = (u16)(viewport.height - win32_mouse_coords.y);
+            mouse_pos.x = ( u16 )kWin32MouseCoordinates.x;
+            mouse_pos.y = (u16)(kGameWindow.height - kWin32MouseCoordinates.y);
             break;
         }
     }
@@ -138,8 +152,8 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-__UE_internal__ const uWin32Info* __UE_call__
-                      uWin32CreateWin32Info()
+static const uWin32Info*
+uWin32CreateWin32Info()
 {
     if(uAPI_PRIME_WIN32_INFO) { return uAPI_PRIME_WIN32_INFO; }
 
@@ -196,28 +210,29 @@ __UE_internal__ const uWin32Info* __UE_call__
     }
 
     ShowWindow(uAPI_PRIME_WIN32_INFO->window, uAPI_PRIME_WIN32_INFO->command_show);
+    kGameWindow.is_minimized = false;
     return uAPI_PRIME_WIN32_INFO;
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* __UE_internal__ __UE_inline__ const uWin32Info* */
+/* static __UE_inline__ const uWin32Info* */
 /* uWin32CreateWindow() */
 /* { */
 /*     return uWin32CreateWin32Info(); */
 /* } */
 
-__UE_internal__ __UE_inline__ uSystemEvent
+__UE_inline__ static uSystemEvent
 uWin32HandleEvents()
 {
-    win32_sys_event = uEventNone;
-    MSG msg         = {};
+    kWin32SystemEvent = uEventNone;
+    MSG msg           = {};
     PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
     TranslateMessage(&msg);
     DispatchMessage(&msg);
-    return win32_sys_event;
+    return kWin32SystemEvent;
 }
 
-__UE_internal__ void __UE_call__
+static void
 uDestroyWin32()
 {
     const uWin32Info* win32_info = uGetWin32Info();

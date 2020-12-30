@@ -1,13 +1,13 @@
 #include "type_tools.h"
-__UE_global__ bool RUNNING = true;
+bool kRunning = true;
 
 #if __linux__
-#    include "nix_platform.h"
+#include "nix_platform.h"
 #elif _WIN32
 // Note: platform win32 khr macro must be included before
 //       vulkan/vulkan.h header
-#    define VK_USE_PLATFORM_WIN32_KHR 1
-#    include "win_platform.h"
+#define VK_USE_PLATFORM_WIN32_KHR 1
+#include "win_platform.h"
 #endif // _WIN32
 
 // Set __uDEBUG_SYSTEM__ == 1 in compiler invocation to enable system debugging
@@ -18,41 +18,43 @@ __UE_global__ bool RUNNING = true;
 #include "memory_tools.h"
 #include "vulkan_tools/shader_tools.h"
 #include "vulkan_tools/vulkan_tools.h"
+#include "window_tools.h"
 
 // Set __uTESTS_ENABLED__ == 0 in tests.h to disable tests on startup
 #include "tests/tests.h"
 
 //
 // [ begin ] Global members
-__UE_global__ size_t TOTAL_FRAME_COUNT = 0;
-#define uUpdateTFC TOTAL_FRAME_COUNT++;
-
+size_t kTotalFrameCount = 0;
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-__UE_global__ const char* required_instance_validation_layers[] = { "VK_LAYER_KHRONOS_validation" };
+const char* kRequiredInstanceValidationLayers[] = { "VK_LAYER_KHRONOS_validation" };
 #endif //  __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 
-__UE_global__ const char* required_instance_extensions[] = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-                                                             "VK_KHR_surface",
+const char* kRequiredInstanceExtensions[] = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+                                              "VK_KHR_surface",
 #if _WIN32
-                                                             "VK_KHR_win32_surface"
+                                              "VK_KHR_win32_surface"
 #endif // _WIN32
 };
 
-__UE_global__ const char* required_device_extensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+const char* kRequiredDeviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 // [ end ] Global members
 //
 
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 uHandleWindowResize()
 {
-    uDebugPrint("[ resize ] viewport (width, height): (%d, %d)\n", viewport.width, viewport.height);
+    uDebugPrint("[ resize ] width: %d, height: %d\n", kGameWindow.width, kGameWindow.height);
 
-    uRebuildVulkanSwapChain();
-    uVULKAN_DRAW_TOOLS_OUTDATED = true;
+    if(!kGameWindow.is_minimized)
+    {
+        uRebuildVulkanSwapChain();
+        kVulkanDrawToolsOutdated = true;
+    }
 }
 
 // Query the mouse and keyboard state
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 uRefreshInputState()
 {
     uSystemEvent sys_event = uEventNone;
@@ -78,14 +80,14 @@ uRefreshInputState()
         }
         case uEventClose:
         {
-            RUNNING = false;
+            kRunning = false;
             return;
         }
     }
 }
 
-__UE_internal__ __UE_inline__ void
-uUpdatePresentInfoAndPresent(_mut_ uVulkanDrawTools* const restrict dt, const u32* const restrict next_frame_idx)
+static __UE_inline__ void
+uUpdatePresentInfoAndPresent(uVulkanDrawTools* const restrict dt, const u32* const restrict next_frame_idx)
 {
     uAssertMsg_v(dt, "[ render ] uVulkanDrawtools must be non zero.\n");
     uAssertMsg_v(next_frame_idx, "[ render ] Next frame index ptr must be non null.\n");
@@ -98,13 +100,13 @@ uUpdatePresentInfoAndPresent(_mut_ uVulkanDrawTools* const restrict dt, const u3
     if(result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         uVkVerbose("Swap chain was out of date.\n");
-        uVULKAN_DRAW_TOOLS_OUTDATED = true;
+        kVulkanDrawToolsOutdated = true;
         uRebuildVulkanSwapChain();
     }
-    else if(result == VK_ERROR_OUT_OF_DATE_KHR)
+    else if(result == VK_SUBOPTIMAL_KHR)
     {
         uVkVerbose("Swap chain was suboptimal.\n");
-        uVULKAN_DRAW_TOOLS_OUTDATED = true;
+        kVulkanDrawToolsOutdated = true;
         uRebuildVulkanSwapChain();
     }
     else
@@ -113,8 +115,8 @@ uUpdatePresentInfoAndPresent(_mut_ uVulkanDrawTools* const restrict dt, const u3
     }
 }
 
-__UE_internal__ __UE_inline__ void
-uUpdateGraphicsInfoAndSubmit(_mut_ uVulkanDrawTools* const restrict dt, const u32* const restrict next_frame_idx)
+static __UE_inline__ void
+uUpdateGraphicsInfoAndSubmit(uVulkanDrawTools* const restrict dt, const u32* const restrict next_frame_idx)
 {
     uAssertMsg_v(dt, "[ render ] uVulkanDrawtools must be non zero.\n");
     uAssertMsg_v(dt->graphics_queue, "[ render ] VkQueue (graphics) must be non zero.\n");
@@ -132,8 +134,8 @@ uUpdateGraphicsInfoAndSubmit(_mut_ uVulkanDrawTools* const restrict dt, const u3
     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to submit graphics queue.\n");
 }
 
-__UE_internal__ __UE_inline__ void
-uEnsureFrameLanded(_mut_ uVulkanDrawTools* const restrict dt, const u32* const restrict next_frame_idx)
+static __UE_inline__ void
+uEnsureFrameLanded(uVulkanDrawTools* const restrict dt, const u32* const restrict next_frame_idx)
 {
     uAssertMsg_v(dt, "[ render ] uVulkanDrawtools must be non zero.\n");
     uAssertMsg_v(dt->logical_device, "[ render ] VkDevice must be non zero.\n");
@@ -157,8 +159,8 @@ uEnsureFrameLanded(_mut_ uVulkanDrawTools* const restrict dt, const u32* const r
     vkResetFences(dt->logical_device, 1, &(dt->in_flight_fences[dt->frame]));
 }
 
-__UE_internal__ __UE_inline__ void
-uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt, _mut_ u32* const restrict return_idx)
+static __UE_inline__ void
+uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt, u32* const restrict return_idx)
 {
     uAssertMsg_v(dt, "[ render ] uVulkanDrawtools must be non zero.\n");
     uAssertMsg_v(dt->logical_device, "[ render ] VkDevice must be non zero.\n");
@@ -175,13 +177,13 @@ uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt, _mut_
     if(result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         uVkVerbose("Swap chain was out of date.\n");
-        uVULKAN_DRAW_TOOLS_OUTDATED = true;
+        kVulkanDrawToolsOutdated = true;
         uRebuildVulkanSwapChain();
     }
     else if(result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         uVkVerbose("Swap chain was suboptimal.\n");
-        uVULKAN_DRAW_TOOLS_OUTDATED = true;
+        kVulkanDrawToolsOutdated = true;
         uRebuildVulkanSwapChain();
     }
     else
@@ -194,9 +196,12 @@ uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt, _mut_
     }
 }
 
-__UE_internal__ __UE_inline__ void
-uDrawFrame(_mut_ uVulkanDrawTools* const restrict dt)
+static __UE_inline__ void
+uDrawFrame(uVulkanDrawTools* const restrict dt)
 {
+    // Don't do this if the window is minimized
+    if(kGameWindow.is_minimized) { return; }
+
     uAssertMsg_v(dt, "[ render ] uVulkanDrawtools must be non zero.\n");
 
     vkWaitForFences(dt->logical_device, 1, &(dt->in_flight_fences[dt->frame]), VK_TRUE, uVULKAN_MAX_NANOSECOND_WAIT);
@@ -209,13 +214,13 @@ uDrawFrame(_mut_ uVulkanDrawTools* const restrict dt)
 
     // increment frame number
     dt->frame = (dt->frame + 1) % uVULKAN_MAX_FRAMES_IN_FLIGHT;
-    uUpdateTFC;
+    kTotalFrameCount++;
 }
 
-__UE_internal__ void __UE_call__
+static void
 uDestroyEngine()
 {
-    uAssertMsg_v(!RUNNING, "[ engine ] Tear down called while `__UE_global__ RUNNING == true`.\n");
+    uAssertMsg_v(!kRunning, "[ engine ] Tear down called while ` kRunning == true`.\n");
     uDestroyVulkan();
 
 #if _WIN32
@@ -232,7 +237,7 @@ main(int argc, char** argv)
 #endif
 
 #if __UE_debug__ == 1
-#    ifdef _WIN32
+#ifdef _WIN32
     // Enable _CRT Allocation Analysis
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
@@ -241,8 +246,8 @@ main(int argc, char** argv)
     _CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDOUT);
     _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
     _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDOUT);
-#    endif // _WIN32
-#endif     // __UE_debug__ == 1
+#endif // _WIN32
+#endif // __UE_debug__ == 1
 
     if(argc && argv) {}
 
@@ -252,21 +257,21 @@ main(int argc, char** argv)
     printf("[ engine ] - release -\n");
 #endif
 
-    _mut_ uVulkanDrawTools draw_tools = {};
+    uVulkanDrawTools draw_tools = {};
 
     uInitializeVulkan(&draw_tools,
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-                      ( const s8** )required_instance_validation_layers,
-                      sizeof(required_instance_validation_layers) / sizeof(char*),
+                      ( const s8** )kRequiredInstanceValidationLayers,
+                      sizeof(kRequiredInstanceValidationLayers) / sizeof(char*),
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-                      ( const s8** )required_instance_extensions,
-                      sizeof(required_instance_extensions) / sizeof(char*),
-                      ( const s8** )required_device_extensions,
-                      sizeof(required_device_extensions) / sizeof(char*));
+                      ( const s8** )kRequiredInstanceExtensions,
+                      sizeof(kRequiredInstanceExtensions) / sizeof(char*),
+                      ( const s8** )kRequiredDeviceExtensions,
+                      sizeof(kRequiredDeviceExtensions) / sizeof(char*));
 
-    while(RUNNING)
+    while(kRunning)
     {
-        if(uVULKAN_DRAW_TOOLS_OUTDATED) { uRebuidlDrawTools(&draw_tools); }
+        if(kVulkanDrawToolsOutdated && !kGameWindow.is_minimized) { uRebuidlDrawTools(&draw_tools); }
 
         uDrawFrame(&draw_tools);
         uRefreshInputState();

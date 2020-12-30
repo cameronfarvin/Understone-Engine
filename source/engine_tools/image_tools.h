@@ -5,7 +5,7 @@
 #include <engine_tools/memory_tools.h>
 #include <engine_tools/type_tools.h>
 #ifdef _linux_
-#    include <unistd.h>
+#include <unistd.h>
 #endif
 
 uMemoryArena* imageArena;
@@ -66,7 +66,7 @@ uLoadBitmap(const restrict char* const file_path, const restrict uImage* const i
     return false;
 }
 
-__UE_internal__ __UE_inline__ u8
+static __UE_inline__ u8
 BindValueTo8BitColorChannel(const r32 value_min, const r32 value_max, const r32 value)
 {
     __UE_ASSERT__(value_max > value_min);
@@ -75,7 +75,7 @@ BindValueTo8BitColorChannel(const r32 value_min, const r32 value_max, const r32 
     return ( u8 )NormalizeToRange(value_min, value_max, 0.0f, 255.0f, value);
 }
 
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 RGB32ToHSV32(const Color32_RGB* restrict const rgb_source, _mut_ Color32_HSV* restrict const hsv_result)
 {
     __UE_ASSERT__(rgb_source);
@@ -148,7 +148,7 @@ RGB32ToHSV32(const Color32_RGB* restrict const rgb_source, _mut_ Color32_HSV* re
     hsv_result->V = value;
 }
 
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 HSV32ToRGB32(const Color32_HSV* restrict const hsv_source, _mut_ Color32_RGB* restrict const rgb_result)
 {
     __UE_ASSERT__(rgb_result);
@@ -237,7 +237,7 @@ HSV32ToRGB32(const Color32_HSV* restrict const hsv_source, _mut_ Color32_RGB* re
     rgb_result->channel.B = ( u8 )round(NormalizeToRange(0.0f, 1.0f, 0.0f, 255.0f, rgb_b));
 }
 
-__UE_internal__ void __UE_call__
+static void
 WritePPM32(const restrict Color32_RGB* const pixel_array,
            u32                               image_width,
            u32                               image_height,
@@ -281,7 +281,7 @@ WritePPM32(const restrict Color32_RGB* const pixel_array,
     fclose(ppm_file);
 }
 
-__UE_internal__ void __UE_call__
+static void
 WriteBitmap32(const restrict Color32_RGB* const pixel_array,
               u32                               image_width,
               u32                               image_height,

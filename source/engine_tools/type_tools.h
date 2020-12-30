@@ -28,14 +28,7 @@ typedef struct
     size_t return_code;
     char   output[512];
     bool   success;
-} PipeReturnType;
-
-typedef struct
-{
-    u16 width;
-    u16 height;
-} VIEWPORT;
-VIEWPORT viewport;
+} uPipeReturnType;
 
 //
 // Endian types
@@ -51,10 +44,10 @@ typedef enum
     uLITTLE_ENDIAN = 0,
     uBIG_ENDIAN    = 1
 } uEndianness;
-uEndianness uSystemEndianness;
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* __UE_internal__ void __UE_call__ */
+/* uEndianness uSystemEndianness; */
+/* static void  */
 /* uDetermineSystemEndianness() */
 /* { */
 /*     uEndiannessUnion.dword = 1; */
@@ -103,13 +96,13 @@ typedef union
     } LSB_channel;
 
     u32 value;
-} Color32_RGB;
+} Color32RGB;
 
 typedef struct
 {
     r32 H; // [ 0, 360 ]
     r32 S; // [ 0, 001 ]
     r32 V; // [ 0, 001 ]
-} Color32_HSV;
+} Color32HSV;
 
 #endif // __UE_TYPE_TOOLS__

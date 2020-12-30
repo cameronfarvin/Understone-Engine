@@ -21,7 +21,7 @@ typedef struct
     Color32_RGB   color;
 } Material;
 
-__UE_internal__ void __UE_call__
+static void
 GetDefaultMaterialByClass(_mut_ Material* restrict const material, const MaterialClass material_class)
 {
     __UE_ASSERT__(material);
@@ -50,7 +50,7 @@ GetDefaultMaterialByClass(_mut_ Material* restrict const material, const Materia
     }
 }
 
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 BlendColorByMaterial(const Material* restrict const    material,
                      const Color32_RGB* restrict const input_color,
                      _mut_ Color32_RGB* restrict const return_color)

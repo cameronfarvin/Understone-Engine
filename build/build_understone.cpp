@@ -675,7 +675,9 @@ class CompilerInvocationGenerator
         {
             // Note: Win32 vulkan headers will be added in compilation options section
             for(const std::string& header_dir : header_directories)
-            { header_directories_invocation += ("-I" + header_dir + " "); }
+            {
+                header_directories_invocation += ("-I" + header_dir + " ");
+            }
         }
 
         // Compilation options
@@ -785,7 +787,9 @@ class CompilerInvocationGenerator
         {
             // Note: Win32 vulkan headers will be added in compilation options section
             for(const std::string& header_dir : header_directories)
-            { header_directories_invocation += ("-I" + header_dir + " "); }
+            {
+                header_directories_invocation += ("-I" + header_dir + " ");
+            }
         }
 
         // Compilation options
@@ -946,8 +950,7 @@ DetermineUnderstoneRootDirectory()
 
     std::filesystem::path partial_path = CWD;
     auto                  path_element = CWD.end();
-    do
-    {
+    do {
         std::filesystem::directory_entry dir(partial_path);
         if(!dir.is_directory())
         {
@@ -973,7 +976,9 @@ DetermineUnderstoneRootDirectory()
                     std::filesystem::perms dir_permissions = subdir_contents.status().permissions();
                     if(!subdir_contents.is_directory() ||
                        ((dir_permissions & std::filesystem::perms::others_all) == std::filesystem::perms::none))
-                    { continue; }
+                    {
+                        continue;
+                    }
 
                     std::string expected_path = subdir_contents.path().string();
                     if(std::filesystem::exists(expected_path + "/build") &&
@@ -996,7 +1001,9 @@ DetermineUnderstoneRootDirectory()
         }
 
         if(path_element != CWD.end())
-        { partial_path = CWD.string().substr(0, CWD.string().find(path_element->string())); }
+        {
+            partial_path = CWD.string().substr(0, CWD.string().find(path_element->string()));
+        }
         path_element--;
     } while(path_element != CWD.begin());
 
@@ -1217,9 +1224,13 @@ class Analyzer
                     if(tag_indicator_pos != std::string::npos)
                     {
                         if(first_open_brace_pos == std::string::npos)
-                        { first_open_brace_pos = file_line_string.size(); }
+                        {
+                            first_open_brace_pos = file_line_string.size();
+                        }
                         if(first_close_brace_pos == std::string::npos)
-                        { first_close_brace_pos = file_line_string.size(); }
+                        {
+                            first_close_brace_pos = file_line_string.size();
+                        }
 
                         // Determine the dev name (if present)
                         std::string dev_name = "";
@@ -1464,7 +1475,7 @@ ParseCommandLineArgs(const CommandLineArguments& command_line_args,
         else if(arg == CLI_NOCA_STR)
         {
             user_build_flags[BuildFlags::kRunCodeAnalysis] = false;
-            PrintLn("NOT RUNNING CODE ANALYSIS");
+            PrintLn("NOT kRunning CODE ANALYSIS");
         }
         else
         {
@@ -1526,7 +1537,9 @@ main(int argc, char** argv)
                                 user_compilation_options,
                                 user_build_flags,
                                 parse_args_return_status))
-        { return parse_args_return_status; }
+        {
+            return parse_args_return_status;
+        }
     }
 
     // Generate compiler invocation(s)

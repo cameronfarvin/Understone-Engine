@@ -1,11 +1,11 @@
 #ifndef __UE_ENTITY_TOOLS_H___
-#    define __UE_ENTITY_TOOLS_H___
+#define __UE_ENTITY_TOOLS_H___
 
 //#include <rt_settings.h> [ cfarvin::REVISIT ]
-#    include <color_tools.h>
-#    include <macro_tools.h>
-#    include <maths_tools.h>
-#    include <type_tools.h>
+#include <color_tools.h>
+#include <macro_tools.h>
+#include <maths_tools.h>
+#include <type_tools.h>
 
 typedef enum
 {
@@ -23,10 +23,10 @@ typedef struct
     r32 length;
 } Cube;
 
-#    ifdef _WIN32
-#        pragma warning(push)
-#        pragma warning(disable : 4201)
-#    endif // WIN32
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable : 4201)
+#endif // WIN32
 typedef struct
 {
     v3       position;
@@ -39,9 +39,9 @@ typedef struct
         Cube;
     };
 } Entity;
-#    ifdef _WIN32
-#        pragma warning(pop)
-#    endif // WIN32
+#ifdef _WIN32
+#pragma warning(pop)
+#endif // WIN32
 
 typedef struct
 {
@@ -67,12 +67,12 @@ typedef struct
 //
 // PROTOTYPES (as needed)
 //
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 IntersectEntity(const Ray* restrict const    ray,
                 const Entity* restrict const entity,
                 _mut_ RayIntersection* restrict const intersection);
 
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 TraceEntityArray(const Ray* restrict const ray,
                  _mut_ RayIntersection* restrict const intersection,
                  _mut_ r32* restrict const global_magnitude_threshold,
@@ -81,9 +81,9 @@ TraceEntityArray(const Ray* restrict const ray,
                  const size_t                      num_entitys);
 
 //
-#    if __UE_AA__reflections
+#if __UE_AA__reflections
 //
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 ReflectRays(/* const Ray*             restrict const ray, */
             _mut_ RayIntersection* restrict const incident_intersection,
             /* _mut_ r32*             restrict const global_magnitude_threshold,
@@ -145,12 +145,14 @@ ReflectRays(/* const Ray*             restrict const ray, */
 // Ensure that the reflected ray does not intersect
 // the originating entity at a point other than its
 // origin.
-#        if __UE_debug__ == 1
+#if __UE_debug__ == 1
         RayIntersection test_intersection = { 0 };
         IntersectEntity(&bounce_ray, &entity_arr[intersected_entity_index], &test_intersection);
         if(test_intersection.does_intersect)
-        { __UE_ASSERT__(v3IsEqual(&test_intersection.normal_vector, &bounce_ray.origin)); }
-#        endif // __UE_debug__ == 1
+        {
+            __UE_ASSERT__(v3IsEqual(&test_intersection.normal_vector, &bounce_ray.origin));
+        }
+#endif // __UE_debug__ == 1
 
         TraceEntityArray(&bounce_ray,
                          &bounce_intersection,
@@ -171,10 +173,10 @@ ReflectRays(/* const Ray*             restrict const ray, */
     }
 }
 //
-#    endif // __UE_AA__reflections
+#endif // __UE_AA__reflections
 //
 
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 SetRayDirectionByPixelCoordAA(_mut_ Ray* restrict const ray, const size_t pix_x, const size_t pix_y)
 {
     const r32 xOr_contribution_x = NormalizeToRange(( r32 )TOLERANCE,
@@ -197,7 +199,7 @@ SetRayDirectionByPixelCoordAA(_mut_ Ray* restrict const ray, const size_t pix_x,
     ray->direction.z = -1;
 }
 
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 SetRayDirectionByPixelCoord(_mut_ Ray* restrict const ray, const size_t pix_x, const size_t pix_y)
 {
     ray->direction.x = ((pix_x / ( r32 )IMAGE_WIDTH) - 0.5f) * ASPECT_RATIO;
@@ -205,13 +207,13 @@ SetRayDirectionByPixelCoord(_mut_ Ray* restrict const ray, const size_t pix_x, c
     ray->direction.z = -1;
 }
 
-__UE_internal__ Entity*
-                CreateEntities(const size_t entity_count)
+static Entity*
+CreateEntities(const size_t entity_count)
 {
     return ( Entity* )calloc(entity_count, sizeof(Entity));
 }
 
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 IntersectEntity(const Ray* restrict const    ray,
                 const Entity* restrict const entity,
                 _mut_ RayIntersection* restrict const intersection)
@@ -275,7 +277,7 @@ IntersectEntity(const Ray* restrict const    ray,
     }
 }
 
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 TraceEntity(const Ray* restrict const ray,
             _mut_ RayIntersection* restrict const intersection,
             _mut_ r32* restrict const global_magnitude_threshold,
@@ -296,7 +298,7 @@ TraceEntity(const Ray* restrict const ray,
     }
 }
 
-__UE_internal__ __UE_inline__ void
+static __UE_inline__ void
 TraceEntityArray(const Ray* restrict const ray,
                  _mut_ RayIntersection* restrict const intersection,
                  _mut_ r32* restrict const global_magnitude_threshold,
@@ -314,11 +316,11 @@ TraceEntityArray(const Ray* restrict const ray,
     RayIntersection closestIntersection = { 0 };
     closestIntersection.magnitude       = MAX_RAY_MAG;
 //
-#    if __UE_AA__reflections
+#if __UE_AA__reflections
     //
     size_t intersected_entity_index = 0;
 //
-#    endif // __UE_AA__reflections \
+#endif // __UE_AA__reflections \
     //
     for(size_t entity_index = 0; entity_index < num_entitys; entity_index++)
     {
@@ -334,29 +336,31 @@ TraceEntityArray(const Ray* restrict const ray,
 
             return_color->value = (entity_arr[entity_index]).material.color.value;
 //
-#    if __UE_AA__reflections
+#if __UE_AA__reflections
             //
             intersected_entity_index = entity_index;
 //
-#    endif // __UE_AA__reflections \
+#endif // __UE_AA__reflections \
     //
         }
     }
 
     if(closestIntersection.does_intersect && fabs(closestIntersection.magnitude) < fabs(*global_magnitude_threshold))
-    { intersection->does_intersect = true; }
+    {
+        intersection->does_intersect = true;
+    }
 
 //
-#    if __UE_AA__reflections
+#if __UE_AA__reflections
     //
     ReflectRays(intersection, return_color, entity_arr, num_entitys, intersected_entity_index);
 //
-#    endif // __UE_AA__reflections
-           //
+#endif // __UE_AA__reflections
+       //
 }
 
-__UE_internal__ Entity*
-                CreateRandomEntities(size_t num_entitys)
+static Entity*
+CreateRandomEntities(size_t num_entitys)
 {
     Entity* entity_arr = CreateEntities(num_entitys);
     for(size_t entity_index = 0; entity_index < num_entitys; entity_index++)
@@ -383,7 +387,7 @@ __UE_internal__ Entity*
         entity_arr[entity_index].material.color.channel.B =
           BindValueTo8BitColorChannel(( r32 )TOLERANCE, (r32)(~( u32 )0), ( r32 )XorShift32());
 //
-#    if __UE_debug__ == 1
+#if __UE_debug__ == 1
         //
         // Log
         printf("  Entity [%zd]:\n", entity_index);
@@ -398,7 +402,7 @@ __UE_internal__ Entity*
                entity_arr[entity_index].material.color.channel.B);
         fflush(stdout);
 //
-#    endif // __UE_debug__ == 1 \
+#endif // __UE_debug__ == 1 \
     //
     }
 
