@@ -20,7 +20,7 @@ typedef struct
 static __UE_inline__ uMemoryArena*
                      uMAInit(const u16 arena_bytes)
 {
-    if(!arena_bytes) { return NULL; }
+    if (!arena_bytes) { return NULL; }
 
     uMemoryArena* memory_arena = ( uMemoryArena* )malloc(sizeof(uMemoryArena));
     memory_arena->data         = ( intptr_t* )malloc(arena_bytes);
@@ -64,9 +64,9 @@ static __UE_inline__ uMemoryArena*
 static __UE_inline__ void*
 uMAPushData_API(uMemoryArena* restrict const memory_arena, const void* restrict const new_data, const u16 new_data_size)
 {
-    if(!(memory_arena && new_data && new_data_size)) { return NULL; }
+    if (!(memory_arena && new_data && new_data_size)) { return NULL; }
 
-    if((memory_arena->offset + new_data_size) > (memory_arena->arena_size))
+    if ((memory_arena->offset + new_data_size) > (memory_arena->arena_size))
     {
         uError("[ DATA ] Attempted an illegal push to uMemoryArena (overshot arena "
                "size)\n");
@@ -83,9 +83,9 @@ uMAPushData_API(uMemoryArena* restrict const memory_arena, const void* restrict 
 static __UE_inline__ void*
 uMAPushArray_API(uMemoryArena* memory_arena, void* new_data, u16 new_data_size)
 {
-    if(!(memory_arena && new_data && new_data_size)) { return NULL; }
+    if (!(memory_arena && new_data && new_data_size)) { return NULL; }
 
-    if((memory_arena->offset + new_data_size) > (memory_arena->arena_size))
+    if ((memory_arena->offset + new_data_size) > (memory_arena->arena_size))
     {
         uError("[ ARRAY ] Attempted an illegal push to uMemoryArena (overshot "
                "arena size)\n");
@@ -101,7 +101,7 @@ uMAPushArray_API(uMemoryArena* memory_arena, void* new_data, u16 new_data_size)
 static __UE_inline__ bool
 uMADestroy(uMemoryArena* memory_arena)
 {
-    if(!(memory_arena && memory_arena->data)) { return false; }
+    if (!(memory_arena && memory_arena->data)) { return false; }
 
     free(memory_arena->data);
     free(memory_arena);

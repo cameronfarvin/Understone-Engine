@@ -69,48 +69,48 @@ char _message_buffer[MAX_ERROR_LEN];
 //
 
 // uFatal()
-#define uFatal(...)                                                                                                    \
-    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                             \
-    snprintf(_error_buffer, MAX_ERROR_LEN, "[ fatal ] %s(%d): %s\n", __FILE__, __LINE__, _message_buffer);             \
-    fputs(_error_buffer, stderr);                                                                                      \
-    fflush(stderr);                                                                                                    \
+#define uFatal(...)                                                                                        \
+    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                 \
+    snprintf(_error_buffer, MAX_ERROR_LEN, "[ fatal ] %s(%d): %s\n", __FILE__, __LINE__, _message_buffer); \
+    fputs(_error_buffer, stderr);                                                                          \
+    fflush(stderr);                                                                                        \
     exit(666)
 
 // uError_v()
-#define uError_v(...)                                                                                                  \
-    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                             \
-    snprintf(_error_buffer, MAX_ERROR_LEN, "[ error ] %s(%d): %s\n", __FILE__, __LINE__, _message_buffer);             \
-    fputs(_error_buffer, stderr);                                                                                      \
+#define uError_v(...)                                                                                      \
+    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                 \
+    snprintf(_error_buffer, MAX_ERROR_LEN, "[ error ] %s(%d): %s\n", __FILE__, __LINE__, _message_buffer); \
+    fputs(_error_buffer, stderr);                                                                          \
     fflush(stderr)
 
 // uError()
-#define uError(...)                                                                                                    \
-    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                             \
-    snprintf(_error_buffer, MAX_ERROR_LEN, "[ error ] %s", _message_buffer);                                           \
+#define uError(...)                                                          \
+    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                   \
+    snprintf(_error_buffer, MAX_ERROR_LEN, "[ error ] %s", _message_buffer); \
     fputs(_error_buffer, stderr)
 
 // uWarning()
-#define uWarning(...)                                                                                                  \
-    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                             \
-    snprintf(_error_buffer, MAX_ERROR_LEN, "[ warning ] %s", _message_buffer);                                         \
+#define uWarning(...)                                                          \
+    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                     \
+    snprintf(_error_buffer, MAX_ERROR_LEN, "[ warning ] %s", _message_buffer); \
     fputs(_error_buffer, stderr)
 
 // uTestAssert()
-#define uTesetAssert(cond, ...)                                                                                        \
-    if(!(cond))                                                                                                        \
-    {                                                                                                                  \
-        snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                         \
-        snprintf(_error_buffer, MAX_ERROR_LEN, "[ assertion ] %s(%d): %s", __FILE__, __LINE__, _message_buffer);       \
-        fputs(_error_buffer, stderr);                                                                                  \
-        fflush(stderr);                                                                                                \
-        exit(666);                                                                                                     \
+#define uTesetAssert(cond, ...)                                                                                  \
+    if (!(cond))                                                                                                 \
+    {                                                                                                            \
+        snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                   \
+        snprintf(_error_buffer, MAX_ERROR_LEN, "[ assertion ] %s(%d): %s", __FILE__, __LINE__, _message_buffer); \
+        fputs(_error_buffer, stderr);                                                                            \
+        fflush(stderr);                                                                                          \
+        exit(666);                                                                                               \
     }
 
 // uTrace()
-#define uTrace(...)                                                                                                    \
-    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                             \
-    snprintf(_error_buffer, MAX_ERROR_LEN, "[ trace ] %s(%d): %s", __func__, __LINE__, _message_buffer);               \
-    fputs(_error_buffer, stdout);                                                                                      \
+#define uTrace(...)                                                                                      \
+    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                               \
+    snprintf(_error_buffer, MAX_ERROR_LEN, "[ trace ] %s(%d): %s", __func__, __LINE__, _message_buffer); \
+    fputs(_error_buffer, stdout);                                                                        \
     fflush(stdout)
 
 //
@@ -119,44 +119,44 @@ char _message_buffer[MAX_ERROR_LEN];
 #if __UE_debug__ == 1
 
 // uDebugPrint_v()
-#define uDebugPrint_v(...)                                                                                             \
-    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                             \
-    snprintf(_error_buffer, MAX_ERROR_LEN, "[ debug ] %s(%d): %s", __FILE__, __LINE__, _message_buffer);               \
-    fputs(_error_buffer, stderr);                                                                                      \
+#define uDebugPrint_v(...)                                                                               \
+    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                               \
+    snprintf(_error_buffer, MAX_ERROR_LEN, "[ debug ] %s(%d): %s", __FILE__, __LINE__, _message_buffer); \
+    fputs(_error_buffer, stderr);                                                                        \
     fflush(stderr)
 
 // uDebugPrint()
-#define uDebugPrint(...)                                                                                               \
-    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                             \
-    snprintf(_error_buffer, MAX_ERROR_LEN, "[ debug ] %s", _message_buffer);                                           \
-    fputs(_error_buffer, stderr);                                                                                      \
+#define uDebugPrint(...)                                                     \
+    snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                   \
+    snprintf(_error_buffer, MAX_ERROR_LEN, "[ debug ] %s", _message_buffer); \
+    fputs(_error_buffer, stderr);                                            \
     fflush(stderr)
 
 // uAssertMsg()
-#define uAssertMsg(cond, ...)                                                                                          \
-    if(!cond)                                                                                                          \
-    {                                                                                                                  \
-        snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                         \
-        snprintf(_error_buffer, MAX_ERROR_LEN, "[ assertion ] %s", _message_buffer);                                   \
-        fputs(_error_buffer, stderr);                                                                                  \
-        fflush(stderr);                                                                                                \
-        exit(666);                                                                                                     \
+#define uAssertMsg(cond, ...)                                                        \
+    if (!cond)                                                                       \
+    {                                                                                \
+        snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                       \
+        snprintf(_error_buffer, MAX_ERROR_LEN, "[ assertion ] %s", _message_buffer); \
+        fputs(_error_buffer, stderr);                                                \
+        fflush(stderr);                                                              \
+        exit(666);                                                                   \
     }
 
 // uAssert_v()
-#define uAssertMsg_v(cond, ...)                                                                                        \
-    if(!(cond))                                                                                                        \
-    {                                                                                                                  \
-        snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                         \
-        snprintf(_error_buffer, MAX_ERROR_LEN, "[ assertion ] %s(%d): %s", __FILE__, __LINE__, _message_buffer);       \
-        fputs(_error_buffer, stderr);                                                                                  \
-        fflush(stderr);                                                                                                \
-        exit(666);                                                                                                     \
+#define uAssertMsg_v(cond, ...)                                                                                  \
+    if (!(cond))                                                                                                 \
+    {                                                                                                            \
+        snprintf(_message_buffer, MAX_ERROR_LEN, __VA_ARGS__);                                                   \
+        snprintf(_error_buffer, MAX_ERROR_LEN, "[ assertion ] %s(%d): %s", __FILE__, __LINE__, _message_buffer); \
+        fputs(_error_buffer, stderr);                                                                            \
+        fflush(stderr);                                                                                          \
+        exit(666);                                                                                               \
     }
 
 // uAssert()
-#define uAssert(cond)                                                                                                  \
-    if(!(( long long )(cond))) { exit(666); }
+#define uAssert(cond) \
+    if (!(( long long )(cond))) { exit(666); }
 
 #define uDebugStatement(statement) statement
 

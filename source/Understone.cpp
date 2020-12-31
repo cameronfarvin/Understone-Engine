@@ -46,7 +46,7 @@ uHandleWindowResize()
 {
     uDebugPrint("[ resize ] width: %d, height: %d\n", kGameWindow.width, kGameWindow.height);
 
-    if(!kGameWindow.is_minimized)
+    if (!kGameWindow.is_minimized)
     {
         uRebuildVulkanSwapChain();
         kVulkanDrawToolsOutdated = true;
@@ -67,7 +67,7 @@ uRefreshInputState()
     assert(0);
 #endif // __linux__ _WIN32
 
-    switch(sys_event)
+    switch (sys_event)
     {
         case uEventNone:
         {
@@ -97,13 +97,13 @@ uUpdatePresentInfoAndPresent(uVulkanDrawTools* const restrict dt, const u32* con
 
     VkResult result = vkQueuePresentKHR(dt->present_queue, &(dt->present_info));
 
-    if(result == VK_ERROR_OUT_OF_DATE_KHR)
+    if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         uVkVerbose("Swap chain was out of date.\n");
         kVulkanDrawToolsOutdated = true;
         uRebuildVulkanSwapChain();
     }
-    else if(result == VK_SUBOPTIMAL_KHR)
+    else if (result == VK_SUBOPTIMAL_KHR)
     {
         uVkVerbose("Swap chain was suboptimal.\n");
         kVulkanDrawToolsOutdated = true;
@@ -122,15 +122,13 @@ uUpdateGraphicsInfoAndSubmit(uVulkanDrawTools* const restrict dt, const u32* con
     uAssertMsg_v(dt->graphics_queue, "[ render ] VkQueue (graphics) must be non zero.\n");
     uAssertMsg_v(dt->in_flight_fences, "[ render ] VkFence ptr must be non null.\n");
     uAssertMsg_v(next_frame_idx, "[ render ] Next frame index ptr must be non null.\n");
-    uAssertMsg_v(*next_frame_idx <= uVULKAN_NUM_COMMAND_BUFFERS,
-                 "[ vulkan ] Next frame index value exceeds command buffer length.\n");
+    uAssertMsg_v(*next_frame_idx <= uVULKAN_NUM_COMMAND_BUFFERS, "[ vulkan ] Next frame index value exceeds command buffer length.\n");
 
     (dt->submit_info).pCommandBuffers   = ( VkCommandBuffer* )(&dt->command_buffers[*next_frame_idx]);
     (dt->submit_info).pWaitSemaphores   = &(dt->image_available[dt->frame]); // what to wait on before execution
     (dt->submit_info).pSignalSemaphores = &(dt->render_finished[dt->frame]); // what to signal when execution is done
 
-    uDebugStatement(VkResult result =)
-      vkQueueSubmit(dt->graphics_queue, 1, &(dt->submit_info), dt->in_flight_fences[dt->frame]);
+    uDebugStatement(VkResult result =) vkQueueSubmit(dt->graphics_queue, 1, &(dt->submit_info), dt->in_flight_fences[dt->frame]);
     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to submit graphics queue.\n");
 }
 
@@ -142,13 +140,9 @@ uEnsureFrameLanded(uVulkanDrawTools* const restrict dt, const u32* const restric
     uAssertMsg_v(dt->in_flight_fences, "[ render ] VkFence ptr must be non null.\n");
     uAssertMsg_v(next_frame_idx, "[ render ] Next frame index ptr must be non null.\n");
 
-    if(dt->in_flight_images[*next_frame_idx] != VK_NULL_HANDLE)
+    if (dt->in_flight_images[*next_frame_idx] != VK_NULL_HANDLE)
     {
-        uDebugStatement(VkResult result =) vkWaitForFences(dt->logical_device,
-                                                           1,
-                                                           &(dt->in_flight_images[*next_frame_idx]),
-                                                           VK_TRUE,
-                                                           uVULKAN_MAX_NANOSECOND_WAIT);
+        uDebugStatement(VkResult result =) vkWaitForFences(dt->logical_device, 1, &(dt->in_flight_images[*next_frame_idx]), VK_TRUE, uVULKAN_MAX_NANOSECOND_WAIT);
 
         uAssertMsg_v(result != VK_TIMEOUT, "[ render ] [ timeout ] Fence timeout on image: %d.\n", *next_frame_idx);
         uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to ensure frame readiness.\n");
@@ -167,20 +161,15 @@ uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt, u32* 
     uAssertMsg_v(dt->swap_chain, "[ render ] VkSwapchainKHR must be non zero.\n");
     uAssertMsg_v(return_idx, "[ render ] Return index ptr must be non null.\n");
 
-    VkResult result = vkAcquireNextImageKHR(dt->logical_device,
-                                            dt->swap_chain,
-                                            uVULKAN_MAX_NANOSECOND_WAIT,
-                                            dt->image_available[dt->frame],
-                                            NULL,
-                                            return_idx);
+    VkResult result = vkAcquireNextImageKHR(dt->logical_device, dt->swap_chain, uVULKAN_MAX_NANOSECOND_WAIT, dt->image_available[dt->frame], NULL, return_idx);
 
-    if(result == VK_ERROR_OUT_OF_DATE_KHR)
+    if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         uVkVerbose("Swap chain was out of date.\n");
         kVulkanDrawToolsOutdated = true;
         uRebuildVulkanSwapChain();
     }
-    else if(result == VK_ERROR_OUT_OF_DATE_KHR)
+    else if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         uVkVerbose("Swap chain was suboptimal.\n");
         kVulkanDrawToolsOutdated = true;
@@ -200,7 +189,7 @@ static __UE_inline__ void
 uDrawFrame(uVulkanDrawTools* const restrict dt)
 {
     // Don't do this if the window is minimized
-    if(kGameWindow.is_minimized) { return; }
+    if (kGameWindow.is_minimized) { return; }
 
     uAssertMsg_v(dt, "[ render ] uVulkanDrawtools must be non zero.\n");
 
@@ -249,7 +238,7 @@ main(int argc, char** argv)
 #endif // _WIN32
 #endif // __UE_debug__ == 1
 
-    if(argc && argv) {}
+    if (argc && argv) {}
 
 #if __UE_debug__ == 1
     printf("[ engine ] - debug -\n");
@@ -269,9 +258,9 @@ main(int argc, char** argv)
                       ( const s8** )kRequiredDeviceExtensions,
                       sizeof(kRequiredDeviceExtensions) / sizeof(char*));
 
-    while(kRunning)
+    while (kRunning)
     {
-        if(kVulkanDrawToolsOutdated && !kGameWindow.is_minimized) { uRebuidlDrawTools(&draw_tools); }
+        if (kVulkanDrawToolsOutdated && !kGameWindow.is_minimized) { uRebuidlDrawTools(&draw_tools); }
 
         uDrawFrame(&draw_tools);
         uRefreshInputState();

@@ -40,7 +40,7 @@ uWin32CreateWin32Info();
 __UE_inline__ static const uWin32Info*
 uGetWin32Info()
 {
-    if(!uAPI_PRIME_WIN32_INFO) { *( uWin32Info** )&uAPI_PRIME_WIN32_INFO = ( uWin32Info* )uWin32CreateWin32Info(); }
+    if (!uAPI_PRIME_WIN32_INFO) { *( uWin32Info** )&uAPI_PRIME_WIN32_INFO = ( uWin32Info* )uWin32CreateWin32Info(); }
 
     return uAPI_PRIME_WIN32_INFO;
 }
@@ -81,7 +81,7 @@ uGetWin32Info()
 LRESULT CALLBACK
 uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    switch(uMsg)
+    switch (uMsg)
     {
         case WM_CLOSE:
         {
@@ -127,8 +127,8 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             kGameWindow.height = ( u16 )HIWORD(lParam);
             kWin32SystemEvent  = uEventResize;
 
-            if(wParam == SIZE_MINIMIZED) { kGameWindow.is_minimized = true; }
-            else if(wParam == SIZE_RESTORED)
+            if (wParam == SIZE_MINIMIZED) { kGameWindow.is_minimized = true; }
+            else if (wParam == SIZE_RESTORED)
             {
                 kGameWindow.is_minimized = false;
             }
@@ -155,7 +155,7 @@ uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 static const uWin32Info*
 uWin32CreateWin32Info()
 {
-    if(uAPI_PRIME_WIN32_INFO) { return uAPI_PRIME_WIN32_INFO; }
+    if (uAPI_PRIME_WIN32_INFO) { return uAPI_PRIME_WIN32_INFO; }
 
     const s8* window_class_name = uGetEngineName();
 
@@ -178,7 +178,7 @@ uWin32CreateWin32Info()
       window_class.hIconSm = NULL;
     */
 
-    if(!RegisterClassEx(&window_class))
+    if (!RegisterClassEx(&window_class))
     {
         free(*( uWin32Info** )&uAPI_PRIME_WIN32_INFO);
         uFatal("[ win32 ] Could not register window class; last error code: %lu\n", GetLastError());
@@ -197,13 +197,13 @@ uWin32CreateWin32Info()
                                                                        uAPI_PRIME_WIN32_INFO->instance,
                                                                        0);
 
-    if(uAPI_PRIME_WIN32_INFO->window == NULL)
+    if (uAPI_PRIME_WIN32_INFO->window == NULL)
     {
         free(*( uWin32Info** )&uAPI_PRIME_WIN32_INFO);
         uFatal("Windows returned null handle to client window.\n");
     }
 
-    if(!IsWindow(uAPI_PRIME_WIN32_INFO->window))
+    if (!IsWindow(uAPI_PRIME_WIN32_INFO->window))
     {
         free(*( uWin32Info** )&uAPI_PRIME_WIN32_INFO);
         uFatal("Windows reports that uAPI_PRIME_WIN32_INFO->window is invalid.\n");
@@ -238,7 +238,7 @@ uDestroyWin32()
     const uWin32Info* win32_info = uGetWin32Info();
     uAssertMsg_v(win32_info, "uWin32Info ptr must not be null.\n");
 
-    if(win32_info) { free(( void* )win32_info); }
+    if (win32_info) { free(( void* )win32_info); }
 }
 
 #endif // __win_platform__

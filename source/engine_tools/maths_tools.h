@@ -164,11 +164,7 @@ XorShift32()
 }
 
 static __UE_inline__ r32
-NormalizeToRange(r32 min_source_range,
-                 r32 max_source_range,
-                 r32 min_target_range,
-                 r32 max_target_range,
-                 r32 num_to_normalize)
+NormalizeToRange(r32 min_source_range, r32 max_source_range, r32 min_target_range, r32 max_target_range, r32 num_to_normalize)
 {
     uAssert(max_source_range > min_source_range);
     uAssert(max_target_range > min_target_range);
@@ -176,9 +172,7 @@ NormalizeToRange(r32 min_source_range,
     uAssert(max_target_range != min_target_range);
     uAssert(num_to_normalize >= min_source_range && num_to_normalize <= max_source_range);
 
-    r32 ret = ((r32)(num_to_normalize - min_source_range) / (r32)(max_source_range - min_source_range)) *
-                (max_target_range - min_target_range) +
-              min_target_range;
+    r32 ret = ((r32)(num_to_normalize - min_source_range) / (r32)(max_source_range - min_source_range)) * (max_target_range - min_target_range) + min_target_range;
     return ret;
 }
 
@@ -260,7 +254,7 @@ v3Norm(v3* restrict const a)
     uAssert(a);
     r32 magnitude = v3Mag(a);
     uAssert(magnitude);
-    if(magnitude)
+    if (magnitude)
     {
         a->x /= magnitude;
         a->y /= magnitude;
@@ -358,8 +352,7 @@ static __UE_inline__ bool
 v4IsEqual(const v4* restrict const a, const v4* restrict const b)
 {
     uAssert(a && b);
-    return (IsWithinTolerance(a->x, b->x) && IsWithinTolerance(a->y, b->y) && IsWithinTolerance(a->z, b->z) &&
-            IsWithinTolerance(a->w, b->w));
+    return (IsWithinTolerance(a->x, b->x) && IsWithinTolerance(a->y, b->y) && IsWithinTolerance(a->z, b->z) && IsWithinTolerance(a->w, b->w));
 }
 
 static __UE_inline__ r32
@@ -385,7 +378,7 @@ v4Norm(v4* restrict const a)
 {
     uAssert(a);
     r32 magnitude = v4Mag(a);
-    if(magnitude)
+    if (magnitude)
     {
         a->x /= magnitude;
         a->y /= magnitude;
@@ -459,7 +452,7 @@ static void
 m3Set(m3* restrict const a, const r32 b)
 {
     uAssert(a);
-    for(uint8_t idx = 0; idx < 9; idx++) { a->arr[idx] = b; }
+    for (uint8_t idx = 0; idx < 9; idx++) { a->arr[idx] = b; }
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
@@ -477,21 +470,20 @@ static void
 m3Ident(m3* restrict const result)
 {
     uAssert(result);
-    for(uint8_t idx = 0; idx < 9; idx++) { result->arr[idx] = 0; }
+    for (uint8_t idx = 0; idx < 9; idx++) { result->arr[idx] = 0; }
 
-    for(uint8_t idx = 0; idx < 3; idx++) { result->arr2d[idx][idx] = 1; }
+    for (uint8_t idx = 0; idx < 3; idx++) { result->arr2d[idx][idx] = 1; }
 }
 
 static __UE_inline__ void
 m3Mult(const m3* restrict const a, const m3* restrict const b, m3* restrict const result)
 {
     uAssert(a && b && result);
-    for(uint8_t col = 0; col < 3; col++)
+    for (uint8_t col = 0; col < 3; col++)
     {
-        for(uint8_t row = 0; row < 3; row++)
+        for (uint8_t row = 0; row < 3; row++)
         {
-            result->arr2d[row][col] = a->arr2d[row][0] * b->arr2d[0][col] + a->arr2d[row][1] * b->arr2d[1][col] +
-                                      a->arr2d[row][2] * b->arr2d[2][col];
+            result->arr2d[row][col] = a->arr2d[row][0] * b->arr2d[0][col] + a->arr2d[row][1] * b->arr2d[1][col] + a->arr2d[row][2] * b->arr2d[2][col];
         }
     }
 }
@@ -503,7 +495,7 @@ static void
 m4Set(m4* const a, const r32 b)
 {
     uAssert(a);
-    for(uint8_t idx = 0; idx < 16; idx++) { a->arr[idx] = b; }
+    for (uint8_t idx = 0; idx < 16; idx++) { a->arr[idx] = b; }
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
@@ -521,21 +513,21 @@ static void
 m4Ident(m4* const result)
 {
     uAssert(result);
-    for(uint8_t idx = 0; idx < 16; idx++) { result->arr[idx] = 0; }
+    for (uint8_t idx = 0; idx < 16; idx++) { result->arr[idx] = 0; }
 
-    for(uint8_t idx = 0; idx < 4; idx++) { result->arr2d[idx][idx] = 1; }
+    for (uint8_t idx = 0; idx < 4; idx++) { result->arr2d[idx][idx] = 1; }
 }
 
 static __UE_inline__ void
 m4Mult(const m4* restrict const a, const m4* restrict const b, m4* restrict const result)
 {
     uAssert(a && b && result);
-    for(uint8_t col = 0; col < 4; col++)
+    for (uint8_t col = 0; col < 4; col++)
     {
-        for(uint8_t row = 0; row < 4; row++)
+        for (uint8_t row = 0; row < 4; row++)
         {
-            result->arr2d[row][col] = a->arr2d[row][0] * b->arr2d[0][col] + a->arr2d[row][1] * b->arr2d[1][col] +
-                                      a->arr2d[row][2] * b->arr2d[2][col] + a->arr2d[row][3] * b->arr2d[3][col];
+            result->arr2d[row][col] =
+              a->arr2d[row][0] * b->arr2d[0][col] + a->arr2d[row][1] * b->arr2d[1][col] + a->arr2d[row][2] * b->arr2d[2][col] + a->arr2d[row][3] * b->arr2d[3][col];
         }
     }
 }

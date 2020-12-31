@@ -21,11 +21,7 @@ const uVulkanCommandInfo*  uAPI_PRIME_VULKAN_COMMAND_INFO = NULL;
 static __UE_inline__ const uVulkanCommandInfo*
                            uGetVulkanCommandInfo()
 {
-    if(!uAPI_PRIME_VULKAN_COMMAND_INFO)
-    {
-        *( uVulkanCommandInfo** )&uAPI_PRIME_VULKAN_COMMAND_INFO =
-          ( uVulkanCommandInfo* )calloc(1, sizeof(uVulkanCommandInfo));
-    }
+    if (!uAPI_PRIME_VULKAN_COMMAND_INFO) { *( uVulkanCommandInfo** )&uAPI_PRIME_VULKAN_COMMAND_INFO = ( uVulkanCommandInfo* )calloc(1, sizeof(uVulkanCommandInfo)); }
 
     return uAPI_PRIME_VULKAN_COMMAND_INFO;
 }
@@ -50,11 +46,7 @@ const uVulkanSurfaceInfo*  uAPI_PRIME_VULKAN_SURFACE_INFO = NULL;
 static __UE_inline__ const uVulkanSurfaceInfo*
                            uGetVulkanSurfaceInfo()
 {
-    if(!uAPI_PRIME_VULKAN_SURFACE_INFO)
-    {
-        *( uVulkanSurfaceInfo** )&uAPI_PRIME_VULKAN_SURFACE_INFO =
-          ( uVulkanSurfaceInfo* )calloc(1, sizeof(uVulkanSurfaceInfo));
-    }
+    if (!uAPI_PRIME_VULKAN_SURFACE_INFO) { *( uVulkanSurfaceInfo** )&uAPI_PRIME_VULKAN_SURFACE_INFO = ( uVulkanSurfaceInfo* )calloc(1, sizeof(uVulkanSurfaceInfo)); }
 
     return uAPI_PRIME_VULKAN_SURFACE_INFO;
 }
@@ -78,10 +70,7 @@ const uVulkanQueueInfo*    uAPI_PRIME_VULKAN_QUEUE_INFO = NULL;
 static __UE_inline__ const uVulkanQueueInfo*
                            uGetVulkanQueueInfo()
 {
-    if(!uAPI_PRIME_VULKAN_QUEUE_INFO)
-    {
-        *( uVulkanQueueInfo** )&uAPI_PRIME_VULKAN_QUEUE_INFO = ( uVulkanQueueInfo* )calloc(1, sizeof(uVulkanQueueInfo));
-    }
+    if (!uAPI_PRIME_VULKAN_QUEUE_INFO) { *( uVulkanQueueInfo** )&uAPI_PRIME_VULKAN_QUEUE_INFO = ( uVulkanQueueInfo* )calloc(1, sizeof(uVulkanQueueInfo)); }
 
     return uAPI_PRIME_VULKAN_QUEUE_INFO;
 }
@@ -100,10 +89,7 @@ const uVulkanInfo*         uAPI_PRIME_VULKAN_INFO = NULL;
 static __UE_inline__ const uVulkanInfo*
                            uGetVulkanInfo()
 {
-    if(!uAPI_PRIME_VULKAN_INFO)
-    {
-        *( uVulkanInfo** )&uAPI_PRIME_VULKAN_INFO = ( uVulkanInfo* )calloc(1, sizeof(uVulkanInfo));
-    }
+    if (!uAPI_PRIME_VULKAN_INFO) { *( uVulkanInfo** )&uAPI_PRIME_VULKAN_INFO = ( uVulkanInfo* )calloc(1, sizeof(uVulkanInfo)); }
 
     return uAPI_PRIME_VULKAN_INFO;
 }
@@ -124,11 +110,7 @@ const uVulkanImageGroup*   uAPI_PRIME_VULKAN_IMAGE_GROUP = NULL;
 static __UE_inline__ const uVulkanImageGroup*
                            uGetVulkanImageGroup()
 {
-    if(!uAPI_PRIME_VULKAN_IMAGE_GROUP)
-    {
-        *( uVulkanImageGroup** )&uAPI_PRIME_VULKAN_IMAGE_GROUP =
-          ( uVulkanImageGroup* )calloc(1, sizeof(uVulkanImageGroup));
-    }
+    if (!uAPI_PRIME_VULKAN_IMAGE_GROUP) { *( uVulkanImageGroup** )&uAPI_PRIME_VULKAN_IMAGE_GROUP = ( uVulkanImageGroup* )calloc(1, sizeof(uVulkanImageGroup)); }
 
     return uAPI_PRIME_VULKAN_IMAGE_GROUP;
 }
@@ -150,11 +132,7 @@ const uVulkanRenderInfo*   uAPI_PRIME_VULKAN_RENDER_INFO = NULL;
 static __UE_inline__ const uVulkanRenderInfo*
                            uGetVulkanRenderInfo()
 {
-    if(!uAPI_PRIME_VULKAN_RENDER_INFO)
-    {
-        *( uVulkanRenderInfo** )&uAPI_PRIME_VULKAN_RENDER_INFO =
-          ( uVulkanRenderInfo* )calloc(1, sizeof(uVulkanRenderInfo));
-    }
+    if (!uAPI_PRIME_VULKAN_RENDER_INFO) { *( uVulkanRenderInfo** )&uAPI_PRIME_VULKAN_RENDER_INFO = ( uVulkanRenderInfo* )calloc(1, sizeof(uVulkanRenderInfo)); }
 
     return uAPI_PRIME_VULKAN_RENDER_INFO;
 }
@@ -196,10 +174,7 @@ uCreateDrawTools(uVulkanDrawTools* const restrict draw_tools)
     uAssertMsg_v(image_group, "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
     uAssertMsg_v(command_info, "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
 
-    for(u8 frame_idx = 0; frame_idx < 1; frame_idx++)
-    {
-        draw_tools->stage_flags[frame_idx] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    }
+    for (u8 frame_idx = 0; frame_idx < 1; frame_idx++) { draw_tools->stage_flags[frame_idx] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; }
 
     draw_tools->logical_device = v_info->logical_device;
     draw_tools->swap_chain     = image_group->swap_chain;
@@ -214,9 +189,7 @@ uCreateDrawTools(uVulkanDrawTools* const restrict draw_tools)
     submit_info.signalSemaphoreCount = 1;
 
     draw_tools->submit_info = submit_info;
-    memcpy(&(draw_tools->command_buffers[0]),
-           command_info->command_buffers,
-           uVULKAN_NUM_COMMAND_BUFFERS * sizeof(VkCommandBuffer));
+    memcpy(&(draw_tools->command_buffers[0]), command_info->command_buffers, uVULKAN_NUM_COMMAND_BUFFERS * sizeof(VkCommandBuffer));
 
     VkPresentInfoKHR present_info   = {};
     present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -248,49 +221,37 @@ uCreateDrawTools(uVulkanDrawTools* const restrict draw_tools)
     VkResult   result                  = VK_SUCCESS;
     const char sync_create_error_msg[] = "[ vulkan ] Unable to create draw syn objects.\n";
 
-    for(u8 sync_obj_idx = 0; sync_obj_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; sync_obj_idx++)
+    for (u8 sync_obj_idx = 0; sync_obj_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; sync_obj_idx++)
     {
         // Create image acquired semaphores
-        result = vkCreateSemaphore(v_info->logical_device,
-                                   &semaphore_create_info,
-                                   NULL,
-                                   &(draw_tools->image_available[sync_obj_idx]));
+        result = vkCreateSemaphore(v_info->logical_device, &semaphore_create_info, NULL, &(draw_tools->image_available[sync_obj_idx]));
 
-        if(result != VK_SUCCESS)
+        if (result != VK_SUCCESS)
         {
             kRunning = false;
             uFatal(sync_create_error_msg);
         }
 
         // Create present ready semaphores
-        result = vkCreateSemaphore(v_info->logical_device,
-                                   &semaphore_create_info,
-                                   NULL,
-                                   &(draw_tools->render_finished[sync_obj_idx]));
+        result = vkCreateSemaphore(v_info->logical_device, &semaphore_create_info, NULL, &(draw_tools->render_finished[sync_obj_idx]));
 
-        if(result != VK_SUCCESS)
+        if (result != VK_SUCCESS)
         {
             kRunning = false;
             uFatal(sync_create_error_msg);
         }
 
         // Create in-flight fences
-        result = vkCreateFence(v_info->logical_device,
-                               &fence_create_info,
-                               NULL,
-                               &(draw_tools->in_flight_fences[sync_obj_idx]));
+        result = vkCreateFence(v_info->logical_device, &fence_create_info, NULL, &(draw_tools->in_flight_fences[sync_obj_idx]));
 
-        if(result != VK_SUCCESS)
+        if (result != VK_SUCCESS)
         {
             kRunning = false;
             uFatal(sync_create_error_msg);
         }
     }
 
-    for(u8 cmd_buff_idx = 0; cmd_buff_idx < uVULKAN_NUM_COMMAND_BUFFERS; cmd_buff_idx++)
-    {
-        draw_tools->in_flight_images[cmd_buff_idx] = VK_NULL_HANDLE;
-    }
+    for (u8 cmd_buff_idx = 0; cmd_buff_idx < uVULKAN_NUM_COMMAND_BUFFERS; cmd_buff_idx++) { draw_tools->in_flight_images[cmd_buff_idx] = VK_NULL_HANDLE; }
 }
 
 static void __UE_inline__
@@ -298,18 +259,18 @@ uDestroyDrawTools(uVulkanDrawTools* const restrict draw_tools, bool is_rebuildin
 {
     uVulkanInfo* v_info = ( uVulkanInfo* )uGetVulkanInfo();
 
-    if(is_rebuilding_swap_chain) {} // Silence release build warnings
+    if (is_rebuilding_swap_chain) {} // Silence release build warnings
     uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkDevice ptr must be non null.\n");
     uAssertMsg_v(draw_tools, "[ vulkan ] uVulkanDrawTools ptr must be non null.\n");
     uAssertMsg_v(is_rebuilding_swap_chain || !kRunning, "[ vulkan ] Tear down called while ` kRunning == true`.\n");
 
-    if(draw_tools && v_info && v_info->logical_device)
+    if (draw_tools && v_info && v_info->logical_device)
     {
         // Wait for device to be idle
         vkDeviceWaitIdle(v_info->logical_device);
 
-        for(u32 sync_obj_idx = 0; sync_obj_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; sync_obj_idx++)
+        for (u32 sync_obj_idx = 0; sync_obj_idx < uVULKAN_MAX_FRAMES_IN_FLIGHT; sync_obj_idx++)
         {
             vkDestroySemaphore(v_info->logical_device, draw_tools->image_available[sync_obj_idx], NULL);
             vkDestroySemaphore(v_info->logical_device, draw_tools->render_finished[sync_obj_idx], NULL);
@@ -343,9 +304,9 @@ uDestroyVulkanRenderInfo()
 
     // Destroy pipeline, pipeline layout, renderpass;
     uVkVerbose("Destroying pipeline components...\n");
-    if(render_info)
+    if (render_info)
     {
-        if(v_info->logical_device)
+        if (v_info->logical_device)
         {
             // Destroy pipeline layout, render pass, graphics pipeline, frame
             // buffer(s)
@@ -354,14 +315,11 @@ uDestroyVulkanRenderInfo()
             vkDestroyRenderPass(v_info->logical_device, render_info->render_pass, NULL);
         }
 
-        if(render_info->attachment_descriptions)
-        {
-            free(( VkAttachmentDescription* )render_info->attachment_descriptions);
-        }
+        if (render_info->attachment_descriptions) { free(( VkAttachmentDescription* )render_info->attachment_descriptions); }
 
-        if(render_info->attachment_references) { free(( VkAttachmentReference* )render_info->attachment_references); }
+        if (render_info->attachment_references) { free(( VkAttachmentReference* )render_info->attachment_references); }
 
-        if(kRunning) { memset(render_info, 0, sizeof(uVulkanRenderInfo)); }
+        if (kRunning) { memset(render_info, 0, sizeof(uVulkanRenderInfo)); }
         else
         {
             free(render_info);
@@ -377,9 +335,9 @@ uDestroyVulkanQueueInfo()
 
     uVkVerbose("Destroying queue components...\n");
 
-    if(queue_info)
+    if (queue_info)
     {
-        if(kRunning) { memset(queue_info, 0, sizeof(uVulkanQueueInfo)); }
+        if (kRunning) { memset(queue_info, 0, sizeof(uVulkanQueueInfo)); }
         else
         {
             free(queue_info);
@@ -398,17 +356,11 @@ uDestroyVulkanCommandBuffers()
     uAssertMsg_v(command_info, "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
 
     uVkVerbose("Destroying command buffers...\n");
-    if(command_info)
+    if (command_info)
     {
-        if(v_info)
-        {
-            vkFreeCommandBuffers(v_info->logical_device,
-                                 command_info->command_pool,
-                                 command_info->num_command_buffers,
-                                 command_info->command_buffers);
-        }
+        if (v_info) { vkFreeCommandBuffers(v_info->logical_device, command_info->command_pool, command_info->num_command_buffers, command_info->command_buffers); }
 
-        if(command_info->command_buffers) { free(( void* )command_info->command_buffers); }
+        if (command_info->command_buffers) { free(( void* )command_info->command_buffers); }
     }
 }
 
@@ -423,13 +375,13 @@ uDestroyVulkanCommandInfo()
     uAssertMsg_v(command_info, "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
 
     uVkVerbose("Destroying command components...\n");
-    if(command_info)
+    if (command_info)
     {
         uDestroyVulkanCommandBuffers();
 
-        if(v_info) { vkDestroyCommandPool(v_info->logical_device, command_info->command_pool, NULL); }
+        if (v_info) { vkDestroyCommandPool(v_info->logical_device, command_info->command_pool, NULL); }
 
-        if(kRunning) { memset(command_info, 0, sizeof(uVulkanCommandInfo)); }
+        if (kRunning) { memset(command_info, 0, sizeof(uVulkanCommandInfo)); }
         else
         {
             free(command_info);
@@ -449,16 +401,16 @@ uDestroyVulkanSurfaceInfo()
     uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
 
     uVkVerbose("Destroying surface components...\n");
-    if(surface_info)
+    if (surface_info)
     {
-        if(v_info->instance) { vkDestroySurfaceKHR(v_info->instance, surface_info->surface, NULL); }
+        if (v_info->instance) { vkDestroySurfaceKHR(v_info->instance, surface_info->surface, NULL); }
 
-        if(surface_info->surface_formats) { free(( VkSurfaceFormatKHR* )surface_info->surface_formats); }
+        if (surface_info->surface_formats) { free(( VkSurfaceFormatKHR* )surface_info->surface_formats); }
 
-        if(surface_info->present_modes) { free(( VkPresentModeKHR* )surface_info->present_modes); }
+        if (surface_info->present_modes) { free(( VkPresentModeKHR* )surface_info->present_modes); }
 
-        if(kRunning) { memset(surface_info, 0, sizeof(uVulkanSurfaceInfo)); }
-        else if(surface_info)
+        if (kRunning) { memset(surface_info, 0, sizeof(uVulkanSurfaceInfo)); }
+        else if (surface_info)
         {
             free(surface_info);
         }
@@ -474,32 +426,28 @@ uDestroyVulkanInfo()
     uAssertMsg_v(v_info->instance, "[ vulkan ] VkInstance must be non zero.\n");
 
     uVkVerbose("Destroying primary vulkan components...\n");
-    if(v_info)
+    if (v_info)
     {
-        if(v_info->instance)
+        if (v_info->instance)
         {
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
             // Destroy debug messenger
             PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT =
-              ( PFN_vkDestroyDebugUtilsMessengerEXT )vkGetInstanceProcAddr(v_info->instance,
-                                                                           "vkDestroyDebugUtilsMessengerEXT");
+              ( PFN_vkDestroyDebugUtilsMessengerEXT )vkGetInstanceProcAddr(v_info->instance, "vkDestroyDebugUtilsMessengerEXT");
             uAssertMsg_v(vkDestroyDebugUtilsMessengerEXT,
                          "[ vulkan ] Unable to acquire fnptr: "
                          "vkDestroyDebugUtilsMessengerEXT().\n");
-            if(vkDestroyDebugUtilsMessengerEXT && vulkan_main_debug_messenger)
-            {
-                vkDestroyDebugUtilsMessengerEXT(v_info->instance, vulkan_main_debug_messenger, NULL);
-            }
+            if (vkDestroyDebugUtilsMessengerEXT && vulkan_main_debug_messenger) { vkDestroyDebugUtilsMessengerEXT(v_info->instance, vulkan_main_debug_messenger, NULL); }
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
         }
 
-        if(v_info->logical_device) { vkDestroyDevice(v_info->logical_device, NULL); }
+        if (v_info->logical_device) { vkDestroyDevice(v_info->logical_device, NULL); }
 
-        if(v_info->instance) { vkDestroyInstance(v_info->instance, NULL); }
+        if (v_info->instance) { vkDestroyInstance(v_info->instance, NULL); }
     }
 
-    if(kRunning) { memset(v_info, 0, sizeof(uVulkanInfo)); }
-    else if(v_info)
+    if (kRunning) { memset(v_info, 0, sizeof(uVulkanInfo)); }
+    else if (v_info)
     {
         free(v_info);
     }
@@ -516,40 +464,34 @@ uDestroyVulkanImageGroup()
     uAssertMsg_v(image_group, "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
 
     uVkVerbose("Destroying image group components...\n");
-    if(image_group)
+    if (image_group)
     {
-        if(v_info && v_info->logical_device)
+        if (v_info && v_info->logical_device)
         {
             // Destroy image views, frame buffers
-            for(u32 image_idx = 0; image_idx < image_group->num_images; image_idx++)
+            for (u32 image_idx = 0; image_idx < image_group->num_images; image_idx++)
             {
-                if(image_group->image_views)
-                {
-                    vkDestroyImageView(v_info->logical_device, image_group->image_views[image_idx], NULL);
-                }
+                if (image_group->image_views) { vkDestroyImageView(v_info->logical_device, image_group->image_views[image_idx], NULL); }
 
-                if(image_group->frame_buffers)
-                {
-                    vkDestroyFramebuffer(v_info->logical_device, image_group->frame_buffers[image_idx], NULL);
-                }
+                if (image_group->frame_buffers) { vkDestroyFramebuffer(v_info->logical_device, image_group->frame_buffers[image_idx], NULL); }
             }
         }
 
-        if(image_group->swap_chain)
+        if (image_group->swap_chain)
         {
             uVkVerbose("Destroying old swap chain...\n");
             vkDestroySwapchainKHR(v_info->logical_device, image_group->swap_chain, NULL);
         }
 
-        if(image_group->images) { free(image_group->images); }
+        if (image_group->images) { free(image_group->images); }
 
-        if(image_group->image_views) { free(image_group->image_views); }
+        if (image_group->image_views) { free(image_group->image_views); }
 
-        if(image_group->frame_buffers) { free(image_group->frame_buffers); }
+        if (image_group->frame_buffers) { free(image_group->frame_buffers); }
     }
 
-    if(kRunning) { memset(image_group, 0, sizeof(uVulkanImageGroup)); }
-    else if(image_group)
+    if (kRunning) { memset(image_group, 0, sizeof(uVulkanImageGroup)); }
+    else if (image_group)
     {
         free(image_group);
     }

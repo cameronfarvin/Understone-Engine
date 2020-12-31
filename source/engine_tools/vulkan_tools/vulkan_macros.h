@@ -19,10 +19,10 @@
 #define MAX_VKVERBOSE_LEN 256
 char _vkverbose_buffer[MAX_VKVERBOSE_LEN];
 char _vkMessage_buffer[MAX_VKVERBOSE_LEN];
-#define uVkVerbose(...)                                                                                                \
-    snprintf(_vkMessage_buffer, MAX_VKVERBOSE_LEN, __VA_ARGS__);                                                       \
-    snprintf(_vkverbose_buffer, MAX_VKVERBOSE_LEN, "[ vulkan ] %s", _vkMessage_buffer);                                \
-    fputs(_vkverbose_buffer, stdout);                                                                                  \
+#define uVkVerbose(...)                                                                 \
+    snprintf(_vkMessage_buffer, MAX_VKVERBOSE_LEN, __VA_ARGS__);                        \
+    snprintf(_vkverbose_buffer, MAX_VKVERBOSE_LEN, "[ vulkan ] %s", _vkMessage_buffer); \
+    fputs(_vkverbose_buffer, stdout);                                                   \
     fflush(stdout);
 #else
 #define uVkVerbose(...) /* uVKVerbose() REMOVED */

@@ -20,13 +20,13 @@ uStringLen(const char* const uStr)
     uAssertMsg_v(uStr, "String must be non null.");
 
     size_t len = 0;
-    if(uStr)
+    if (uStr)
     {
         // Avoid while()
         size_t max = ~(( size_t )0);
-        for(size_t idx = 0; idx < max; idx++)
+        for (size_t idx = 0; idx < max; idx++)
         {
-            if(uStr[idx] == '\0')
+            if (uStr[idx] == '\0')
             {
                 // Do not include null terminator
                 // in length count.
@@ -49,47 +49,47 @@ uStringVerify(const uString* const uStr)
     bool retVal = true;
 
     // uStr is non null
-    if(!uStr)
+    if (!uStr)
     {
         retVal = false;
         uError_v("uString was null.\n");
     }
 
     // uStr->data is non null
-    if(!(retVal && uStr->data))
+    if (!(retVal && uStr->data))
     {
         retVal = false;
         uError_v("uString->data was null.\n");
     }
 
     // uStr->length is non zero
-    if(!(retVal && uStr->length > 0))
+    if (!(retVal && uStr->length > 0))
     {
         retVal = false;
         uError_v("uString->length is zero.\n");
     }
 
     // uStr->bytes is non zero
-    if(!(retVal && uStr->bytes > 0))
+    if (!(retVal && uStr->bytes > 0))
     {
         retVal = false;
         uError_v("uString->bytes is zero.\n");
     }
 
     // uStr->bytes >= uStr->length
-    if(!(retVal && uStr->bytes >= uStr->length))
+    if (!(retVal && uStr->bytes >= uStr->length))
     {
         retVal = false;
         uError_v("uString->bytes must be <= uString->length.\n");
     }
 
-    if(retVal)
+    if (retVal)
     {
         size_t null_term_pos = 0;
         size_t char_idx      = 0;
-        while(char_idx < uStr->length)
+        while (char_idx < uStr->length)
         {
-            if((uStr->data)[char_idx] == '\0')
+            if ((uStr->data)[char_idx] == '\0')
             {
                 // Do not include null terminator
                 // in length count.
@@ -101,7 +101,7 @@ uStringVerify(const uString* const uStr)
         }
 
         // uStr->length is reasonable
-        if(retVal && (char_idx != uStringLen(uStr->data)))
+        if (retVal && (char_idx != uStringLen(uStr->data)))
         {
             retVal = false;
             uError_v("uString->length is incorrect.\n");
@@ -115,7 +115,7 @@ static __UE_inline__ uString*
                      uStringInit(const char* str)
 {
     // [ cfarvin::REVISIT ] Strlen correctness, use throughout uString
-    if(str)
+    if (str)
     {
         uString* uStr                    = ( uString* )calloc(1, sizeof(uString));
         size_t*  non_const_length        = ( size_t* )&(uStr->length);
@@ -138,7 +138,7 @@ static __UE_inline__ uString*
 static __UE_inline__ bool
 uStringDestroy(uString* const uStr)
 {
-    if(uStr && uStr->data)
+    if (uStr && uStr->data)
     {
         free(uStr->data);
         free(uStr);

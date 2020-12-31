@@ -38,9 +38,7 @@ uCreateVulkanSwapChain(uVulkanInfo* const restrict            v_info,
                        bool                                   is_rebuilding_swap_chain);
 
 static __UE_inline__ void
-uCreateVulkanImageViews(const uVulkanInfo* const restrict        v_info,
-                        uVulkanImageGroup* restrict              image_group,
-                        const uVulkanSurfaceInfo* const restrict surface_info);
+uCreateVulkanImageViews(const uVulkanInfo* const restrict v_info, uVulkanImageGroup* restrict image_group, const uVulkanSurfaceInfo* const restrict surface_info);
 
 static __UE_inline__ void
 uCreateVulkanRenderPass(const uVulkanInfo* const restrict        v_info,
@@ -70,11 +68,55 @@ uCreateVulkanCommandBuffers(const uVulkanInfo* const restrict        v_info,
                             bool                                     is_rebuilding_swap_chain);
 
 static bool __UE_inline__
-uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice             physical_device,
-                                                uVulkanSurfaceInfo* const restrict surface_info,
-                                                bool                               is_rebuilding_swapchain);
+uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice physical_device, uVulkanSurfaceInfo* const restrict surface_info, bool is_rebuilding_swapchain);
 // [ end ] Forward decls
 //
+
+// [ cfarvin::REMOVE ] This will no longer be needed when we autogen-bake shaders into the exe
+__UE_inline__ static void
+uVulkanDestroyLoadedShaders_TEMP(uVulkanShader* restrict loaded_shaders, const u8 num_loaded_shaders, bool is_rebuilding_swap_chain)
+{
+    const uVulkanInfo* v_info = uGetVulkanInfo();
+
+    uAssertMsg_v(v_info, "[ vulkan ] Invalid v_info aquired.\n");
+    uAssertMsg_v(v_info->logical_device, "[ vulkan ] Invalid logical device.\n");
+    uAssertMsg_v(loaded_shaders, "[ vulkan ] loaded_shaders ptr must be non-null.\n");
+    uAssertMsg_v(num_loaded_shaders, "[ vulkan ] num_loaded_shaders must be non-zero.\n");
+    uAssertMsg_v(num_loaded_shaders == (sizeof(kShadersToLoad) / sizeof(uVulkanShader)), "[ vulkan ] Invalid number of shaders.\n");
+
+    for (size_t shader_idx = 0; shader_idx < num_loaded_shaders; shader_idx++)
+    {
+        uVulkanShader shader = loaded_shaders[shader_idx];
+        vkDestroyShaderModule(v_info->logical_device, shader.module, NULL);
+        if (shader.data) { free(( void* )shader.data); }
+    }
+}
+
+__UE_inline__ static void
+uVulkanDetermineShaderStageCount(u8* const restrict return_num_shader_stages, const uVulkanShader* const restrict loaded_shaders, const u8 num_loaded_shaders)
+{
+    uAssertMsg_v(!(*return_num_shader_stages), "[ vulkan ] num_shader_stages must be zero; will be overwritten.\n");
+    uAssertMsg_v(return_num_shader_stages, "[ vulkan ] num_shader_stages ptr must be non-null.\n");
+    uAssertMsg_v(loaded_shaders, "[ vulkan ] loaded_shaders ptr must be non-null.\n");
+    uAssertMsg_v(num_loaded_shaders, "[ vulkan ] num_loaded_shaders must be non-zero.\n");
+
+    s8 used_shader_stage_types[uVK_SHADER_TYPE_COUNT] = {};
+    for (size_t shader_idx = 0; shader_idx < num_loaded_shaders; shader_idx++)
+    {
+        uVulkanShaderType type = loaded_shaders[shader_idx].type;
+        uAssertMsg_v(*return_num_shader_stages < 255, "[ vulkan ] Impossible shader stage quantity.\n");
+        uAssertMsg_v(type > uVK_SHADER_TYPE_NONE && type < uVK_SHADER_TYPE_COUNT, "[ vulkan ] Invalid shader type.\n");
+        if (!used_shader_stage_types[type])
+        {
+            (*return_num_shader_stages)++;
+            used_shader_stage_types[type]++;
+        }
+        else
+        {
+            uFatal("Multiple shader stages of the same type discovered.\n");
+        }
+    }
+}
 
 static __UE_inline__ void
 uDestroyOldSwapChain()
@@ -90,7 +132,7 @@ static __UE_inline__ void
 uRebuildVulkanSwapChain()
 {
     // Can't rebuild swapchain with width/height of 0; such as a window minimization
-    if(kGameWindow.is_minimized) { return; }
+    if (kGameWindow.is_minimized) { return; }
 
     uVulkanInfo* v_info = ( uVulkanInfo* )uGetVulkanInfo();
     vkDeviceWaitIdle(v_info->logical_device);
@@ -116,12 +158,11 @@ uRebuildVulkanSwapChain()
     uAssertMsg_v(command_info, "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
 
     // Rebuild swap chain
-    bool swap_chain_surface_compatible =
-      uValidateVulkanSwapChainAndSurfaceCompatibility(v_info->physical_device, surface_info, true);
+    bool swap_chain_surface_compatible = uValidateVulkanSwapChainAndSurfaceCompatibility(v_info->physical_device, surface_info, true);
 
     const char swap_chain_surface_error[] = "[ vulkan ] The swap chain and surface were found to be incompatible.\n";
     uAssertMsg_v(swap_chain_surface_compatible, swap_chain_surface_error);
-    if(!swap_chain_surface_compatible)
+    if (!swap_chain_surface_compatible)
     {
         // Note: Can't destroy vulkan here; pointers in uDestroy<*> functions will
         // have non 0x000 "magic" values on msvc (0xdddd, 0xcccc, etc), thus `if(x)
@@ -148,7 +189,7 @@ uCreateVulkanCommandBuffers(const uVulkanInfo* const restrict        v_info,
                             const uVulkanSurfaceInfo* const restrict surface_info,
                             bool                                     is_rebuilding_swap_chain)
 {
-    if(is_rebuilding_swap_chain) {} // Silence release build warnings
+    if (is_rebuilding_swap_chain) {} // Silence release build warnings
     uAssertMsg_v(v_info, "[ vulkan ] uVulkaninfo ptr must be non null.\n");
     uAssertMsg_v(v_info->physical_device, "[ vulkan ] VkPhysicalDevice must be non zero.\n");
     uAssertMsg_v(command_info, "[ vulkan ] uVulkanCommandInfo ptr must be non null.\n");
@@ -159,22 +200,18 @@ uCreateVulkanCommandBuffers(const uVulkanInfo* const restrict        v_info,
     uAssertMsg_v(render_info->render_pass, "[ vulkan ] VkRenderPass must be non zero.\n");
     uAssertMsg_v(render_info->graphics_pipeline, "[ vulkan ] VkPipeline ptr must be non zero.\n");
     uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo must be non null.\n");
-    uAssertMsg_v(is_rebuilding_swap_chain || !command_info->command_buffers,
-                 "[ vulkan ] VkCommandBuffer ptr must be null; will be overwritten.\n");
+    uAssertMsg_v(is_rebuilding_swap_chain || !command_info->command_buffers, "[ vulkan ] VkCommandBuffer ptr must be null; will be overwritten.\n");
 
     // Create command buffers
-    if(image_group->num_images > uVULKAN_NUM_COMMAND_BUFFERS)
+    if (image_group->num_images > uVULKAN_NUM_COMMAND_BUFFERS)
     {
         uDestroyVulkan();
-        uFatal("[ api ] More swap chain images than command buffers: (%d, %d).\n",
-               image_group->num_images,
-               uVULKAN_NUM_COMMAND_BUFFERS);
+        uFatal("[ api ] More swap chain images than command buffers: (%d, %d).\n", image_group->num_images, uVULKAN_NUM_COMMAND_BUFFERS);
     }
 
-    *( VkCommandBuffer** )&(command_info->command_buffers) =
-      ( VkCommandBuffer* )calloc(image_group->num_images, sizeof(VkCommandBuffer));
+    *( VkCommandBuffer** )&(command_info->command_buffers) = ( VkCommandBuffer* )calloc(image_group->num_images, sizeof(VkCommandBuffer));
 
-    if(!command_info->command_buffers)
+    if (!command_info->command_buffers)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to allocate command buffers.\n");
@@ -190,17 +227,15 @@ uCreateVulkanCommandBuffers(const uVulkanInfo* const restrict        v_info,
     cb_alloc_create_info.level                       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     cb_alloc_create_info.commandBufferCount          = image_group->num_images;
 
-    VkResult result = vkAllocateCommandBuffers(v_info->logical_device,
-                                               &cb_alloc_create_info,
-                                               ( VkCommandBuffer* )command_info->command_buffers);
+    VkResult result = vkAllocateCommandBuffers(v_info->logical_device, &cb_alloc_create_info, ( VkCommandBuffer* )command_info->command_buffers);
 
-    if(result != VK_SUCCESS)
+    if (result != VK_SUCCESS)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create command buffers.\n");
     }
 
-    for(u32 image_idx = 0; image_idx < image_group->num_images; image_idx++)
+    for (u32 image_idx = 0; image_idx < image_group->num_images; image_idx++)
     {
         // Begin cb recording
         VkCommandBufferBeginInfo cb_begin_info = {};
@@ -210,7 +245,7 @@ uCreateVulkanCommandBuffers(const uVulkanInfo* const restrict        v_info,
 
         result = vkBeginCommandBuffer(command_info->command_buffers[image_idx], &cb_begin_info);
 
-        if(result != VK_SUCCESS)
+        if (result != VK_SUCCESS)
         {
             uDestroyVulkan();
             uFatal("[ vulkan ] Unable to begin command buffer at index: %d.\n", image_idx);
@@ -232,9 +267,7 @@ uCreateVulkanCommandBuffers(const uVulkanInfo* const restrict        v_info,
 
         vkCmdBeginRenderPass(command_info->command_buffers[image_idx], &rp_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(command_info->command_buffers[image_idx],
-                          VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          render_info->graphics_pipeline);
+        vkCmdBindPipeline(command_info->command_buffers[image_idx], VK_PIPELINE_BIND_POINT_GRAPHICS, render_info->graphics_pipeline);
 
         vkCmdDraw(command_info->command_buffers[image_idx],
                   3,  // vertex count
@@ -245,7 +278,7 @@ uCreateVulkanCommandBuffers(const uVulkanInfo* const restrict        v_info,
         vkCmdEndRenderPass(command_info->command_buffers[image_idx]);
 
         result = vkEndCommandBuffer(command_info->command_buffers[image_idx]);
-        if(result != VK_SUCCESS)
+        if (result != VK_SUCCESS)
         {
             uDestroyVulkan();
             uFatal("[ vulkan ] Unable to end command buffer.\n");
@@ -254,8 +287,7 @@ uCreateVulkanCommandBuffers(const uVulkanInfo* const restrict        v_info,
 }
 
 static void
-uCreateVulkanCommandPool(const uVulkanInfo* const restrict        v_info,
-                         const uVulkanCommandInfo* const restrict command_info)
+uCreateVulkanCommandPool(const uVulkanInfo* const restrict v_info, const uVulkanCommandInfo* const restrict command_info)
 {
     uAssertMsg_v(v_info, "[ vulkan ] uVulkaninfo ptr must be non null.\n");
     uAssertMsg_v(v_info->physical_device, "[ vulkan ] VkPhysicalDevice must be non zero.\n");
@@ -267,11 +299,8 @@ uCreateVulkanCommandPool(const uVulkanInfo* const restrict        v_info,
     command_pool_create_info.queueFamilyIndex        = uVULKAN_GRAPHICS_QUEUE_INDEX;
     command_pool_create_info.flags                   = 0;
 
-    VkResult result = vkCreateCommandPool(v_info->logical_device,
-                                          &command_pool_create_info,
-                                          NULL,
-                                          ( VkCommandPool* )&(command_info->command_pool));
-    if(result != VK_SUCCESS)
+    VkResult result = vkCreateCommandPool(v_info->logical_device, &command_pool_create_info, NULL, ( VkCommandPool* )&(command_info->command_pool));
+    if (result != VK_SUCCESS)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create command pool.\n");
@@ -285,25 +314,23 @@ uCreateVulkanFrameBuffers(const uVulkanInfo* const restrict        v_info,
                           const uVulkanRenderInfo* const restrict  render_info,
                           bool                                     is_rebuilding_swap_chain)
 {
-    if(is_rebuilding_swap_chain) {} // Silence release build warnings
+    if (is_rebuilding_swap_chain) {} // Silence release build warnings
     uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkPhysicalDevice must be non zero.\n");
     uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
     uAssertMsg_v(image_group, "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
     uAssertMsg_v(render_info, "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
-    uAssertMsg_v(is_rebuilding_swap_chain || !image_group->frame_buffers,
-                 "[ vulkan ] VkFrameBuffer ptr must be null; will be overwritten.\n");
+    uAssertMsg_v(is_rebuilding_swap_chain || !image_group->frame_buffers, "[ vulkan ] VkFrameBuffer ptr must be null; will be overwritten.\n");
 
     // Create a frame buffer for each image view
-    *( VkFramebuffer** )&(image_group->frame_buffers) =
-      ( VkFramebuffer* )calloc(image_group->num_images, sizeof(VkFramebuffer));
-    if(!(image_group->frame_buffers))
+    *( VkFramebuffer** )&(image_group->frame_buffers) = ( VkFramebuffer* )calloc(image_group->num_images, sizeof(VkFramebuffer));
+    if (!(image_group->frame_buffers))
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to allocate frame buffer array.\n");
     }
 
-    for(u32 image_idx = 0; image_idx < image_group->num_images; image_idx++)
+    for (u32 image_idx = 0; image_idx < image_group->num_images; image_idx++)
     {
         VkFramebufferCreateInfo frame_buffer_create_info = {};
         frame_buffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -314,12 +341,9 @@ uCreateVulkanFrameBuffers(const uVulkanInfo* const restrict        v_info,
         frame_buffer_create_info.height                  = surface_info->surface_extent.height;
         frame_buffer_create_info.layers                  = 1; // Non stereoscopic
 
-        VkResult result = vkCreateFramebuffer(v_info->logical_device,
-                                              &frame_buffer_create_info,
-                                              NULL,
-                                              &(image_group->frame_buffers[image_idx]));
+        VkResult result = vkCreateFramebuffer(v_info->logical_device, &frame_buffer_create_info, NULL, &(image_group->frame_buffers[image_idx]));
 
-        if(result != VK_SUCCESS)
+        if (result != VK_SUCCESS)
         {
             uDestroyVulkan();
             uFatal("[ vulkan ] Unable to create frame buffer.\n");
@@ -336,7 +360,7 @@ uCreateVulkanRenderPass(const uVulkanInfo* const restrict        v_info,
                         uVulkanRenderInfo* const restrict        render_info,
                         bool                                     is_rebuilding_swap_chain)
 {
-    if(is_rebuilding_swap_chain) {} // Silence release build warnings
+    if (is_rebuilding_swap_chain) {} // Silence release build warnings
     uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
     uAssertMsg_v(surface_info->surface_formats, "[ vulkan ] VkSurfaceFormatsKHR ptr must be non null.\n");
@@ -348,18 +372,16 @@ uCreateVulkanRenderPass(const uVulkanInfo* const restrict        v_info,
                  "[ vulkan ] VkAttachmentReference ptr must be null; will be "
                  "overwritten.\n");
 
-    *( u32* )&render_info->num_attachments = 1;
-    *( VkAttachmentDescription** )&(render_info->attachment_descriptions) =
-      ( VkAttachmentDescription* )calloc(render_info->num_attachments, sizeof(VkAttachmentDescription));
-    if(!render_info->attachment_descriptions)
+    *( u32* )&render_info->num_attachments                                = 1;
+    *( VkAttachmentDescription** )&(render_info->attachment_descriptions) = ( VkAttachmentDescription* )calloc(render_info->num_attachments, sizeof(VkAttachmentDescription));
+    if (!render_info->attachment_descriptions)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to allocate attachment descriptions.\n");
     }
 
-    *( VkAttachmentReference** )&(render_info->attachment_references) =
-      ( VkAttachmentReference* )calloc(render_info->num_attachments, sizeof(VkAttachmentReference));
-    if(!render_info->attachment_references)
+    *( VkAttachmentReference** )&(render_info->attachment_references) = ( VkAttachmentReference* )calloc(render_info->num_attachments, sizeof(VkAttachmentReference));
+    if (!render_info->attachment_references)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to allocate attachment references.\n");
@@ -367,16 +389,14 @@ uCreateVulkanRenderPass(const uVulkanInfo* const restrict        v_info,
 
     VkSurfaceFormatKHR surface_format = (surface_info->surface_formats)[surface_info->designated_format_index];
 
-    for(u32 attachment_idx = 0; attachment_idx < render_info->num_attachments; attachment_idx++)
+    for (u32 attachment_idx = 0; attachment_idx < render_info->num_attachments; attachment_idx++)
     {
         // Attachement description
-        VkAttachmentDescription* attachment_descriptions =
-          *( VkAttachmentDescription** )&(render_info->attachment_descriptions);
+        VkAttachmentDescription* attachment_descriptions = *( VkAttachmentDescription** )&(render_info->attachment_descriptions);
 
-        attachment_descriptions[attachment_idx].format  = surface_format.format;
-        attachment_descriptions[attachment_idx].samples = VK_SAMPLE_COUNT_1_BIT; // Note: 1 == No MSAA
-        attachment_descriptions[attachment_idx].loadOp =
-          VK_ATTACHMENT_LOAD_OP_CLEAR; // [ cfarvin::PERF ] expensive or nominal?
+        attachment_descriptions[attachment_idx].format         = surface_format.format;
+        attachment_descriptions[attachment_idx].samples        = VK_SAMPLE_COUNT_1_BIT;       // Note: 1 == No MSAA
+        attachment_descriptions[attachment_idx].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR; // [ cfarvin::PERF ] expensive or nominal?
         attachment_descriptions[attachment_idx].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
         attachment_descriptions[attachment_idx].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         attachment_descriptions[attachment_idx].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -384,8 +404,7 @@ uCreateVulkanRenderPass(const uVulkanInfo* const restrict        v_info,
         attachment_descriptions[attachment_idx].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
         // Attachment reference
-        VkAttachmentReference* color_attachment_reference =
-          *( VkAttachmentReference** )&(render_info->attachment_references);
+        VkAttachmentReference* color_attachment_reference = *( VkAttachmentReference** )&(render_info->attachment_references);
 
         color_attachment_reference[attachment_idx].attachment = 0; // Read: "Attachment index"
         color_attachment_reference[attachment_idx].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -394,13 +413,13 @@ uCreateVulkanRenderPass(const uVulkanInfo* const restrict        v_info,
     // Subpasses
     // Note: References layout(location = 0) in frag shader.
     VkSubpassDependency subpass_dependency = {};
-    subpass_dependency.srcSubpass          = VK_SUBPASS_EXTERNAL; // Indicates this is the first subpass to be run
-    subpass_dependency.dstSubpass          = 0;                   // Index of this subpass in the pSubpasses array
+    subpass_dependency.srcSubpass          = VK_SUBPASS_EXTERNAL;                           // Indicates this is the first subpass to be run
+    subpass_dependency.dstSubpass          = 0;                                             // Index of this subpass in the pSubpasses array
     subpass_dependency.srcStageMask        = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; // Stage to wait on.
-    subpass_dependency.srcAccessMask       = 0; // Types of operations to wait on in that ^ stage.
+    subpass_dependency.srcAccessMask       = 0;                                             // Types of operations to wait on in that ^ stage.
     subpass_dependency.dstStageMask        = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; // Stage to wait on.
-    subpass_dependency.dstAccessMask       = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT; // Types of operations to wait on in
-                                                                                   // that ^ stage.
+    subpass_dependency.dstAccessMask       = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;          // Types of operations to wait on in
+                                                                                            // that ^ stage.
 
     VkSubpassDescription subpass_description = {};
     subpass_description.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -417,12 +436,9 @@ uCreateVulkanRenderPass(const uVulkanInfo* const restrict        v_info,
     render_pass_create_info.dependencyCount        = 1;
     render_pass_create_info.pDependencies          = &subpass_dependency;
 
-    VkResult result = vkCreateRenderPass(v_info->logical_device,
-                                         &render_pass_create_info,
-                                         NULL,
-                                         ( VkRenderPass* )&(render_info->render_pass));
+    VkResult result = vkCreateRenderPass(v_info->logical_device, &render_pass_create_info, NULL, ( VkRenderPass* )&(render_info->render_pass));
 
-    if(result != VK_SUCCESS)
+    if (result != VK_SUCCESS)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create render pass.\n");
@@ -440,104 +456,73 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
     uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
     uAssertMsg_v(render_info, "[ vulkan ] uVulkanRenderInfo ptr must be non null.\n");
 
-    // [ cfarvin::RESTORE ]
-    /* VkPipelineShaderStageCreateInfo* shader_stage_create_infos = NULL; */
-    /* uVulkanShader*                   loaded_shaders            = NULL; */
-    /* u32                              num_loaded_shaders        = 0; */
+    VkPipelineShaderStageCreateInfo* shader_stage_create_infos = NULL;
+    uVulkanShader*                   loaded_shaders            = NULL;
+    u32                              num_loaded_shaders        = 0;
 
-    if(!is_rebuilding_swap_chain)
+    // [ cfarvin::REMOVE ] Remove this comment when autogen-baked shaders are working
+    // Note: shader files currently hard-coded - see vulkan_tools/shader_tools.h
+    //       right now, we're loading shader modules for every pipeline creation (including
+    //       swap-chain re-creation, because in the final use-case shader modules will be baked
+    //       in. Functionally it will be the same, but without the perf cost of loading from disk
+    //       each rebuild.
+    //
+    //       Also: we are not currently able to delete previously allocated shader data and module data
+    //             (? does vulkan delete module data on VkDestroyShaderModule?) because they are not currently
+    //             global. There's no need to make them global if we're going to bake them in shortly, so we're
+    //             accepting a memory leak for this test.
+    if (is_rebuilding_swap_chain) { uVulkanDestroyStaticShaderData_TEMP(); }
+
+    // Load all shader files
+    uLoadSpirvModules(&loaded_shaders, &num_loaded_shaders);
+
+    uAssertMsg_v(num_loaded_shaders, "[ vulkan ] No shaders were loaded.\n");
+    if (!num_loaded_shaders)
     {
-        // Note: shader files currently hard-coded
-        //       see vulkan_tools/shader_tools.h
+        uDestroyVulkan();
+        kRunning = false;
+    }
 
-        // [ cfarvin::RESTORE ]
-        // Load all shader files
-        /* uLoadSpirvModules(&loaded_shaders, */
-        /*                   &num_loaded_shaders); */
-        // [ cfarvin::REMOVE ]
-        uLoadSpirvModules(&(kRemoveMe.shaders), &(kRemoveMe.num_shaders));
+    uAssertMsg_v(loaded_shaders, "[ vulkan ] uVulkanShader ptr must not be null.\n");
+    if (!loaded_shaders)
+    {
+        uDestroyVulkan();
+        kRunning = false;
+    }
 
-        // [ cfarvin::RESTORE ]
-        /* const char* shader_load_err_msg = "[ vulkan ] No shaders were loaded.\n";
-         */
-        /* uAssertMsg_v(num_loaded_shaders, shader_load_err_msg); */
-        /* if (!num_loaded_shaders) */
-        /* { */
-        /*     uDestroyVulkan(); */
-        /*     uFatal(shader_load_err_msg); */
-        /* } */
+    // Store shader stage create infos
+    // [ cfarvin::TODO ] Free later
+    shader_stage_create_infos = ( VkPipelineShaderStageCreateInfo* )calloc(num_loaded_shaders, sizeof(VkPipelineShaderStageCreateInfo));
 
-        // [ cfarvin::RESTORE ]
-        /* const char* shader_array_err_msg = "[ vulkan ] uVulkanShader ptr must not
-         * be null.\n"; */
-        /* uAssertMsg_v(loaded_shaders, shader_array_err_msg); */
-        /* if (!loaded_shaders) */
-        /* { */
-        /*     uDestroyVulkan(); */
-        /*     uFatal(shader_array_err_msg); */
-        /* } */
+    for (size_t shader_idx = 0; shader_idx < num_loaded_shaders; shader_idx++)
+    {
+        const uVulkanShader shader = loaded_shaders[shader_idx];
 
-        // Store shader stage create infos
-        // [ cfarvin::TODO ] Free later
-        // [ cfarvin::RESTORE ]
-        /* shader_stage_create_infos =
-         * (VkPipelineShaderStageCreateInfo*)calloc(num_loaded_shaders, */
-        /*                                                                     sizeof(VkPipelineShaderStageCreateInfo));
-         */
-        // [ cfarvin::REMOVE ]
-        kRemoveMe.shader_stage_create_infos =
-          ( VkPipelineShaderStageCreateInfo* )calloc(kRemoveMe.num_shaders, sizeof(VkPipelineShaderStageCreateInfo));
+        uAssertMsg_v(shader.module, "[ vulkan ] VkShaderModule must be non zero.\n");
+        uAssertMsg_v(shader.data, "[ vulkan ] Shader data ptr must be non null\n.");
+        uAssertMsg_v(shader.data_size, "[ vulkan ] Shader byte count must be non zero\n.");
+        uAssertMsg_v(uValidateVulkanShaderType(shader.type), "[ vulkan ] Shader type must be valid.\n");
 
-        // [ cfarvin::RESTORE ]
-        /* for (size_t shader_idx = 0; shader_idx < num_loaded_shaders;
-         * shader_idx++) */
-        // [ cfarvin::REMOVE ]
-        for(size_t shader_idx = 0; shader_idx < kRemoveMe.num_shaders; shader_idx++)
-        {
-            // [ cfarvin::RESTORE ]
-            /* const uVulkanShader shader = loaded_shaders[shader_idx]; */
-            // [ cfarvin::REMOVE ]
-            const uVulkanShader shader = kRemoveMe.shaders[shader_idx];
-            uAssertMsg_v(shader.shader_module, "[ vulkan ] VkShaderModule must be non zero.\n");
-            uAssertMsg_v(shader.shader_data, "[ vulkan ] Shader data ptr must be non null\n.");
-            uAssertMsg_v(shader.num_shader_data_bytes, "[ vulkan ] Shader byte count must be non zero\n.");
-            uAssertMsg_v(uValidateVulkanShaderType(shader.shader_type), "[ vulkan ] Shader type must be valid.\n");
-
-            // [ cfarvin::RESTORE ]
-            /* shader_stage_create_infos[shader_idx].sType               =
-             * VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO; */
-            /* shader_stage_create_infos[shader_idx].stage               =
-             * uVulkanShaderTypeToStageBit(shader.shader_type); */
-            /* shader_stage_create_infos[shader_idx].module              =
-             * shader.shader_module; */
-            /* shader_stage_create_infos[shader_idx].pName               = "main"; //
-             * entry point */
-            /* shader_stage_create_infos[shader_idx].pSpecializationInfo = NULL;   //
-             * optional: set shader constants */
-
-            // [ cfarvin::REMOVE ]
-            kRemoveMe.shader_stage_create_infos[shader_idx].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-            kRemoveMe.shader_stage_create_infos[shader_idx].stage = uVulkanShaderTypeToStageBit(shader.shader_type);
-            kRemoveMe.shader_stage_create_infos[shader_idx].module = shader.shader_module;
-            kRemoveMe.shader_stage_create_infos[shader_idx].pName  = "main"; // entry point
-            kRemoveMe.shader_stage_create_infos[shader_idx].pSpecializationInfo =
-              NULL; // optional: set shader constants
-        }
+        shader_stage_create_infos[shader_idx].sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shader_stage_create_infos[shader_idx].stage               = uVulkanShaderTypeToStageBit(shader.type);
+        shader_stage_create_infos[shader_idx].module              = shader.module;
+        shader_stage_create_infos[shader_idx].pName               = "main"; // entry point
+        shader_stage_create_infos[shader_idx].pSpecializationInfo = NULL;   // optional: set shader constants
     }
 
     // Vertex input
     VkPipelineVertexInputStateCreateInfo vertex_input_create_info = {};
-    vertex_input_create_info.sType                         = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertex_input_create_info.vertexBindingDescriptionCount = 0;
-    vertex_input_create_info.pVertexBindingDescriptions    = NULL;
-    vertex_input_create_info.vertexAttributeDescriptionCount = 0;
-    vertex_input_create_info.pVertexAttributeDescriptions    = NULL;
+    vertex_input_create_info.sType                                = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertex_input_create_info.vertexBindingDescriptionCount        = 0;
+    vertex_input_create_info.pVertexBindingDescriptions           = NULL;
+    vertex_input_create_info.vertexAttributeDescriptionCount      = 0;
+    vertex_input_create_info.pVertexAttributeDescriptions         = NULL;
 
     // Input assembly
     VkPipelineInputAssemblyStateCreateInfo input_assembly_create_info = {};
-    input_assembly_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    input_assembly_create_info.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    input_assembly_create_info.primitiveRestartEnable = VK_FALSE;
+    input_assembly_create_info.sType                                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    input_assembly_create_info.topology                               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    input_assembly_create_info.primitiveRestartEnable                 = VK_FALSE;
 
     // Viewport
     VkViewport frame_buffer_viewport = {};
@@ -556,35 +541,35 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
 
     // Viewport state
     VkPipelineViewportStateCreateInfo frame_buffer_viewport_create_info = {};
-    frame_buffer_viewport_create_info.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    frame_buffer_viewport_create_info.viewportCount = 1;
-    frame_buffer_viewport_create_info.pViewports    = &frame_buffer_viewport;
-    frame_buffer_viewport_create_info.scissorCount  = 1;
-    frame_buffer_viewport_create_info.pScissors     = &frame_buffer_scissor;
+    frame_buffer_viewport_create_info.sType                             = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    frame_buffer_viewport_create_info.viewportCount                     = 1;
+    frame_buffer_viewport_create_info.pViewports                        = &frame_buffer_viewport;
+    frame_buffer_viewport_create_info.scissorCount                      = 1;
+    frame_buffer_viewport_create_info.pScissors                         = &frame_buffer_scissor;
 
     // Rasterizer
     VkPipelineRasterizationStateCreateInfo raster_create_info = {};
-    raster_create_info.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    raster_create_info.depthClampEnable        = VK_FALSE;
-    raster_create_info.rasterizerDiscardEnable = VK_FALSE;
-    raster_create_info.polygonMode             = VK_POLYGON_MODE_FILL;
-    raster_create_info.lineWidth               = 1.0f;
-    raster_create_info.cullMode                = VK_CULL_MODE_BACK_BIT;
-    raster_create_info.frontFace               = VK_FRONT_FACE_CLOCKWISE;
-    raster_create_info.depthBiasEnable         = VK_FALSE;
-    raster_create_info.depthBiasConstantFactor = 0.0f;
-    raster_create_info.depthBiasClamp          = 0.0f;
-    raster_create_info.depthBiasSlopeFactor    = 0.0f;
+    raster_create_info.sType                                  = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    raster_create_info.depthClampEnable                       = VK_FALSE;
+    raster_create_info.rasterizerDiscardEnable                = VK_FALSE;
+    raster_create_info.polygonMode                            = VK_POLYGON_MODE_FILL;
+    raster_create_info.lineWidth                              = 1.0f;
+    raster_create_info.cullMode                               = VK_CULL_MODE_BACK_BIT;
+    raster_create_info.frontFace                              = VK_FRONT_FACE_CLOCKWISE;
+    raster_create_info.depthBiasEnable                        = VK_FALSE;
+    raster_create_info.depthBiasConstantFactor                = 0.0f;
+    raster_create_info.depthBiasClamp                         = 0.0f;
+    raster_create_info.depthBiasSlopeFactor                   = 0.0f;
 
     // Multisampling
     VkPipelineMultisampleStateCreateInfo multi_sample_create_info = {};
-    multi_sample_create_info.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multi_sample_create_info.sampleShadingEnable   = VK_FALSE;
-    multi_sample_create_info.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
-    multi_sample_create_info.minSampleShading      = 1.0f;
-    multi_sample_create_info.pSampleMask           = NULL;
-    multi_sample_create_info.alphaToCoverageEnable = VK_FALSE;
-    multi_sample_create_info.alphaToOneEnable      = VK_FALSE;
+    multi_sample_create_info.sType                                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multi_sample_create_info.sampleShadingEnable                  = VK_FALSE;
+    multi_sample_create_info.rasterizationSamples                 = VK_SAMPLE_COUNT_1_BIT;
+    multi_sample_create_info.minSampleShading                     = 1.0f;
+    multi_sample_create_info.pSampleMask                          = NULL;
+    multi_sample_create_info.alphaToCoverageEnable                = VK_FALSE;
+    multi_sample_create_info.alphaToOneEnable                     = VK_FALSE;
 
     // Depth stencil [ currently off ]
     VkPipelineDepthStencilStateCreateInfo* depth_stencil_create_info = NULL;
@@ -594,26 +579,25 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
     //       VkPipelineColorBlendAttachmentState sets local state per attached
     //       frame buffer.
     VkPipelineColorBlendAttachmentState color_blend_attachment = {};
-    color_blend_attachment.colorWriteMask =
-      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    color_blend_attachment.blendEnable         = VK_FALSE;
-    color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    color_blend_attachment.colorBlendOp        = VK_BLEND_OP_ADD;
-    color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
+    color_blend_attachment.colorWriteMask                      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    color_blend_attachment.blendEnable                         = VK_FALSE;
+    color_blend_attachment.srcColorBlendFactor                 = VK_BLEND_FACTOR_ONE;
+    color_blend_attachment.dstColorBlendFactor                 = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    color_blend_attachment.colorBlendOp                        = VK_BLEND_OP_ADD;
+    color_blend_attachment.srcAlphaBlendFactor                 = VK_BLEND_FACTOR_ONE;
+    color_blend_attachment.dstAlphaBlendFactor                 = VK_BLEND_FACTOR_ZERO;
+    color_blend_attachment.alphaBlendOp                        = VK_BLEND_OP_ADD;
 
     VkPipelineColorBlendStateCreateInfo color_blend_create_info = {};
-    color_blend_create_info.sType             = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    color_blend_create_info.logicOpEnable     = VK_FALSE;
-    color_blend_create_info.logicOp           = VK_LOGIC_OP_COPY;
-    color_blend_create_info.attachmentCount   = 1;
-    color_blend_create_info.pAttachments      = &color_blend_attachment;
-    color_blend_create_info.blendConstants[0] = 0.0f;
-    color_blend_create_info.blendConstants[1] = 0.0f;
-    color_blend_create_info.blendConstants[2] = 0.0f;
-    color_blend_create_info.blendConstants[3] = 0.0f;
+    color_blend_create_info.sType                               = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    color_blend_create_info.logicOpEnable                       = VK_FALSE;
+    color_blend_create_info.logicOp                             = VK_LOGIC_OP_COPY;
+    color_blend_create_info.attachmentCount                     = 1;
+    color_blend_create_info.pAttachments                        = &color_blend_attachment;
+    color_blend_create_info.blendConstants[0]                   = 0.0f;
+    color_blend_create_info.blendConstants[1]                   = 0.0f;
+    color_blend_create_info.blendConstants[2]                   = 0.0f;
+    color_blend_create_info.blendConstants[3]                   = 0.0f;
 
     // Dynamic state
     // Note: Causes previous configuration to be ignored, and information to be
@@ -636,29 +620,10 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
     pipeline_layout_create_info.pushConstantRangeCount     = 0;
     pipeline_layout_create_info.pPushConstantRanges        = NULL;
 
-    VkResult result = vkCreatePipelineLayout(v_info->logical_device,
-                                             &pipeline_layout_create_info,
-                                             NULL,
-                                             ( VkPipelineLayout* )&(render_info->pipeline_layout));
-
-    if(result != VK_SUCCESS)
+    VkResult result = vkCreatePipelineLayout(v_info->logical_device, &pipeline_layout_create_info, NULL, ( VkPipelineLayout* )&(render_info->pipeline_layout));
+    if (result != VK_SUCCESS)
     {
-        if(!is_rebuilding_swap_chain)
-        {
-            // [ cfarvin::RESTORE ]
-            /* for (size_t shader_idx = 0; shader_idx < num_loaded_shaders;
-             * shader_idx++) */
-            // [ cfarvin::REMOVE ]
-            for(size_t shader_idx = 0; shader_idx < kRemoveMe.num_shaders; shader_idx++)
-            {
-                // [ cfarvin::RESTORE ]
-                /* uVulkanShader shader = loaded_shaders[shader_idx]; */
-                // [ cfarvin::REMOVE ]
-                uVulkanShader shader = kRemoveMe.shaders[shader_idx];
-                if(shader.shader_data) { free(( void* )shader.shader_data); }
-            }
-        }
-
+        uVulkanDestroyLoadedShaders_TEMP(loaded_shaders, num_loaded_shaders, false);
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create pipeline layout.\n");
     }
@@ -668,22 +633,25 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
     graphics_pipeline_create_info.sType                        = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 
     // [ cfarvin::TODO ] This needs to be coupled with a better way to store
-    // shader data
-    //                   such that on pipeline re-creation, we do not have to go
-    //                   to disk. The two questions: 1) Do we really want to store
-    //                   this? 2) If so, how to we do this effectively?
+    //                   shader data such that on pipeline re-creation, we do not
+    //                   have to go to disk. The two questions: 1) Do we really
+    //                   want to store this? 2) If so, how to we do this effectively?
     //
     //                   Change graphics_pipeline_create_info.stageCount when we
     //                   figure this out. Hard-coded for vert/frag triangle for
     //                   now.
-    graphics_pipeline_create_info.stageCount = kRemoveMe.num_stages;
-    /* graphics_pipeline_create_info.stageCount          = 2; */
+
+    u8 num_shader_stages = 0;
+    uVulkanDetermineShaderStageCount(&num_shader_stages, ( const uVulkanShader* const )loaded_shaders, num_loaded_shaders);
+    uAssertMsg_v(num_shader_stages, "[ vulkan ] No shader stages found.\n");
+
+    graphics_pipeline_create_info.stageCount = num_shader_stages;
 
     // [ cfarvin::RESTORE ]
-    /* graphics_pipeline_create_info.pStages             =
-     * shader_stage_create_infos; */
+    graphics_pipeline_create_info.pStages = shader_stage_create_infos;
     // [ cfarvin::REMOVE ]
-    graphics_pipeline_create_info.pStages             = kRemoveMe.shader_stage_create_infos;
+    /* graphics_pipeline_create_info.pStages             = kRemoveMe.shader_stage_create_infos; */
+
     graphics_pipeline_create_info.pVertexInputState   = &vertex_input_create_info;
     graphics_pipeline_create_info.pInputAssemblyState = &input_assembly_create_info;
     graphics_pipeline_create_info.pViewportState      = &frame_buffer_viewport_create_info;
@@ -698,55 +666,18 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
     graphics_pipeline_create_info.basePipelineHandle  = NULL;
     graphics_pipeline_create_info.basePipelineIndex   = -1;
 
-    result = vkCreateGraphicsPipelines(v_info->logical_device,
-                                       VK_NULL_HANDLE,
-                                       1,
-                                       &graphics_pipeline_create_info,
-                                       NULL,
-                                       ( VkPipeline* )&(render_info->graphics_pipeline));
-
-    if(result != VK_SUCCESS)
+    result = vkCreateGraphicsPipelines(v_info->logical_device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, NULL, ( VkPipeline* )&(render_info->graphics_pipeline));
+    if (result != VK_SUCCESS)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create graphics pipeline.\n");
     }
 
-    // Clean up
-    if(!is_rebuilding_swap_chain)
-    {
-        // [ cfarvin::RESTORE ]
-        /* for (size_t shader_idx = 0; shader_idx < num_loaded_shaders;
-         * shader_idx++) */
-        // [ cfarvin::REMOVE ]
-        for(size_t shader_idx = 0; shader_idx < kRemoveMe.num_shaders; shader_idx++)
-        {
-            // [ cfarvin::RESTORE ]
-            /* uVulkanShader shader = loaded_shaders[shader_idx]; */
-            /* // [ cfarvin::REVISIT ] You'll need to destroy shader modules on
-             * tear-down if you keep */
-            /* //                      them loaded. */
-            /* vkDestroyShaderModule(v_info->logical_device, */
-            /*                       shader.shader_module, */
-            /*                       NULL); */
-
-            /* if (shader.shader_data) */
-            /* { */
-            /*     free((void*)shader.shader_data); */
-            /* } */
-
-            // [ begin ]
-            // [ cfarvin::REMOVE ]
-            uVulkanShader shader = kRemoveMe.shaders[shader_idx];
-            if(shader.shader_data) { free(( void* )shader.shader_data); }
-            // [ end ]
-        }
-    }
+    uVulkanDestroyLoadedShaders_TEMP(loaded_shaders, num_loaded_shaders, is_rebuilding_swap_chain);
 }
 
 static __UE_inline__ void
-uCreateVulkanImageViews(const uVulkanInfo* const restrict        v_info,
-                        uVulkanImageGroup* restrict              image_group,
-                        const uVulkanSurfaceInfo* const restrict surface_info)
+uCreateVulkanImageViews(const uVulkanInfo* const restrict v_info, uVulkanImageGroup* restrict image_group, const uVulkanSurfaceInfo* const restrict surface_info)
 {
     uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkDevice ptr must be non null.\n");
@@ -758,7 +689,7 @@ uCreateVulkanImageViews(const uVulkanInfo* const restrict        v_info,
     uAssertMsg_v(surface_info->surface_formats, "[ vulkan ] VkSurfaceFormatKHR ptr must be non null.\n");
 
     VkSurfaceFormatKHR* surface_formats = ( VkSurfaceFormatKHR* )surface_info->surface_formats;
-    for(u32 image_idx = 0; image_idx < image_group->num_images; image_idx++)
+    for (u32 image_idx = 0; image_idx < image_group->num_images; image_idx++)
     {
         // Fill create info
         VkImageViewCreateInfo image_view_create_info = {};
@@ -780,12 +711,9 @@ uCreateVulkanImageViews(const uVulkanInfo* const restrict        v_info,
         image_view_create_info.subresourceRange.layerCount     = 1;
 
         // Create image view
-        VkResult result = vkCreateImageView(v_info->logical_device,
-                                            &image_view_create_info,
-                                            NULL,
-                                            &(image_group->image_views[image_idx]));
+        VkResult result = vkCreateImageView(v_info->logical_device, &image_view_create_info, NULL, &(image_group->image_views[image_idx]));
 
-        if(result != VK_SUCCESS)
+        if (result != VK_SUCCESS)
         {
             uDestroyVulkan();
             uFatal("[ vulkan ] Unable to create image view.\n");
@@ -804,12 +732,12 @@ uVulkanExtractUniqueQueueFamilies(const uVulkanQueueInfo* const restrict queue_i
     uAssertMsg_v(num_possible_queues, "[ vulkan ] The number of possible queues must be non zero.\n");
     uAssertMsg_v(unique_queues_found, "[ vulkan ] The 'num_queues_found' ptr must be non null.\n");
 
-    if(num_possible_queues)
+    if (num_possible_queues)
     {
-        for(u8 unchecked_queue_idx = 0; unchecked_queue_idx < num_possible_queues; unchecked_queue_idx++)
+        for (u8 unchecked_queue_idx = 0; unchecked_queue_idx < num_possible_queues; unchecked_queue_idx++)
         {
             // Create graphics queue as unique by default.
-            if(unchecked_queue_idx == 0)
+            if (unchecked_queue_idx == 0)
             {
                 unique_queue_array[(*unique_queues_found)] = queue_info->designated_graphics_index;
                 (*unique_queues_found)++;
@@ -819,16 +747,16 @@ uVulkanExtractUniqueQueueFamilies(const uVulkanQueueInfo* const restrict queue_i
                 bool is_unique = true;
 
                 // Check present queue uniqueness
-                for(u8 unique_queue_idx = 0; unique_queue_idx < (*unique_queues_found); unique_queue_idx++)
+                for (u8 unique_queue_idx = 0; unique_queue_idx < (*unique_queues_found); unique_queue_idx++)
                 {
-                    if(queue_info->designated_present_index == unique_queue_array[unique_queue_idx])
+                    if (queue_info->designated_present_index == unique_queue_array[unique_queue_idx])
                     {
                         is_unique = false;
                         break;
                     }
                 }
 
-                if(is_unique)
+                if (is_unique)
                 {
                     unique_queue_array[(*unique_queues_found)] = queue_info->designated_present_index;
                     (*unique_queues_found)++;
@@ -845,7 +773,6 @@ uCreateVulkanSwapChain(uVulkanInfo* const restrict            v_info,
                        uVulkanImageGroup* restrict            image_group,
                        bool                                   is_rebuilding_swap_chain)
 {
-    if(is_rebuilding_swap_chain) {} // Silence release build warnings
     uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkLogicalDevice must be non zero.\n");
     uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
@@ -853,12 +780,11 @@ uCreateVulkanSwapChain(uVulkanInfo* const restrict            v_info,
     uAssertMsg_v(queue_info, "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n");
     uAssertMsg_v(surface_info->surface_formats, "[ vulkan ] VkSurfaceFormatKHR ptr must be non null.\n");
     uAssertMsg_v(surface_info->present_modes, "[ vulkan ] VkPresentModeKHR ptr must be non null.\n");
-    uAssertMsg_v(is_rebuilding_swap_chain || !(image_group->swap_chain),
-                 "[ vulkan ] VkSwapChainKHR must be zero; will be overwritten.\n");
+    uAssertMsg_v(is_rebuilding_swap_chain || !(image_group->swap_chain), "[ vulkan ] VkSwapChainKHR must be zero; will be overwritten.\n");
 
     // Select a suitable swapchain
     bool swap_chain_selected = uSelectVulkanSwapChain(surface_info);
-    if(!swap_chain_selected)
+    if (!swap_chain_selected)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to select a suitable swap chain.\n");
@@ -873,17 +799,14 @@ uCreateVulkanSwapChain(uVulkanInfo* const restrict            v_info,
 
     // Ensure designated count is within bounds
     bool image_count_unlimited = (max_image_count == 0);
-    if(!image_count_unlimited && (designated_image_count > max_image_count))
-    {
-        designated_image_count = max_image_count;
-    }
+    if (!image_count_unlimited && (designated_image_count > max_image_count)) { designated_image_count = max_image_count; }
 
     // Determine if queues are unique
     u32 unique_queue_array[uVULKAN_NUM_QUEUES] = {};
     u8  unique_queues_found                    = 0;
     uVulkanExtractUniqueQueueFamilies(queue_info, &(unique_queue_array[0]), uVULKAN_NUM_QUEUES, &unique_queues_found);
 
-    if(!unique_queues_found)
+    if (!unique_queues_found)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Was unable to find any queues.\n");
@@ -906,16 +829,13 @@ uCreateVulkanSwapChain(uVulkanInfo* const restrict            v_info,
     swap_chain_create_info.compositeAlpha           = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // Ignore alpha channel
     swap_chain_create_info.presentMode              = present_modes[surface_info->designated_present_index];
     swap_chain_create_info.clipped                  = VK_TRUE;
-    if(is_rebuilding_swap_chain && image_group->swap_chain)
-    {
-        swap_chain_create_info.oldSwapchain = image_group->swap_chain;
-    }
+    if (is_rebuilding_swap_chain && image_group->swap_chain) { swap_chain_create_info.oldSwapchain = image_group->swap_chain; }
     else
     {
         swap_chain_create_info.oldSwapchain = VK_NULL_HANDLE;
     }
 
-    if(unique_queues_found == 1)
+    if (unique_queues_found == 1)
     {
         // Queues were unique/identical
         swap_chain_create_info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
@@ -931,12 +851,9 @@ uCreateVulkanSwapChain(uVulkanInfo* const restrict            v_info,
     }
 
     // Create swap chain
-    VkResult result = vkCreateSwapchainKHR(v_info->logical_device,
-                                           &swap_chain_create_info,
-                                           NULL,
-                                           ( VkSwapchainKHR* )&(image_group->swap_chain));
+    VkResult result = vkCreateSwapchainKHR(v_info->logical_device, &swap_chain_create_info, NULL, ( VkSwapchainKHR* )&(image_group->swap_chain));
 
-    if(result != VK_SUCCESS)
+    if (result != VK_SUCCESS)
     {
         free(( VkSurfaceFormatKHR* )surface_info->surface_formats);
         free(( VkPresentModeKHR* )surface_info->present_modes);
@@ -946,21 +863,21 @@ uCreateVulkanSwapChain(uVulkanInfo* const restrict            v_info,
 
     // Get handles to swap chain images
     u32 reported_image_count = designated_image_count;
-    result = vkGetSwapchainImagesKHR(v_info->logical_device, image_group->swap_chain, &designated_image_count, NULL);
+    result                   = vkGetSwapchainImagesKHR(v_info->logical_device, image_group->swap_chain, &designated_image_count, NULL);
 
-    if(result != VK_SUCCESS)
+    if (result != VK_SUCCESS)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to obtain swap chain image count.\n");
     }
 
-    if(!reported_image_count)
+    if (!reported_image_count)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Swap chain reports no images.\n");
     }
 
-    if(designated_image_count != reported_image_count)
+    if (designated_image_count != reported_image_count)
     {
         uWarning("[ vulkan ] Swap chain images count != designated count.\n");
         designated_image_count = reported_image_count;
@@ -968,12 +885,9 @@ uCreateVulkanSwapChain(uVulkanInfo* const restrict            v_info,
 
     image_group->images      = ( VkImage* )calloc(designated_image_count, sizeof(VkImage));
     image_group->image_views = ( VkImageView* )calloc(designated_image_count, sizeof(VkImageView));
-    result                   = vkGetSwapchainImagesKHR(v_info->logical_device,
-                                     image_group->swap_chain,
-                                     &designated_image_count,
-                                     image_group->images);
+    result                   = vkGetSwapchainImagesKHR(v_info->logical_device, image_group->swap_chain, &designated_image_count, image_group->images);
 
-    if(result != VK_SUCCESS)
+    if (result != VK_SUCCESS)
     {
         uDestroyVulkan();
         free(image_group->images);
@@ -1000,14 +914,14 @@ uCreateVulkanLogicalDevice(uVulkanInfo* const restrict            v_info,
     uAssertMsg_v(queue_info, "[ vulkan ] Queue indices ptr must be non null\n");
     uAssertMsg_v(queue_info->queues, "[ vulkan ] VkQueue ptr must be non null.\n");
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-    if(num_instance_validation_layer_names)
+    if (num_instance_validation_layer_names)
     {
         uAssertMsg_v(instance_validation_layer_names && *instance_validation_layer_names,
                      "[ vulkan ] If the instance validation layer quanitity is non "
                      "zero, the names ptr must be non null\n");
     }
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-    if(num_user_device_extension_names)
+    if (num_user_device_extension_names)
     {
         uAssertMsg_v(user_device_extension_names && *user_device_extension_names,
                      "[ vulkan ] If the device extension quanitity is non zero, "
@@ -1020,15 +934,14 @@ uCreateVulkanLogicalDevice(uVulkanInfo* const restrict            v_info,
     uVulkanExtractUniqueQueueFamilies(queue_info, &(unique_queues[0]), uVULKAN_NUM_QUEUES, &num_unique_queues);
 
     // Create logical device create info structure(s)
-    VkDeviceQueueCreateInfo* device_queue_create_infos =
-      ( VkDeviceQueueCreateInfo* )calloc(num_unique_queues, sizeof(VkDeviceQueueCreateInfo));
-    if(!device_queue_create_infos)
+    VkDeviceQueueCreateInfo* device_queue_create_infos = ( VkDeviceQueueCreateInfo* )calloc(num_unique_queues, sizeof(VkDeviceQueueCreateInfo));
+    if (!device_queue_create_infos)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create logical device.\n");
     }
 
-    for(u32 queue_family_idx = 0; queue_family_idx < num_unique_queues; queue_family_idx++)
+    for (u32 queue_family_idx = 0; queue_family_idx < num_unique_queues; queue_family_idx++)
     {
         r32 device_queue_priorities                                  = 1.0f;
         device_queue_create_infos[queue_family_idx].sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -1055,35 +968,28 @@ uCreateVulkanLogicalDevice(uVulkanInfo* const restrict            v_info,
     logical_device_create_info.enabledExtensionCount   = num_user_device_extension_names;
     logical_device_create_info.ppEnabledExtensionNames = ( const char** const )user_device_extension_names;
 
-    VkResult device_creation_success =
-      vkCreateDevice(v_info->physical_device, &logical_device_create_info, NULL, ( VkDevice* )&v_info->logical_device);
+    VkResult device_creation_success = vkCreateDevice(v_info->physical_device, &logical_device_create_info, NULL, ( VkDevice* )&v_info->logical_device);
 
-    if(device_creation_success != VK_SUCCESS)
+    if (device_creation_success != VK_SUCCESS)
     {
-        if(device_queue_create_infos) { free(device_queue_create_infos); }
+        if (device_queue_create_infos) { free(device_queue_create_infos); }
 
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create logical device.\n");
     }
 
-    vkGetDeviceQueue(v_info->logical_device,
-                     queue_info->designated_graphics_index,
-                     0,
-                     ( VkQueue* )(&(queue_info->queues)[uVULKAN_GRAPHICS_QUEUE_INDEX]));
+    vkGetDeviceQueue(v_info->logical_device, queue_info->designated_graphics_index, 0, ( VkQueue* )(&(queue_info->queues)[uVULKAN_GRAPHICS_QUEUE_INDEX]));
 
-    vkGetDeviceQueue(v_info->logical_device,
-                     queue_info->designated_present_index,
-                     0,
-                     ( VkQueue* )(&(queue_info->queues)[uVULKAN_PRESENT_QUEUE_INDEX]));
+    vkGetDeviceQueue(v_info->logical_device, queue_info->designated_present_index, 0, ( VkQueue* )(&(queue_info->queues)[uVULKAN_PRESENT_QUEUE_INDEX]));
 
-    if(device_queue_create_infos) { free(device_queue_create_infos); }
+    if (device_queue_create_infos) { free(device_queue_create_infos); }
 }
 
 // [ cfarvin::TODO ] Define device feature requirements
 static bool
 uValidateVulkanDeviceFeaturesReqruirement(const VkPhysicalDevice physical_device)
 {
-    if(physical_device) {}
+    if (physical_device) {}
 
     // Aquire physical device features
     /* VkPhysicalDeviceFeatures device_features; */
@@ -1097,7 +1003,7 @@ uValidateVulkanDeviceFeaturesReqruirement(const VkPhysicalDevice physical_device
 static bool
 uValidateVulkanDevicePropertiesReqruirement(const VkPhysicalDevice physical_device)
 {
-    if(physical_device) {}
+    if (physical_device) {}
 
     // Aquire physical device properties
     /* VkPhysicalDeviceProperties device_properties; */
@@ -1108,11 +1014,9 @@ uValidateVulkanDevicePropertiesReqruirement(const VkPhysicalDevice physical_devi
 }
 
 static bool
-uValidateVulkanDeviceExtensionsReqruirement(const VkPhysicalDevice physical_device,
-                                            const s8** restrict    user_device_extension_names,
-                                            const u16              num_user_device_extension_names)
+uValidateVulkanDeviceExtensionsReqruirement(const VkPhysicalDevice physical_device, const s8** restrict user_device_extension_names, const u16 num_user_device_extension_names)
 {
-    if(user_device_extension_names)
+    if (user_device_extension_names)
     {
         uAssertMsg_v(user_device_extension_names && *user_device_extension_names,
                      "[ vulkan ] If the device extension quanitity is non zero, "
@@ -1120,14 +1024,11 @@ uValidateVulkanDeviceExtensionsReqruirement(const VkPhysicalDevice physical_devi
     }
 
     u16 num_validated_extension_names = 0;
-    uQueryVulkanDeviceExtensions(&physical_device,
-                                 user_device_extension_names,
-                                 num_user_device_extension_names,
-                                 &num_validated_extension_names);
+    uQueryVulkanDeviceExtensions(&physical_device, user_device_extension_names, num_user_device_extension_names, &num_validated_extension_names);
 
     const char extension_name_err_msg[] = "[ vulkan ] Unable to verify user extension names.\n";
     uAssertMsg_v(num_validated_extension_names == num_user_device_extension_names, extension_name_err_msg);
-    if(num_validated_extension_names != num_user_device_extension_names)
+    if (num_validated_extension_names != num_user_device_extension_names)
     {
         uVkVerbose(extension_name_err_msg);
         return false;
@@ -1137,9 +1038,7 @@ uValidateVulkanDeviceExtensionsReqruirement(const VkPhysicalDevice physical_devi
 }
 
 static bool
-uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice                   physical_device,
-                                      const uVulkanSurfaceInfo* const restrict surface_info,
-                                      uVulkanQueueInfo* const restrict         queue_info)
+uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice physical_device, const uVulkanSurfaceInfo* const restrict surface_info, uVulkanQueueInfo* const restrict queue_info)
 {
     uAssertMsg_v(surface_info, "[ vulkan ] The uVulkanSurfaceInfo ptr must be non null.\n");
     uAssertMsg_v(surface_info->surface, "[ vulkan ] The VKSurfaceKHR must be non zero.\n");
@@ -1155,12 +1054,11 @@ uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice                   p
     // Get queue family count
     u32 queue_family_count = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, NULL);
-    if(!queue_family_count) { return false; }
+    if (!queue_family_count) { return false; }
 
     // Get queue families
-    VkQueueFamilyProperties* queue_family_props =
-      ( VkQueueFamilyProperties* )calloc(queue_family_count, sizeof(VkQueueFamilyProperties));
-    if(!queue_family_props) { return false; }
+    VkQueueFamilyProperties* queue_family_props = ( VkQueueFamilyProperties* )calloc(queue_family_count, sizeof(VkQueueFamilyProperties));
+    if (!queue_family_props) { return false; }
 
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_family_props);
 
@@ -1173,10 +1071,10 @@ uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice                   p
     num_queues++;
 
     bool queues_satisfied = false;
-    for(u32 queue_idx = 0; queue_idx < queue_family_count; queue_idx++)
+    for (u32 queue_idx = 0; queue_idx < queue_family_count; queue_idx++)
     {
         // Check grahpics capability for this family
-        if(queue_family_props[queue_idx].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        if (queue_family_props[queue_idx].queueFlags & VK_QUEUE_GRAPHICS_BIT)
         {
             graphics_pair.index     = queue_idx;
             graphics_pair.validated = true;
@@ -1186,21 +1084,21 @@ uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice                   p
         VkBool32 present_capability = false;
         vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, queue_idx, surface_info->surface, &present_capability);
 
-        if(present_capability)
+        if (present_capability)
         {
             present_pair.index     = queue_idx;
             present_pair.validated = true;
         }
 
         // Break when all conditions are met
-        if(graphics_pair.validated && present_pair.validated)
+        if (graphics_pair.validated && present_pair.validated)
         {
             // Store family indices for each required queue.
             *( u32* )&queue_info->designated_graphics_index = graphics_pair.index;
             *( u32* )&queue_info->designated_present_index  = present_pair.index;
 
             // Issue perf warning for different graphics/presentation queue
-            if(graphics_pair.index != present_pair.index)
+            if (graphics_pair.index != present_pair.index)
             {
                 uWarning("[ vulkan ] [ perf ] Different graphics and prsent queue "
                          "families chosen.\n");
@@ -1211,10 +1109,10 @@ uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice                   p
         }
     }
 
-    if(queue_family_props) { free(queue_family_props); }
+    if (queue_family_props) { free(queue_family_props); }
 
     // Issue engine level warning to update uVULKAN_NUM_QUEUES
-    if(uVULKAN_NUM_QUEUES != num_queues)
+    if (uVULKAN_NUM_QUEUES != num_queues)
     {
         uFatal("[ engine ][ vulkan ] uVulkanInfo.queues length: %d. %d queues were "
                "checked during physical device "
@@ -1238,7 +1136,7 @@ uSelectVulkanSwapChainExtent(uVulkanSurfaceInfo* const restrict surface_info)
     // Note: Some window managers use u32_MAX as a magic value which indicates
     // that the extent must be manually set up.
     u32 u32_MAX = ~( u32 )0;
-    if(surface_capabilities.currentExtent.width != u32_MAX)
+    if (surface_capabilities.currentExtent.width != u32_MAX)
     {
         *extent_width  = surface_capabilities.currentExtent.width;
         *extent_height = surface_capabilities.currentExtent.height;
@@ -1249,14 +1147,14 @@ uSelectVulkanSwapChainExtent(uVulkanSurfaceInfo* const restrict surface_info)
     }
 
     // Ensure we do not exceed maximums
-    if(*extent_width > surface_capabilities.maxImageExtent.width)
+    if (*extent_width > surface_capabilities.maxImageExtent.width)
     {
         uVkVerbose("[ vulkan ] Calculated extent width exceeded surface "
                    "capabiility; capped.\n");
         *extent_width = surface_capabilities.maxImageExtent.width;
     }
 
-    if(*extent_height > surface_capabilities.maxImageExtent.height)
+    if (*extent_height > surface_capabilities.maxImageExtent.height)
     {
         uVkVerbose("[ vulkan ] Calculated extent height exceeded surface "
                    "capabiility; capped.\n");
@@ -1264,14 +1162,14 @@ uSelectVulkanSwapChainExtent(uVulkanSurfaceInfo* const restrict surface_info)
     }
 
     // Ensure we do not fall below minimums
-    if(*extent_width < surface_capabilities.minImageExtent.width)
+    if (*extent_width < surface_capabilities.minImageExtent.width)
     {
         uVkVerbose("[ vulkan ] Calculated extent width fell below surface "
                    "capabiility; capped.\n");
         *extent_width = surface_capabilities.minImageExtent.width;
     }
 
-    if(*extent_height < surface_capabilities.minImageExtent.height)
+    if (*extent_height < surface_capabilities.minImageExtent.height)
     {
         uVkVerbose("[ vulkan ] Calculated extent height fell below surface "
                    "capabiility; capped.\n");
@@ -1283,22 +1181,16 @@ static __UE_inline__ bool
 uSelectVulkanSwapChain(uVulkanSurfaceInfo* const restrict surface_info)
 {
     uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
-    if(surface_info->num_surface_formats)
-    {
-        uAssertMsg_v(surface_info->surface_formats, "[ vulkan ] VkSurfaceFormatKHR ptr must be non null.\n");
-    }
-    if(surface_info->num_present_modes)
-    {
-        uAssertMsg_v(surface_info->present_modes, "[ vulkan ] VkPresentModeKHR ptr must be non null.\n");
-    }
+    if (surface_info->num_surface_formats) { uAssertMsg_v(surface_info->surface_formats, "[ vulkan ] VkSurfaceFormatKHR ptr must be non null.\n"); }
+    if (surface_info->num_present_modes) { uAssertMsg_v(surface_info->present_modes, "[ vulkan ] VkPresentModeKHR ptr must be non null.\n"); }
 
     // Determine best available surface format
     u32* non_const_designated_format_index = ( u32* )&(surface_info->designated_format_index);
     bool optimal_format_found              = false;
-    for(u16 format_idx = 0; format_idx < surface_info->num_surface_formats; format_idx++)
+    for (u16 format_idx = 0; format_idx < surface_info->num_surface_formats; format_idx++)
     {
-        if(surface_info->surface_formats[format_idx].format == VK_FORMAT_B8G8R8A8_SRGB &&
-           surface_info->surface_formats[format_idx].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+        if (surface_info->surface_formats[format_idx].format == VK_FORMAT_B8G8R8A8_SRGB &&
+            surface_info->surface_formats[format_idx].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
         {
             *non_const_designated_format_index = format_idx;
             optimal_format_found               = true;
@@ -1306,7 +1198,7 @@ uSelectVulkanSwapChain(uVulkanSurfaceInfo* const restrict surface_info)
         }
     }
 
-    if(!optimal_format_found)
+    if (!optimal_format_found)
     {
         // Issue perf warning
         uWarning("[ vulkan ] [ perf ] 8bpp sRGB swap chain format unavailble. "
@@ -1318,26 +1210,26 @@ uSelectVulkanSwapChain(uVulkanSurfaceInfo* const restrict surface_info)
     bool suitable_present_found             = false;
     bool optimal_present_found              = false;
     u16  fifo_present_index                 = 0;
-    for(u16 present_idx = 0; present_idx < surface_info->num_present_modes; present_idx++)
+    for (u16 present_idx = 0; present_idx < surface_info->num_present_modes; present_idx++)
     {
         VkPresentModeKHR present_mode = surface_info->present_modes[present_idx];
-        if(present_mode == VK_PRESENT_MODE_MAILBOX_KHR)
+        if (present_mode == VK_PRESENT_MODE_MAILBOX_KHR)
         {
             *non_const_designated_present_index = present_idx;
             optimal_present_found               = true;
             suitable_present_found              = true;
             break;
         }
-        else if(present_mode == VK_PRESENT_MODE_FIFO_KHR)
+        else if (present_mode == VK_PRESENT_MODE_FIFO_KHR)
         {
             fifo_present_index     = present_idx;
             suitable_present_found = true;
         }
     }
 
-    if(!suitable_present_found) { uFatal("[ vulkan ] Unable to find a suitable present mode.\n"); }
+    if (!suitable_present_found) { uFatal("[ vulkan ] Unable to find a suitable present mode.\n"); }
 
-    if(!optimal_present_found)
+    if (!optimal_present_found)
     {
         // Issue perf warning
         uWarning("[ vulkan ] [ perf ] Tripple buffering present mode unavailble. "
@@ -1353,55 +1245,44 @@ uSelectVulkanSwapChain(uVulkanSurfaceInfo* const restrict surface_info)
 }
 
 static bool __UE_inline__
-uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice             physical_device,
-                                                uVulkanSurfaceInfo* const restrict surface_info,
-                                                bool                               is_rebuilding_swap_chain)
+uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice physical_device, uVulkanSurfaceInfo* const restrict surface_info, bool is_rebuilding_swap_chain)
 {
     uAssertMsg_v(surface_info, "[ vulkan ] The uVulkanSurfaceInfo ptr must be non null.\n");
     uAssertMsg_v(surface_info->surface, "[ vulkan ] The VKSurfaceKHR ptr must be non null.\n");
 
     // Get surface capabilities
     VkSurfaceCapabilitiesKHR* surface_capabilities = ( VkSurfaceCapabilitiesKHR* )&(surface_info->surface_capabilities);
-    VkResult                  success              = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device,
-                                                                 *( VkSurfaceKHR* )&(surface_info->surface),
-                                                                 surface_capabilities);
+    VkResult                  success              = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, *( VkSurfaceKHR* )&(surface_info->surface), surface_capabilities);
 
     uAssert(success == VK_SUCCESS);
-    if(success != VK_SUCCESS)
+    if (success != VK_SUCCESS)
     {
         uVkVerbose("Could not attain surface capabilities.\n");
         return false;
     }
 
     // Get surface formats
-    success = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device,
-                                                   *( VkSurfaceKHR* )&(surface_info->surface),
-                                                   ( u32* )&(surface_info->num_surface_formats),
-                                                   NULL);
+    success = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, *( VkSurfaceKHR* )&(surface_info->surface), ( u32* )&(surface_info->num_surface_formats), NULL);
 
     uAssert(success == VK_SUCCESS);
-    if(success != VK_SUCCESS)
+    if (success != VK_SUCCESS)
     {
         uVkVerbose("Could not attain surface format quantity.\n");
         return false;
     }
 
-    if(surface_info->num_surface_formats)
+    if (surface_info->num_surface_formats)
     {
-        if(is_rebuilding_swap_chain && surface_info->surface_formats)
-        {
-            free(( VkSurfaceFormatKHR* )surface_info->surface_formats);
-        }
+        if (is_rebuilding_swap_chain && surface_info->surface_formats) { free(( VkSurfaceFormatKHR* )surface_info->surface_formats); }
 
-        surface_info->surface_formats =
-          ( VkSurfaceFormatKHR* )malloc(surface_info->num_surface_formats * sizeof(VkSurfaceFormatKHR));
-        success = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device,
+        surface_info->surface_formats = ( VkSurfaceFormatKHR* )malloc(surface_info->num_surface_formats * sizeof(VkSurfaceFormatKHR));
+        success                       = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device,
                                                        *( VkSurfaceKHR* )&(surface_info->surface),
                                                        ( u32* )&(surface_info->num_surface_formats),
                                                        ( VkSurfaceFormatKHR* )surface_info->surface_formats);
 
         uAssert(success == VK_SUCCESS);
-        if(success != VK_SUCCESS)
+        if (success != VK_SUCCESS)
         {
             uVkVerbose("Could not attain surface formats.\n");
             return false;
@@ -1413,33 +1294,26 @@ uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice          
     }
 
     // Get surface present modes
-    success = vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device,
-                                                        *( VkSurfaceKHR* )&(surface_info->surface),
-                                                        ( u32* )&(surface_info->num_present_modes),
-                                                        NULL);
+    success = vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, *( VkSurfaceKHR* )&(surface_info->surface), ( u32* )&(surface_info->num_present_modes), NULL);
     uAssert(success == VK_SUCCESS);
-    if(success != VK_SUCCESS)
+    if (success != VK_SUCCESS)
     {
         uVkVerbose("Could not attain present mode quantity.\n");
         return false;
     }
 
-    if(surface_info->num_present_modes)
+    if (surface_info->num_present_modes)
     {
-        if(is_rebuilding_swap_chain && surface_info->present_modes)
-        {
-            free(( VkPresentModeKHR* )surface_info->present_modes);
-        }
+        if (is_rebuilding_swap_chain && surface_info->present_modes) { free(( VkPresentModeKHR* )surface_info->present_modes); }
 
-        surface_info->present_modes =
-          ( VkPresentModeKHR* )malloc(surface_info->num_present_modes * sizeof(VkPresentModeKHR));
+        surface_info->present_modes = ( VkPresentModeKHR* )malloc(surface_info->num_present_modes * sizeof(VkPresentModeKHR));
 
         success = vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device,
                                                             ( VkSurfaceKHR )surface_info->surface,
                                                             ( u32* )&(surface_info->num_present_modes),
                                                             ( VkPresentModeKHR* )surface_info->present_modes);
         uAssert(success == VK_SUCCESS);
-        if(success != VK_SUCCESS)
+        if (success != VK_SUCCESS)
         {
             uVkVerbose("Could not attain present modes.\n");
             return false;
@@ -1464,12 +1338,11 @@ uSelectVulkanPhysicalDevice(const VkPhysicalDevice** const restrict physical_dev
     uAssertMsg_v(num_physical_devices, "[ vulkan ] Physical devices count must be non zero.\n");
     uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
     uAssertMsg_v(surface_info->surface, "[ vulkan ] VkSurfaceKHR must be non zero.\n");
-    for(u32 device_idx = 0; device_idx < num_physical_devices; device_idx++)
+    for (u32 device_idx = 0; device_idx < num_physical_devices; device_idx++)
     {
-        uAssertMsg_v(physical_device_list[device_idx],
-                     "[ vulkan ] Indices of physical_device_list must be non-null.\n");
+        uAssertMsg_v(physical_device_list[device_idx], "[ vulkan ] Indices of physical_device_list must be non-null.\n");
     }
-    if(user_device_extension_names)
+    if (user_device_extension_names)
     {
         uAssertMsg_v(user_device_extension_names && *user_device_extension_names,
                      "[ vulkan ] If the device extension quanitity is non zero, "
@@ -1477,30 +1350,27 @@ uSelectVulkanPhysicalDevice(const VkPhysicalDevice** const restrict physical_dev
     }
 
     bool selection_complete = false;
-    for(u32 device_idx = 0; device_idx < num_physical_devices; device_idx++)
+    for (u32 device_idx = 0; device_idx < num_physical_devices; device_idx++)
     {
         const VkPhysicalDevice physical_device = *physical_device_list[device_idx];
-        if(!physical_device) { continue; }
+        if (!physical_device) { continue; }
 
-        selection_complete = uValidateVulkanDeviceFeaturesReqruirement(physical_device) &&
-                             uValidateVulkanDevicePropertiesReqruirement(physical_device) &&
+        selection_complete = uValidateVulkanDeviceFeaturesReqruirement(physical_device) && uValidateVulkanDevicePropertiesReqruirement(physical_device) &&
                              uValidateVulkanDeviceQueueRequirement(physical_device, surface_info, queue_info) &&
-                             uValidateVulkanDeviceExtensionsReqruirement(physical_device,
-                                                                         user_device_extension_names,
-                                                                         num_user_device_extension_names) &&
+                             uValidateVulkanDeviceExtensionsReqruirement(physical_device, user_device_extension_names, num_user_device_extension_names) &&
                              // Must query for surface and extension support before swap chains
                              // support.
                              uValidateVulkanSwapChainAndSurfaceCompatibility(physical_device, surface_info, false);
 
         // Set the physical device
-        if(selection_complete)
+        if (selection_complete)
         {
             *return_device = physical_device;
             break;
         }
     }
 
-    if(!selection_complete) { uFatal("[ vulkan ] Unable to select a suitable physical device.\n"); }
+    if (!selection_complete) { uFatal("[ vulkan ] Unable to select a suitable physical device.\n"); }
 }
 
 static void
@@ -1516,7 +1386,7 @@ uCreateVulkanPhysicalDevice(uVulkanInfo* const restrict        v_info,
     uAssertMsg_v(queue_info, "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n");
     uAssertMsg_v(return_surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
     uAssertMsg_v(return_surface_info->surface, "[ vulkan ] VkSurfaceKHR must be zero; will be overwritten.\n");
-    if(num_user_device_extension_names)
+    if (num_user_device_extension_names)
     {
         uAssertMsg_v(user_device_extension_names && *user_device_extension_names,
                      "[ vulkan ] If the device extension quanitity is non zero, "
@@ -1527,10 +1397,9 @@ uCreateVulkanPhysicalDevice(uVulkanInfo* const restrict        v_info,
     vkEnumeratePhysicalDevices(v_info->instance, &num_physical_devices, NULL);
 
     uAssertMsg_v(num_physical_devices, "[ vulkan ] No physical devices found.\n");
-    if(!num_physical_devices) { return; }
+    if (!num_physical_devices) { return; }
 
-    VkPhysicalDevice* physical_device_list =
-      ( VkPhysicalDevice* )calloc(num_physical_devices, sizeof(VkPhysicalDevice));
+    VkPhysicalDevice* physical_device_list = ( VkPhysicalDevice* )calloc(num_physical_devices, sizeof(VkPhysicalDevice));
     uAssertMsg_v(physical_device_list, "[ vulkan ] Unable to allocate physical device list.\n");
 
     vkEnumeratePhysicalDevices(v_info->instance, &num_physical_devices, physical_device_list);
@@ -1545,9 +1414,9 @@ uCreateVulkanPhysicalDevice(uVulkanInfo* const restrict        v_info,
                                 num_user_device_extension_names,
                                 return_surface_info);
 
-    if(!candidate_device)
+    if (!candidate_device)
     {
-        if(physical_device_list) { free(physical_device_list); }
+        if (physical_device_list) { free(physical_device_list); }
 
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to find suitable device.\n");
@@ -1557,7 +1426,7 @@ uCreateVulkanPhysicalDevice(uVulkanInfo* const restrict        v_info,
     VkPhysicalDevice* non_const_physical_device = ( VkPhysicalDevice* )&(v_info->physical_device);
     *non_const_physical_device                  = candidate_device;
 
-    if(physical_device_list) { free(physical_device_list); }
+    if (physical_device_list) { free(physical_device_list); }
 }
 
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
@@ -1569,11 +1438,13 @@ uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bi
                  void*                                       user_data)
 {
     VkBool32 should_abort_calling_process = VK_FALSE;
-    if(user_data) {} // Silence warnings
+    if (user_data) {} // Silence warnings
 
-    if(message_severity_bits >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ||
-       message_type_bits >= VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+    if (message_severity_bits >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT || message_type_bits >= VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
     {
+        // [ cfarvin::TODO ] This still displays when running build_understone executable with the
+        //                   -release flag, which should not happen. In release, we should presumably
+        //                   just crash or have undefined behavior.
         printf("[ vulkan validation begin ]\n%s\n[ vulkan validation end ]\n", callback_data->pMessage);
         fflush(stdout);
 
@@ -1588,13 +1459,11 @@ uCreateVulkanDebugMessengerInfo(VkDebugUtilsMessengerCreateInfoEXT* const restri
 {
     uAssertMsg_v(debug_message_create_info, "[ vulkan ] VkDebugUtilsMessengerCreateInfoEXT ptr must be non null.\n");
 
-    debug_message_create_info->messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    debug_message_create_info->messageSeverity =
+      VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 
-    debug_message_create_info->messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                                             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                                             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    debug_message_create_info->messageType =
+      VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 
     debug_message_create_info->sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     debug_message_create_info->pfnUserCallback = uVkDebugCallback;
@@ -1615,13 +1484,12 @@ uCreateVulkanDebugMessenger(const uVulkanInfo* const restrict                  v
 
     uAssertMsg_v(vkCreateDebugUtilsMessengerEXT, "[ vulkan ] Failed to acquire pfn: vkCreateDebugUtilsMessengerEXT\n");
 
-    if(vkCreateDebugUtilsMessengerEXT)
+    if (vkCreateDebugUtilsMessengerEXT)
     {
         uCreateVulkanDebugMessengerInfo(( VkDebugUtilsMessengerCreateInfoEXT* )debug_message_create_info);
-        VkResult success =
-          vkCreateDebugUtilsMessengerEXT(v_info->instance, debug_message_create_info, NULL, debug_messenger);
+        VkResult success = vkCreateDebugUtilsMessengerEXT(v_info->instance, debug_message_create_info, NULL, debug_messenger);
 
-        if(success != VK_SUCCESS)
+        if (success != VK_SUCCESS)
         {
             uDestroyVulkan();
             uFatal("[ vulkan ] Failed to create debug messenger callback.\n");
@@ -1641,17 +1509,16 @@ uCreateWin32Surface(uVulkanInfo* const restrict v_info, uVulkanSurfaceInfo* cons
 
     const uWin32Info* win32_info = uGetWin32Info();
     uAssertMsg_v(win32_info && win32_info->window, "[ vulkan ] [ win32 ] Unable to create Win32 window.\n");
-    if(!win32_info) { return; }
+    if (!win32_info) { return; }
 
     VkWin32SurfaceCreateInfoKHR win32_surface_info = {};
     win32_surface_info.sType                       = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     win32_surface_info.hwnd                        = win32_info->window;
     win32_surface_info.hinstance                   = GetModuleHandle(NULL);
 
-    VkResult win32_surface_result =
-      vkCreateWin32SurfaceKHR(v_info->instance, &win32_surface_info, NULL, ( VkSurfaceKHR* )&surface_info->surface);
+    VkResult win32_surface_result = vkCreateWin32SurfaceKHR(v_info->instance, &win32_surface_info, NULL, ( VkSurfaceKHR* )&surface_info->surface);
 
-    if(win32_surface_result != VK_SUCCESS)
+    if (win32_surface_result != VK_SUCCESS)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create win32 surface.\n");
@@ -1680,55 +1547,48 @@ uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const restrict physical_dev
 {
     uAssertMsg_v(physical_device, "[ vulkan ] VkPhysicalDevice ptr must be non null.\n");
     uAssertMsg_v(num_verified_extension_names, "[ vulkan ] Verified extension count ptr must be non null.\n");
-    if(num_user_device_extension_names)
+    if (num_user_device_extension_names)
     {
         uAssertMsg_v(user_device_extension_names && *user_device_extension_names,
                      "[ vulkan ] If the device extension quanitity is non zero, "
                      "the names ptr must be non null.\n");
     }
 
-    if(!num_user_device_extension_names) { return; }
+    if (!num_user_device_extension_names) { return; }
 
     // Query Extension Count
     u32      num_available_device_extensions = 0;
-    VkResult success =
-      vkEnumerateDeviceExtensionProperties(*physical_device, NULL, &num_available_device_extensions, NULL);
+    VkResult success                         = vkEnumerateDeviceExtensionProperties(*physical_device, NULL, &num_available_device_extensions, NULL);
 
-    if(success != VK_SUCCESS) { uFatal("[ vulkan ] Unable to enumerate extension properties.\n"); }
+    if (success != VK_SUCCESS) { uFatal("[ vulkan ] Unable to enumerate extension properties.\n"); }
 
-    VkExtensionProperties* device_extension_properties =
-      ( VkExtensionProperties* )malloc(num_available_device_extensions * sizeof(VkExtensionProperties));
+    VkExtensionProperties* device_extension_properties = ( VkExtensionProperties* )malloc(num_available_device_extensions * sizeof(VkExtensionProperties));
 
     // Query Extension Names
-    success = vkEnumerateDeviceExtensionProperties(*physical_device,
-                                                   NULL,
-                                                   &num_available_device_extensions,
-                                                   device_extension_properties);
+    success = vkEnumerateDeviceExtensionProperties(*physical_device, NULL, &num_available_device_extensions, device_extension_properties);
 
-    if(success != VK_SUCCESS)
+    if (success != VK_SUCCESS)
     {
-        if(device_extension_properties) { free(device_extension_properties); }
+        if (device_extension_properties) { free(device_extension_properties); }
 
         uFatal("[ vulkan ] Unable to enumerate extension properties.\n");
     }
 
     // Verify user/device extensions match
     *num_verified_extension_names = 0;
-    for(u32 device_extension_name_idx = 0; device_extension_name_idx < num_available_device_extensions;
-        device_extension_name_idx++)
+    for (u32 device_extension_name_idx = 0; device_extension_name_idx < num_available_device_extensions; device_extension_name_idx++)
     {
-        for(u32 user_device_extension_name_idx = 0; user_device_extension_name_idx < num_user_device_extension_names;
-            user_device_extension_name_idx++)
+        for (u32 user_device_extension_name_idx = 0; user_device_extension_name_idx < num_user_device_extension_names; user_device_extension_name_idx++)
         {
-            if(strcmp((( const char* )(device_extension_properties[device_extension_name_idx]).extensionName),
-                      ( const char* )user_device_extension_names[user_device_extension_name_idx]) == 0)
+            if (strcmp((( const char* )(device_extension_properties[device_extension_name_idx]).extensionName),
+                       ( const char* )user_device_extension_names[user_device_extension_name_idx]) == 0)
             {
                 (*num_verified_extension_names)++;
             }
         }
     }
 
-    if(device_extension_properties) { free(device_extension_properties); }
+    if (device_extension_properties) { free(device_extension_properties); }
 }
 
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
@@ -1740,26 +1600,24 @@ uQueryVulkanInstanceValidationLayers(s8*** restrict                       instan
                                      const u32                            num_user_instance_validation_layer_names)
 {
     uAssertMsg_v(instance_create_info, "[ vulkan ] VkInstanceCreateInfo ptr must be non null.\n");
-    uAssertMsg_v(!(*instance_validation_layer_names),
-                 "[ vulkan ] Layer names ptr must be null; will be overwritten.\n");
-    uAssertMsg_v(!(*instance_validation_layer_properties),
-                 "[ vulkan ] VkLayerProperties ptr must be null; will be overwritten.\n");
+    uAssertMsg_v(!(*instance_validation_layer_names), "[ vulkan ] Layer names ptr must be null; will be overwritten.\n");
+    uAssertMsg_v(!(*instance_validation_layer_properties), "[ vulkan ] VkLayerProperties ptr must be null; will be overwritten.\n");
     uAssertMsg_v(user_instance_validation_layer_names, "[ vulkan ] Validation layer names ptr must be non null.\n");
-    if(num_user_instance_validation_layer_names)
+    if (num_user_instance_validation_layer_names)
     {
         uAssertMsg_v(user_instance_validation_layer_names && *user_instance_validation_layer_names,
                      "[ vulkan ] If the instance layer quanitity is non zero, the "
                      "names ptr must be non null.\n");
     }
 
-    if(!num_user_instance_validation_layer_names) { return; }
+    if (!num_user_instance_validation_layer_names) { return; }
 
     // Query Layer Count
     VkResult success              = VK_SUCCESS;
     u32      num_available_layers = 0;
     success                       = vkEnumerateInstanceLayerProperties(&num_available_layers, NULL);
 
-    if(success != VK_SUCCESS) { uFatal("[ vulkan ] Unable to enumerate layers.\n"); }
+    if (success != VK_SUCCESS) { uFatal("[ vulkan ] Unable to enumerate layers.\n"); }
 
     uAssertMsg_v((num_available_layers >= num_user_instance_validation_layer_names),
                  "[ vulkan ] Number of requested validation layers [ %d ] exceeds total "
@@ -1767,36 +1625,31 @@ uQueryVulkanInstanceValidationLayers(s8*** restrict                       instan
                  num_user_instance_validation_layer_names,
                  num_available_layers);
 
-    *instance_validation_layer_properties =
-      ( VkLayerProperties* )malloc(num_available_layers * sizeof(VkLayerProperties));
+    *instance_validation_layer_properties = ( VkLayerProperties* )malloc(num_available_layers * sizeof(VkLayerProperties));
 
     // Query Layer Names
     success = vkEnumerateInstanceLayerProperties(&num_available_layers, *instance_validation_layer_properties);
-    if(success != VK_SUCCESS) { uFatal("[ vulkan ] Unable to enumerate layers.\n"); }
+    if (success != VK_SUCCESS) { uFatal("[ vulkan ] Unable to enumerate layers.\n"); }
 
     // Set Layer Names
     uVkVerbose("Searching for validation layers...\n");
     u32 num_added_layers             = 0;
     *instance_validation_layer_names = ( s8** )malloc(num_available_layers * sizeof(s8**));
-    for(u32 available_layer_idx = 0; available_layer_idx < num_available_layers; available_layer_idx++)
+    for (u32 available_layer_idx = 0; available_layer_idx < num_available_layers; available_layer_idx++)
     {
-        for(u32 user_layer_idx = 0; user_layer_idx < num_user_instance_validation_layer_names; user_layer_idx++)
+        for (u32 user_layer_idx = 0; user_layer_idx < num_user_instance_validation_layer_names; user_layer_idx++)
         {
             uVkVerbose("\tLayer found: %s\n", (*instance_validation_layer_properties)[available_layer_idx].layerName);
-            if(strcmp(( const char* )user_instance_validation_layer_names[user_layer_idx],
-                      ( const char* )(*instance_validation_layer_properties)[available_layer_idx].layerName) == 0)
+            if (strcmp(( const char* )user_instance_validation_layer_names[user_layer_idx],
+                       ( const char* )(*instance_validation_layer_properties)[available_layer_idx].layerName) == 0)
             {
-                (*instance_validation_layer_names)[num_added_layers] =
-                  ( s8* )(*instance_validation_layer_properties)[available_layer_idx].layerName;
+                (*instance_validation_layer_names)[num_added_layers] = ( s8* )(*instance_validation_layer_properties)[available_layer_idx].layerName;
                 num_added_layers++;
             }
         }
     }
 
-    if(num_added_layers != num_user_instance_validation_layer_names)
-    {
-        uFatal("[ vulkan ] Unable to load all requested layers.\n");
-    }
+    if (num_added_layers != num_user_instance_validation_layer_names) { uFatal("[ vulkan ] Unable to load all requested layers.\n"); }
 
     instance_create_info->enabledLayerCount   = num_added_layers;
     instance_create_info->ppEnabledLayerNames = ( const char** )*instance_validation_layer_names;
@@ -1815,32 +1668,29 @@ uQueryVulkanInstanceExtensions(const s8*** restrict                   instance_e
     uAssertMsg_v(!(*instance_extension_properties),
                  "[ vulkan ] VkExtensionProperties ptr must be null; will be "
                  "overwritten.\n");
-    if(num_user_instance_extension_names)
+    if (num_user_instance_extension_names)
     {
         uAssertMsg_v(user_instance_extension_names && *user_instance_extension_names,
                      "[ vulkan ] If the instance extension quanitity is non zero, "
                      "the names ptr must be non null\n");
     }
 
-    if(!user_instance_extension_names) { return; }
+    if (!user_instance_extension_names) { return; }
 
     // Query Extension Count
     VkResult success = VK_SUCCESS;
     success          = vkEnumerateInstanceExtensionProperties(NULL, &instance_create_info->enabledExtensionCount, NULL);
 
-    if(success != VK_SUCCESS) { uFatal("[ vulkan ] Unable to enumerate layer properties.\n"); }
+    if (success != VK_SUCCESS) { uFatal("[ vulkan ] Unable to enumerate layer properties.\n"); }
 
-    *instance_extension_properties =
-      ( VkExtensionProperties* )malloc(instance_create_info->enabledExtensionCount * sizeof(VkExtensionProperties));
+    *instance_extension_properties = ( VkExtensionProperties* )malloc(instance_create_info->enabledExtensionCount * sizeof(VkExtensionProperties));
 
     // Query Extension Names
-    success = vkEnumerateInstanceExtensionProperties(NULL,
-                                                     &instance_create_info->enabledExtensionCount,
-                                                     *instance_extension_properties);
+    success = vkEnumerateInstanceExtensionProperties(NULL, &instance_create_info->enabledExtensionCount, *instance_extension_properties);
 
-    if(success != VK_SUCCESS)
+    if (success != VK_SUCCESS)
     {
-        if(instance_extension_properties) { free(instance_extension_properties); }
+        if (instance_extension_properties) { free(instance_extension_properties); }
 
         uFatal("[ vulkan ] Unable to enumerate layer properties.\n");
     }
@@ -1849,24 +1699,22 @@ uQueryVulkanInstanceExtensions(const s8*** restrict                   instance_e
     uVkVerbose("Searching for extensions...\n");
     u32 num_added_extensions  = 0;
     *instance_extension_names = ( const s8** )malloc(instance_create_info->enabledExtensionCount * sizeof(s8**));
-    for(u32 ext_idx = 0; ext_idx < instance_create_info->enabledExtensionCount; ext_idx++)
+    for (u32 ext_idx = 0; ext_idx < instance_create_info->enabledExtensionCount; ext_idx++)
     {
         uVkVerbose("\tExtension found: %s\n", (*instance_extension_properties)[ext_idx].extensionName);
-        for(u32 user_ext_idx = 0; user_ext_idx < num_user_instance_extension_names; user_ext_idx++)
+        for (u32 user_ext_idx = 0; user_ext_idx < num_user_instance_extension_names; user_ext_idx++)
         {
-            if(strcmp(( const char* )user_instance_extension_names[user_ext_idx],
-                      ( const char* )(*instance_extension_properties)[ext_idx].extensionName) == 0)
+            if (strcmp(( const char* )user_instance_extension_names[user_ext_idx], ( const char* )(*instance_extension_properties)[ext_idx].extensionName) == 0)
             {
-                (*instance_extension_names)[num_added_extensions] =
-                  ( const s8* )(*instance_extension_properties)[ext_idx].extensionName;
+                (*instance_extension_names)[num_added_extensions] = ( const s8* )(*instance_extension_properties)[ext_idx].extensionName;
                 num_added_extensions++;
             }
         }
     }
 
-    if(num_added_extensions != num_user_instance_extension_names)
+    if (num_added_extensions != num_user_instance_extension_names)
     {
-        if(instance_extension_properties) { free(instance_extension_properties); }
+        if (instance_extension_properties) { free(instance_extension_properties); }
 
         uFatal("[ vulkan ] Unable to load all requested extensions.\n");
     }
@@ -1889,14 +1737,14 @@ uCreateVulkanInstance(const uVulkanInfo* const restrict       v_info,
     uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(application_info, "[ vulkan ] VkApplicationInfo ptr must be non null.\n");
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-    if(num_user_instance_validation_layer_names)
+    if (num_user_instance_validation_layer_names)
     {
         uAssertMsg_v(user_instance_validation_layer_names && *user_instance_validation_layer_names,
                      "[ vulkan ] If the instance layer quanitity is non zero, the "
                      "names ptr must be non null.\n");
     }
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-    if(num_user_instance_extension_names)
+    if (num_user_instance_extension_names)
     {
         uAssertMsg_v(user_instance_extension_names && *user_instance_extension_names,
                      "[ vulkan ] If the instance extension quanitity is non zero, "
@@ -1938,30 +1786,27 @@ uCreateVulkanInstance(const uVulkanInfo* const restrict       v_info,
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     success = vkCreateInstance(&instance_create_info, NULL, ( VkInstance* )&v_info->instance);
 
-    if(success != VK_SUCCESS)
+    if (success != VK_SUCCESS)
     {
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create vulkan instance.\n");
     }
 
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-    uCreateVulkanDebugMessenger(v_info,
-                                ( VkDebugUtilsMessengerCreateInfoEXT* )&vulkan_main_debug_messenger_info,
-                                ( VkDebugUtilsMessengerEXT* )&vulkan_main_debug_messenger);
+    uCreateVulkanDebugMessenger(v_info, ( VkDebugUtilsMessengerCreateInfoEXT* )&vulkan_main_debug_messenger_info, ( VkDebugUtilsMessengerEXT* )&vulkan_main_debug_messenger);
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 
-    if(instance_extension_names) { free(instance_extension_names); }
+    if (instance_extension_names) { free(instance_extension_names); }
 
-    if(instance_validation_layer_names) { free(instance_validation_layer_names); }
+    if (instance_validation_layer_names) { free(instance_validation_layer_names); }
 
-    if(instance_extension_properties) { free(instance_extension_properties); }
+    if (instance_extension_properties) { free(instance_extension_properties); }
 
-    if(instance_validation_layer_properties) { free(instance_validation_layer_properties); }
+    if (instance_validation_layer_properties) { free(instance_validation_layer_properties); }
 }
 
 static void
-uCreateVulkanApplicationInfo(const s8* const restrict          application_name,
-                             VkApplicationInfo* const restrict application_info)
+uCreateVulkanApplicationInfo(const s8* const restrict application_name, VkApplicationInfo* const restrict application_info)
 {
     uAssertMsg_v(application_name, "[ vulkan ] Application names ptr must be non null.\n");
     uAssertMsg_v(application_info, "[ vulkan ] Application info ptr must be non null.\n");
@@ -1985,20 +1830,20 @@ uInitializeVulkan(uVulkanDrawTools* const restrict draw_tools,
                   const u16                 num_user_device_extension_names)
 {
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-    if(num_user_instance_validation_layer_names)
+    if (num_user_instance_validation_layer_names)
     {
         uAssertMsg_v(user_instance_validation_layer_names && *user_instance_validation_layer_names,
                      "[ vulkan ] If the instance layer quanitity is non zero, the "
                      "names ptr must be non null.\n");
     }
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-    if(num_user_instance_extension_names)
+    if (num_user_instance_extension_names)
     {
         uAssertMsg_v(user_instance_extension_names && *user_instance_extension_names,
                      "[ vulkan ] If the instance extension quanitity is non zero, "
                      "the names ptr must be non null.\n");
     }
-    if(num_user_device_extension_names)
+    if (num_user_device_extension_names)
     {
         uAssertMsg_v(user_device_extension_names && *user_device_extension_names,
                      "[ vulkan ] If the device extension quanitity is non zero, "
@@ -2038,11 +1883,7 @@ uInitializeVulkan(uVulkanDrawTools* const restrict draw_tools,
 
     // queue_info built
     // surface_info_built
-    uCreateVulkanPhysicalDevice(v_info,
-                                queue_info,
-                                user_device_extension_names,
-                                num_user_device_extension_names,
-                                surface_info);
+    uCreateVulkanPhysicalDevice(v_info, queue_info, user_device_extension_names, num_user_device_extension_names, surface_info);
 
     uCreateVulkanLogicalDevice(v_info,
                                queue_info,
@@ -2081,18 +1922,18 @@ uDestroyVulkan()
     uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
 
     // Wait for device to be idle
-    if(v_info->logical_device) { vkDeviceWaitIdle(v_info->logical_device); }
+    if (v_info->logical_device) { vkDeviceWaitIdle(v_info->logical_device); }
 
     // [ begin ]
     // [ cfarvin::REMOVE ]
-    for(size_t shader_idx = 0; shader_idx < kRemoveMe.num_shaders; shader_idx++)
-    {
-        vkDestroyShaderModule(v_info->logical_device, kRemoveMe.shaders[shader_idx].shader_module, NULL);
-    }
+    /* for (size_t shader_idx = 0; shader_idx < kRemoveMe.num_shaders; shader_idx++) */
+    /* { */
+    /*     vkDestroyShaderModule(v_info->logical_device, kRemoveMe.shaders[shader_idx].module, NULL); */
+    /* } */
 
-    if(kRemoveMe.shader_stage_create_infos) { free(kRemoveMe.shader_stage_create_infos); }
+    /* if (kRemoveMe.shader_stage_create_infos) { free(kRemoveMe.shader_stage_create_infos); } */
 
-    if(kRemoveMe.shaders) { free(kRemoveMe.shaders); }
+    /* if (kRemoveMe.shaders) { free(kRemoveMe.shaders); } */
     // [ end ]
 
     uDestroyVulkanImageGroup();
