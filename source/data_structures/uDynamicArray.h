@@ -38,8 +38,8 @@ typedef struct
 } uDynamicArray;
 
 #define uDAInit(type) uAPI_uDAInit(sizeof(type))
-static __UE_inline__ uDynamicArray*
-                     uAPI_uDAInit(const size_t datatypesize_in)
+__UE_inline__ static uDynamicArray*
+uAPI_uDAInit(const size_t datatypesize_in)
 {
     uAssertMsg_v(datatypesize_in, "Data type size must be non-zero.\n");
     uDynamicArray* const da = ( uDynamicArray* )calloc(1, sizeof(uDynamicArray));
@@ -62,7 +62,7 @@ static __UE_inline__ uDynamicArray*
 }
 
 #define uDAPush(da, data_in) uAPI_uDAPush(da, VPPC_STR_LITERAL(void**) data_in)
-static __UE_inline__ bool
+__UE_inline__ static bool
 uAPI_uDAPush(uDynamicArray* const restrict da, void** const restrict data_in)
 {
     uAssertMsg_v(da, "Null uDynamicArray ptr provided.\n");
@@ -90,7 +90,7 @@ uAPI_uDAPush(uDynamicArray* const restrict da, void** const restrict data_in)
     return false;
 }
 
-static __UE_inline__ void*
+__UE_inline__ static void*
 uDAIndex(uDynamicArray* const restrict da, const size_t index)
 {
     uAssertMsg_v(da, "Null uDynamicArray ptr pvoided.\n");
@@ -101,7 +101,7 @@ uDAIndex(uDynamicArray* const restrict da, const size_t index)
     return NULL;
 }
 
-static __UE_inline__ bool
+__UE_inline__ static bool
 uDAPop(uDynamicArray* const restrict da)
 {
     uAssertMsg_v(da, "Null uDynamicArray ptr pvoided.\n");
@@ -120,7 +120,7 @@ uDAPop(uDynamicArray* const restrict da)
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* static __UE_inline__ bool */
+/* __UE_inline__ static bool */
 /* uDAFitToSize( uDynamicArray* const restrict da) */
 /* { */
 /*     uAssertMsg_v(da, "Null uDynamicArray ptr provided.\n"); */
@@ -142,7 +142,7 @@ uDAPop(uDynamicArray* const restrict da)
 /* } */
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* static __UE_inline__ bool */
+/* __UE_inline__ static bool */
 /* uDASetScalingFactor( uDynamicArray* const restrict da, */
 /*                     const size_t scaling_factor_in) */
 /* { */
@@ -161,7 +161,7 @@ uDAPop(uDynamicArray* const restrict da)
 /*     return false; */
 /* } */
 
-static __UE_inline__ bool
+__UE_inline__ static bool
 uDADestroy(uDynamicArray* const restrict da)
 {
     if (da && da->data)

@@ -50,7 +50,7 @@ uGetWin32Info()
 // [ cfarvin::REMOVE ] There is a lot of "RESTORE" tags, I am worried that removing this now will end up
 //                     doing away with something I needed for one of them. Finish those first, then remove
 //                     this if necessary.
-/* static __UE_inline__ void */
+/* __UE_inline__ static void */
 /* uWin32GetWindowSize(u32* const restrict width, u32* const restrict height) */
 /* { */
 /*     const uWin32Info* win32_info = uGetWin32Info(); */
@@ -215,7 +215,7 @@ uWin32CreateWin32Info()
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* static __UE_inline__ const uWin32Info* */
+/* __UE_inline__ static const uWin32Info* */
 /* uWin32CreateWindow() */
 /* { */
 /*     return uWin32CreateWin32Info(); */

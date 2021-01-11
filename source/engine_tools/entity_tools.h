@@ -67,10 +67,10 @@ typedef struct
 //
 // PROTOTYPES (as needed)
 //
-static __UE_inline__ void
+__UE_inline__ static void
 IntersectEntity(const Ray* restrict const ray, const Entity* restrict const entity, _mut_ RayIntersection* restrict const intersection);
 
-static __UE_inline__ void
+__UE_inline__ static void
 TraceEntityArray(const Ray* restrict const ray,
                  _mut_ RayIntersection* restrict const intersection,
                  _mut_ r32* restrict const global_magnitude_threshold,
@@ -81,7 +81,7 @@ TraceEntityArray(const Ray* restrict const ray,
 //
 #if __UE_AA__reflections
 //
-static __UE_inline__ void
+__UE_inline__ static void
 ReflectRays(/* const Ray*             restrict const ray, */
             _mut_ RayIntersection* restrict const incident_intersection,
             /* _mut_ r32*             restrict const global_magnitude_threshold,
@@ -150,7 +150,7 @@ ReflectRays(/* const Ray*             restrict const ray, */
 #endif // __UE_AA__reflections
 //
 
-static __UE_inline__ void
+__UE_inline__ static void
 SetRayDirectionByPixelCoordAA(_mut_ Ray* restrict const ray, const size_t pix_x, const size_t pix_y)
 {
     const r32 xOr_contribution_x = NormalizeToRange(( r32 )TOLERANCE, (r32)(~( u32 )0), ( r32 )TOLERANCE, ( r32 )__UE_AA__noise, ( r32 )XorShift32() + ( r32 )TOLERANCE);
@@ -165,7 +165,7 @@ SetRayDirectionByPixelCoordAA(_mut_ Ray* restrict const ray, const size_t pix_x,
     ray->direction.z = -1;
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 SetRayDirectionByPixelCoord(_mut_ Ray* restrict const ray, const size_t pix_x, const size_t pix_y)
 {
     ray->direction.x = ((pix_x / ( r32 )IMAGE_WIDTH) - 0.5f) * ASPECT_RATIO;
@@ -179,7 +179,7 @@ CreateEntities(const size_t entity_count)
     return ( Entity* )calloc(entity_count, sizeof(Entity));
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 IntersectEntity(const Ray* restrict const ray, const Entity* restrict const entity, _mut_ RayIntersection* restrict const intersection)
 {
     __UE_ASSERT__(ray && entity && intersection);
@@ -241,7 +241,7 @@ IntersectEntity(const Ray* restrict const ray, const Entity* restrict const enti
     }
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 TraceEntity(const Ray* restrict const ray,
             _mut_ RayIntersection* restrict const intersection,
             _mut_ r32* restrict const global_magnitude_threshold,
@@ -262,7 +262,7 @@ TraceEntity(const Ray* restrict const ray,
     }
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 TraceEntityArray(const Ray* restrict const ray,
                  _mut_ RayIntersection* restrict const intersection,
                  _mut_ r32* restrict const global_magnitude_threshold,

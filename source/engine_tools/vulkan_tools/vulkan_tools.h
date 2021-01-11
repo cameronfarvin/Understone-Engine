@@ -16,6 +16,9 @@
 // [ cfarvin::REMOVE ] Remove stdio.h
 #include <stdio.h>
 
+// [ cfarvin::TEMP ]
+#include "vkTriangleShader.h"
+
 //
 // [ begin ] Forward decls
 static void
@@ -27,20 +30,20 @@ uQueryVulkanDeviceExtensions(const VkPhysicalDevice* const restrict physical_dev
                              const u16                              num_user_device_extension_names,
                              u16* const restrict                    num_verified_extension_names);
 
-static __UE_inline__ bool
+__UE_inline__ static bool
 uSelectVulkanSwapChain(uVulkanSurfaceInfo* const restrict surface_info);
 
-static __UE_inline__ void
+__UE_inline__ static void
 uCreateVulkanSwapChain(uVulkanInfo* const restrict            v_info,
                        uVulkanSurfaceInfo* const restrict     surface_info,
                        const uVulkanQueueInfo* const restrict queue_info,
                        uVulkanImageGroup* restrict            image_group,
                        bool                                   is_rebuilding_swap_chain);
 
-static __UE_inline__ void
+__UE_inline__ static void
 uCreateVulkanImageViews(const uVulkanInfo* const restrict v_info, uVulkanImageGroup* restrict image_group, const uVulkanSurfaceInfo* const restrict surface_info);
 
-static __UE_inline__ void
+__UE_inline__ static void
 uCreateVulkanRenderPass(const uVulkanInfo* const restrict        v_info,
                         const uVulkanSurfaceInfo* const restrict surface_info,
                         uVulkanRenderInfo* const restrict        render_info,
@@ -67,57 +70,12 @@ uCreateVulkanCommandBuffers(const uVulkanInfo* const restrict        v_info,
                             const uVulkanSurfaceInfo* const restrict surface_info,
                             bool                                     is_rebuilding_swap_chain);
 
-static bool __UE_inline__
+__UE_inline__ static bool
 uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice physical_device, uVulkanSurfaceInfo* const restrict surface_info, bool is_rebuilding_swapchain);
 // [ end ] Forward decls
 //
 
-// [ cfarvin::REMOVE ] This will no longer be needed when we autogen-bake shaders into the exe
 __UE_inline__ static void
-uVulkanDestroyShaderModules(uVulkanShader* restrict loaded_shaders, const u8 num_loaded_shaders)
-{
-    const uVulkanInfo* v_info = uGetVulkanInfo();
-
-    uAssertMsg_v(v_info, "[ vulkan ] Invalid v_info aquired.\n");
-    uAssertMsg_v(v_info->logical_device, "[ vulkan ] Invalid logical device.\n");
-    uAssertMsg_v(loaded_shaders, "[ vulkan ] loaded_shaders ptr must be non-null.\n");
-    uAssertMsg_v(num_loaded_shaders, "[ vulkan ] num_loaded_shaders must be non-zero.\n");
-
-    for (size_t shader_idx = 0; shader_idx < num_loaded_shaders; shader_idx++)
-    {
-        uVulkanShader shader = loaded_shaders[shader_idx];
-        vkDestroyShaderModule(v_info->logical_device, shader.module, NULL);
-        if (shader.data) { free(( void* )shader.data); }
-    }
-}
-
-__UE_inline__ static void
-uVulkanDetermineShaderStageCount(u8* const restrict return_num_shader_stages, const uVulkanShader* const restrict loaded_shaders, const u8 num_loaded_shaders)
-{
-    uAssertMsg_v(!(*return_num_shader_stages), "[ vulkan ] num_shader_stages must be zero; will be overwritten.\n");
-    uAssertMsg_v(return_num_shader_stages, "[ vulkan ] num_shader_stages ptr must be non-null.\n");
-    uAssertMsg_v(loaded_shaders, "[ vulkan ] loaded_shaders ptr must be non-null.\n");
-    uAssertMsg_v(num_loaded_shaders, "[ vulkan ] num_loaded_shaders must be non-zero.\n");
-
-    s8 used_shader_stage_types[uVK_SHADER_TYPE_COUNT] = {};
-    for (size_t shader_idx = 0; shader_idx < num_loaded_shaders; shader_idx++)
-    {
-        uVulkanShaderType type = loaded_shaders[shader_idx].type;
-        uAssertMsg_v(*return_num_shader_stages < 255, "[ vulkan ] Impossible shader stage quantity.\n");
-        uAssertMsg_v(type > uVK_SHADER_TYPE_NONE && type < uVK_SHADER_TYPE_COUNT, "[ vulkan ] Invalid shader type.\n");
-        if (!used_shader_stage_types[type])
-        {
-            (*return_num_shader_stages)++;
-            used_shader_stage_types[type]++;
-        }
-        else
-        {
-            uFatal("Multiple shader stages of the same type discovered.\n");
-        }
-    }
-}
-
-static __UE_inline__ void
 uDestroyOldSwapChain()
 {
     uVkVerbose("Destroying old swap chain components...\n");
@@ -127,7 +85,7 @@ uDestroyOldSwapChain()
     uDestroyVulkanRenderInfo();
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 uRebuildVulkanSwapChain()
 {
     // Can't rebuild swapchain with width/height of 0; such as a window minimization
@@ -353,7 +311,7 @@ uCreateVulkanFrameBuffers(const uVulkanInfo* const restrict        v_info,
 // [ cfarvin::TODO ] When we are rendering w/ more than one attachment:
 //                   Update this function to take the number and type of
 //                   attachments.
-static __UE_inline__ void
+__UE_inline__ static void
 uCreateVulkanRenderPass(const uVulkanInfo* const restrict        v_info,
                         const uVulkanSurfaceInfo* const restrict surface_info,
                         uVulkanRenderInfo* const restrict        render_info,
@@ -444,6 +402,19 @@ uCreateVulkanRenderPass(const uVulkanInfo* const restrict        v_info,
     }
 }
 
+// [ cfarvin::TEMP ] [ cfarvin::REMOVE ] This is only for simple triangle rendering, should
+//                                       be removed from underlying vulkan code.
+static void
+uVulkanSimpleTriangleSwapChainRebuildHelper()
+{
+    uVulkanInfo* v_info = ( uVulkanInfo* )uGetVulkanInfo();
+    uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
+
+    if (vkTriangle_vert.module) { vkDestroyShaderModule(v_info->logical_device, vkTriangle_vert.module, NULL); }
+
+    if (vkTriangle_frag.module) { vkDestroyShaderModule(v_info->logical_device, vkTriangle_frag.module, NULL); }
+}
+
 static void
 uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
                               const uVulkanSurfaceInfo* const restrict surface_info,
@@ -455,45 +426,19 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
     uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
     uAssertMsg_v(render_info, "[ vulkan ] uVulkanRenderInfo ptr must be non null.\n");
 
-    VkPipelineShaderStageCreateInfo* shader_stage_create_infos = NULL;
+    // [ cfarvin::TEMP ] Only for triangle testing
+    static const size_t             num_loaded_shaders                                     = 2;
+    VkPipelineShaderStageCreateInfo pipeline_shader_stage_create_infos[num_loaded_shaders] = {};
 
-
-    // [ cfarvin::REMOVE ]
-    extern uVulkanShader vkTriangle_vert;
-    extern uVulkanShader vkTriangle_frag;
-    uVulkanShader loaded_shaders[] = {vkTriangle_vert, vkTriangle_frag };
-    u32                              num_loaded_shaders        = sizeof(loaded_shaders)/sizeof(uVulkanShader);
-
-    if (is_rebuilding_swap_chain) { uVulkanDestroyShaderModules(&loaded_shaders[0], num_loaded_shaders); }
+    if (is_rebuilding_swap_chain) { uVulkanSimpleTriangleSwapChainRebuildHelper(); }
 
     // Load all shader files
-    uCreateVulkanShaderModules(loaded_shaders, num_loaded_shaders);
-
-    uAssertMsg_v(num_loaded_shaders, "[ vulkan ] No shaders were loaded.\n");
-    if (!num_loaded_shaders)
+    if (!uCreateVulkanShaderModules(&vkTriangle_vert, 1, &pipeline_shader_stage_create_infos[0]) ||
+        !uCreateVulkanShaderModules(&vkTriangle_frag, 1, &pipeline_shader_stage_create_infos[1]))
     {
+        uError_v("Unable to create shader modules!\n");
         uDestroyVulkan();
         kRunning = false;
-    }
-
-    // Store shader stage create infos
-    // [ cfarvin::TODO ] Free later
-    shader_stage_create_infos = ( VkPipelineShaderStageCreateInfo* )calloc(num_loaded_shaders, sizeof(VkPipelineShaderStageCreateInfo));
-
-    for (size_t shader_idx = 0; shader_idx < num_loaded_shaders; shader_idx++)
-    {
-        const uVulkanShader shader = loaded_shaders[shader_idx];
-
-        uAssertMsg_v(shader.module, "[ vulkan ] VkShaderModule must be non zero.\n");
-        uAssertMsg_v(shader.data, "[ vulkan ] Shader data ptr must be non null\n.");
-        uAssertMsg_v(shader.data_size, "[ vulkan ] Shader byte count must be non zero\n.");
-        uAssertMsg_v(uValidateVulkanShaderType(shader.type), "[ vulkan ] Shader type must be valid.\n");
-
-        shader_stage_create_infos[shader_idx].sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shader_stage_create_infos[shader_idx].stage               = uVulkanShaderTypeToStageBit(shader.type);
-        shader_stage_create_infos[shader_idx].module              = shader.module;
-        shader_stage_create_infos[shader_idx].pName               = "main"; // entry point
-        shader_stage_create_infos[shader_idx].pSpecializationInfo = NULL;   // optional: set shader constants
     }
 
     // Vertex input
@@ -609,7 +554,6 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
     VkResult result = vkCreatePipelineLayout(v_info->logical_device, &pipeline_layout_create_info, NULL, ( VkPipelineLayout* )&(render_info->pipeline_layout));
     if (result != VK_SUCCESS)
     {
-        uVulkanDestroyShaderModules(loaded_shaders, num_loaded_shaders);
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create pipeline layout.\n");
     }
@@ -618,26 +562,11 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
     VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = {};
     graphics_pipeline_create_info.sType                        = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 
-    // [ cfarvin::TODO ] This needs to be coupled with a better way to store
-    //                   shader data such that on pipeline re-creation, we do not
-    //                   have to go to disk. The two questions: 1) Do we really
-    //                   want to store this? 2) If so, how to we do this effectively?
-    //
-    //                   Change graphics_pipeline_create_info.stageCount when we
-    //                   figure this out. Hard-coded for vert/frag triangle for
-    //                   now.
-
-    u8 num_shader_stages = 0;
-    uVulkanDetermineShaderStageCount(&num_shader_stages, ( const uVulkanShader* const )loaded_shaders, num_loaded_shaders);
-    uAssertMsg_v(num_shader_stages, "[ vulkan ] No shader stages found.\n");
-
-    graphics_pipeline_create_info.stageCount = num_shader_stages;
-
-    // [ cfarvin::RESTORE ]
-    graphics_pipeline_create_info.pStages = shader_stage_create_infos;
-    // [ cfarvin::REMOVE ]
-    /* graphics_pipeline_create_info.pStages             = kRemoveMe.shader_stage_create_infos; */
-
+    // [ cfarvin::TODO ] I deleted a method to count unique shader stages when redesigning this section
+    //                   it may be useful to have something similar in the future with the new system.
+    u8 num_shader_stages                              = 2;
+    graphics_pipeline_create_info.stageCount          = num_shader_stages;
+    graphics_pipeline_create_info.pStages             = pipeline_shader_stage_create_infos;
     graphics_pipeline_create_info.pVertexInputState   = &vertex_input_create_info;
     graphics_pipeline_create_info.pInputAssemblyState = &input_assembly_create_info;
     graphics_pipeline_create_info.pViewportState      = &frame_buffer_viewport_create_info;
@@ -658,11 +587,9 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create graphics pipeline.\n");
     }
-
-    uVulkanDestroyShaderModules(loaded_shaders, num_loaded_shaders);
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 uCreateVulkanImageViews(const uVulkanInfo* const restrict v_info, uVulkanImageGroup* restrict image_group, const uVulkanSurfaceInfo* const restrict surface_info)
 {
     uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
@@ -752,7 +679,7 @@ uVulkanExtractUniqueQueueFamilies(const uVulkanQueueInfo* const restrict queue_i
     }
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 uCreateVulkanSwapChain(uVulkanInfo* const restrict            v_info,
                        uVulkanSurfaceInfo* const restrict     surface_info,
                        const uVulkanQueueInfo* const restrict queue_info,
@@ -1110,7 +1037,7 @@ uValidateVulkanDeviceQueueRequirement(const VkPhysicalDevice physical_device, co
     return queues_satisfied;
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 uSelectVulkanSwapChainExtent(uVulkanSurfaceInfo* const restrict surface_info)
 {
     uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
@@ -1163,7 +1090,7 @@ uSelectVulkanSwapChainExtent(uVulkanSurfaceInfo* const restrict surface_info)
     }
 }
 
-static __UE_inline__ bool
+__UE_inline__ static bool
 uSelectVulkanSwapChain(uVulkanSurfaceInfo* const restrict surface_info)
 {
     uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
@@ -1230,7 +1157,7 @@ uSelectVulkanSwapChain(uVulkanSurfaceInfo* const restrict surface_info)
     return suitable_present_found;
 }
 
-static bool __UE_inline__
+__UE_inline__ static bool
 uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice physical_device, uVulkanSurfaceInfo* const restrict surface_info, bool is_rebuilding_swap_chain)
 {
     uAssertMsg_v(surface_info, "[ vulkan ] The uVulkanSurfaceInfo ptr must be non null.\n");

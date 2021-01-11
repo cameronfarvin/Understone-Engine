@@ -24,7 +24,7 @@ typedef struct
     const char*             data;
     const size_t            data_size;
     const uVulkanShaderType type;
-    VkShaderModule    module; // unique ID
+    VkShaderModule          module; // unique ID
 } uVulkanShader;
 
 //
@@ -82,13 +82,14 @@ uVulkanShaderTypeToStageBit(uVulkanShaderType shader_type)
     return retVal;
 }
 
-void
-uCreateVulkanShaderModules(const uVulkanShader* const shaders, const u32 num_shaders)
+bool
+uCreateVulkanShaderModules(const uVulkanShader* const restrict shaders, const u32 num_shaders, VkPipelineShaderStageCreateInfo* const restrict pipeline_shader_stage_create_infos)
 {
     const uVulkanInfo* const v_info = uGetVulkanInfo();
 
     uAssertMsg_v(v_info->logical_device, "[ shaders ] SPIR-V file data must be non null.\n");
     uAssertMsg_v(shaders, "[ shaders ] uVulkanShader ptr ptr must be non null\n.");
+    uAssertMsg_v(pipeline_shader_stage_create_infos, "[ shaders ] VkPipelineShaderStageCreateInfo ptr must be non null\n.");
 
     for (u32 shader_idx = 0; shader_idx < num_shaders; shader_idx++)
     {
@@ -109,7 +110,15 @@ uCreateVulkanShaderModules(const uVulkanShader* const shaders, const u32 num_sha
             free(( void* )shaders[shader_idx].data);
             uFatal("[ shaders ] Unable to create shader module.\n");
         }
+
+        pipeline_shader_stage_create_infos[shader_idx].sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        pipeline_shader_stage_create_infos[shader_idx].stage               = uVulkanShaderTypeToStageBit(shaders[shader_idx].type);
+        pipeline_shader_stage_create_infos[shader_idx].module              = shaders[shader_idx].module;
+        pipeline_shader_stage_create_infos[shader_idx].pName               = "main"; // entry point
+        pipeline_shader_stage_create_infos[shader_idx].pSpecializationInfo = NULL;   // optional: set shader constants
     }
+
+    return true;
 }
 
 #endif // __UE_SHADER_TOOLS__

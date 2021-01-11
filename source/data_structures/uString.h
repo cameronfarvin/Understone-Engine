@@ -14,7 +14,7 @@ typedef struct
     const size_t bytes;
 } uString;
 
-static __UE_inline__ size_t
+__UE_inline__ static size_t
 uStringLen(const char* const uStr)
 {
     uAssertMsg_v(uStr, "String must be non null.");
@@ -43,7 +43,7 @@ uStringLen(const char* const uStr)
 // Verifies that the uString members have reasonable values,
 // and that the uString represents a char stream of non-zero
 // length.
-static __UE_inline__ bool
+__UE_inline__ static bool
 uStringVerify(const uString* const uStr)
 {
     bool retVal = true;
@@ -111,8 +111,8 @@ uStringVerify(const uString* const uStr)
     return retVal;
 }
 
-static __UE_inline__ uString*
-                     uStringInit(const char* str)
+__UE_inline__ static uString*
+uStringInit(const char* str)
 {
     // [ cfarvin::REVISIT ] Strlen correctness, use throughout uString
     if (str)
@@ -135,7 +135,7 @@ static __UE_inline__ uString*
     return NULL;
 }
 
-static __UE_inline__ bool
+__UE_inline__ static bool
 uStringDestroy(uString* const uStr)
 {
     if (uStr && uStr->data)

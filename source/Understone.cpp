@@ -41,7 +41,7 @@ const char* kRequiredDeviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 // [ end ] Global members
 //
 
-static __UE_inline__ void
+__UE_inline__ static void
 uHandleWindowResize()
 {
     uDebugPrint("[ resize ] width: %d, height: %d\n", kGameWindow.width, kGameWindow.height);
@@ -54,7 +54,7 @@ uHandleWindowResize()
 }
 
 // Query the mouse and keyboard state
-static __UE_inline__ void
+__UE_inline__ static void
 uRefreshInputState()
 {
     uSystemEvent sys_event = uEventNone;
@@ -86,7 +86,7 @@ uRefreshInputState()
     }
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 uUpdatePresentInfoAndPresent(uVulkanDrawTools* const restrict dt, const u32* const restrict next_frame_idx)
 {
     uAssertMsg_v(dt, "[ render ] uVulkanDrawtools must be non zero.\n");
@@ -115,7 +115,7 @@ uUpdatePresentInfoAndPresent(uVulkanDrawTools* const restrict dt, const u32* con
     }
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 uUpdateGraphicsInfoAndSubmit(uVulkanDrawTools* const restrict dt, const u32* const restrict next_frame_idx)
 {
     uAssertMsg_v(dt, "[ render ] uVulkanDrawtools must be non zero.\n");
@@ -132,7 +132,7 @@ uUpdateGraphicsInfoAndSubmit(uVulkanDrawTools* const restrict dt, const u32* con
     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to submit graphics queue.\n");
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 uEnsureFrameLanded(uVulkanDrawTools* const restrict dt, const u32* const restrict next_frame_idx)
 {
     uAssertMsg_v(dt, "[ render ] uVulkanDrawtools must be non zero.\n");
@@ -153,7 +153,7 @@ uEnsureFrameLanded(uVulkanDrawTools* const restrict dt, const u32* const restric
     vkResetFences(dt->logical_device, 1, &(dt->in_flight_fences[dt->frame]));
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt, u32* const restrict return_idx)
 {
     uAssertMsg_v(dt, "[ render ] uVulkanDrawtools must be non zero.\n");
@@ -185,7 +185,7 @@ uAcquireNextSwapChainFrameIndex(const uVulkanDrawTools* const restrict dt, u32* 
     }
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 uDrawFrame(uVulkanDrawTools* const restrict dt)
 {
     // Don't do this if the window is minimized

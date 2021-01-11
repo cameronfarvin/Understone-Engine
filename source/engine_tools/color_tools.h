@@ -4,7 +4,7 @@
 #include <maths_tools.h>
 #include <type_tools.h>
 
-static u8 __UE_inline__
+__UE_inline__ static u8
 BindValueTo8BitColorChannel(const r32 value_min, const r32 value_max, const r32 value)
 {
     __UE_ASSERT__(value_max > value_min);
@@ -13,7 +13,7 @@ BindValueTo8BitColorChannel(const r32 value_min, const r32 value_max, const r32 
     return ( u8 )NormalizeToRange(value_min, value_max, 0.0f, 255.0f, value);
 }
 
-static void __UE_inline__
+__UE_inline__ static void
 RGB32ToHSV32(const Color32_RGB* restrict const rgb_source, _mut_ Color32_HSV* restrict const hsv_result)
 {
     __UE_ASSERT__(rgb_source);
@@ -86,7 +86,7 @@ RGB32ToHSV32(const Color32_RGB* restrict const rgb_source, _mut_ Color32_HSV* re
     hsv_result->V = value;
 }
 
-static void __UE_inline__
+__UE_inline__ static void
 HSV32ToRGB32(const Color32_HSV* restrict const hsv_source, _mut_ Color32_RGB* restrict const rgb_result)
 {
     __UE_ASSERT__(rgb_result);

@@ -727,12 +727,12 @@ class CompilerInvocationGenerator
             for (const std::string& source : source_files) { source_files_invocation += (source + " "); }
         }
 
-        // Baked shader files
+        // Baked shader files (enforce header syntax)
         std::string baked_shader_files_invocation = "";
         {
             for (const BakedShaderInfo& baked_shader : baked_shader_info)
             {
-                if (std::filesystem::exists(baked_shader.auto_gen_output_file_path)) { baked_shader_files_invocation += (baked_shader.auto_gen_output_file_path + " "); }
+                if (std::filesystem::exists(baked_shader.auto_gen_output_file_path)) { baked_shader_files_invocation += ("-I" + baked_shader.auto_gen_output_file_path + " "); }
                 else
                 {
                     PrintLn("Unable to locate a baked shader listed for compilation: " + baked_shader.auto_gen_output_file_path);
@@ -796,7 +796,7 @@ class CompilerInvocationGenerator
         if (is_ok_)
         {
             source_invocation_ =
-              invocation + compilation_flags_invocation + source_files_invocation + baked_shader_files_invocation + header_directories_invocation + compilation_options_invocation;
+              invocation + compilation_flags_invocation + source_files_invocation + header_directories_invocation + baked_shader_files_invocation + compilation_options_invocation;
         }
     }
 #endif // _WIN32
@@ -849,12 +849,12 @@ class CompilerInvocationGenerator
             for (const std::string& source : source_files) { source_files_invocation += (source + " "); }
         }
 
-        // Baked shader files
+        // Baked shader files (enforce header syntax)
         std::string baked_shader_files_invocation = "";
         {
             for (const BakedShaderInfo& baked_shader : baked_shader_info)
             {
-                if (std::filesystem::exists(baked_shader.auto_gen_output_file_path)) { baked_shader_files_invocation += (baked_shader.auto_gen_output_file_path + " "); }
+                if (std::filesystem::exists(baked_shader.auto_gen_output_file_path)) { baked_shader_files_invocation += ("-I" + baked_shader.auto_gen_output_file_path + " "); }
                 else
                 {
                     PrintLn("Unable to locate a baked shader listed for compilation: " + baked_shader.auto_gen_output_file_path);
@@ -929,7 +929,7 @@ class CompilerInvocationGenerator
 
         if (is_ok_)
         {
-            source_invocation_ = invocation + compilation_flags_invocation + source_files_invocation + baked_shader_files_invocation + header_directories_invocation +
+            source_invocation_ = invocation + compilation_flags_invocation + source_files_invocation + header_directories_invocation + baked_shader_files_invocation +
                                  compilation_options_invocation + output_directory_invocation;
         }
     }
@@ -1206,6 +1206,30 @@ GetDependencyPathInfo(const std::string&              understone_root_dir,
                             std::string auto_gen_file_name = file_stream_line.substr((string_find_pos + kAutoGenFileNameId.size() + 1), file_stream_line.size());
                             TrimString(auto_gen_file_name);
 
+                            bool   shader_name_is_header_type = false;
+                            size_t pos                        = 0;
+                            for (const std::string& header_extension : header_file_types)
+                            {
+                                pos = auto_gen_file_name.find(header_extension);
+                                if (pos != std::string::npos &&                                 // Ensure that the file type matches a known header extension
+                                    pos == auto_gen_file_name.size() - header_extension.size()) // Ensure that the header extension is at the end of the string
+                                {
+                                    shader_name_is_header_type = true;
+                                    break;
+                                }
+                            }
+
+                            // User provided shader names must comply with traditional header file extensions
+                            if (!shader_name_is_header_type)
+                            {
+                                std::string shader_name_header_type_error = "The shader at " + shader_path + " has " + kAutoGenFileNameId + " \"" + auto_gen_file_name +
+                                                                            "\", which is not a known header extension. Known header extensions are:";
+                                for (const std::string& header_extension : header_file_types) { shader_name_header_type_error += (" " + header_extension); }
+                                PrintLn(shader_name_header_type_error, OutputType::kError);
+
+                                return false;
+                            }
+
                             if (auto_gen_file_name.size() < 1)
                             {
                                 std::string auto_gen_file_name_error = "The shader at " + shader_path + " has an " + kAutoGenFileNameId + " \"" + auto_gen_file_name +
@@ -1224,7 +1248,7 @@ GetDependencyPathInfo(const std::string&              understone_root_dir,
                 {
                     std::string shader_header_error = "Unable to parse shader header for file: " + shader_path +
                                                       "\nAll shaders are required to have commented headers in the form:\n"
-                                                      "\t// @uAutoGenFileName: <name for auto generation>\n"
+                                                      "\t// @uAutoGenFileName: <name for auto generation> (header)\n"
                                                       "\t// @uName: <unique name>\n"
                                                       "\t// @uType: <type>\n";
                     PrintLn(shader_header_error, OutputType::kError);
@@ -1484,7 +1508,7 @@ bool
 BakeShaders(const std::string&              understone_root_dir,
             std::vector< BakedShaderInfo >& baked_shader_info,
             const UserCompilationFlags&     user_compilation_flags,
-            std::set< std::string >&        source_files)
+            std::set< std::string >&        header_files)
 {
     // Ensure that the baked_shaders folder exists
     std::filesystem::path baked_shaders_dir(understone_root_dir + "/source/shaders/baked_shaders");
@@ -1545,7 +1569,7 @@ BakeShaders(const std::string&              understone_root_dir,
             file_path_to_contents[baked_shader_full_path].raw_shaders += "// Raw shader:  " + baked_shader.shader_path + "\n";
 
             std::stringstream body_ss;
-            body_ss << "const uVulkanShader " << baked_shader.common_name << " = \n{\n";
+            body_ss << "uVulkanShader " << baked_shader.common_name << " = \n{\n";
             body_ss << "\t.name = \"" << baked_shader.common_name << "\",\n";
             body_ss << "\t.data = \"";
             for (size_t byte_idx = 0; byte_idx < file_size; byte_idx++) { body_ss << std::hex << file_data_hex[byte_idx]; }
@@ -1592,8 +1616,8 @@ BakeShaders(const std::string&              understone_root_dir,
             {
                 std::filesystem::remove(file_or_empty_dir);
 
-                // Ensure that we remove this entry from source file list
-                source_files.erase(file_or_empty_dir.path().string());
+                // Ensure that we remove this entry from header file list
+                header_files.erase(file_or_empty_dir.path().string());
             }
         }
     }
@@ -1848,7 +1872,7 @@ main(int argc, char** argv)
     // Shader baking
     {
         PrintLn("Baking shaders...");
-        if (!BakeShaders(understone_root_dir, baked_shader_info, user_compilation_flags, source_files)) { return -1; }
+        if (!BakeShaders(understone_root_dir, baked_shader_info, user_compilation_flags, header_files)) { return -1; }
     }
 
     // Source invocation & compilation

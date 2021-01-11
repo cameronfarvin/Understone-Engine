@@ -70,20 +70,20 @@ int64_t input_state;
 #define uMouse_left        (1ULL << 45)
 #define uMouse_middle      (1ULL << 46)
 
-static __UE_inline__ void
+__UE_inline__ static void
 uSetInputPressed(const uint64_t key)
 {
     input_state |= key;
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 uSetInputReleased(const uint64_t key)
 {
     input_state &= ~key;
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* static __UE_inline__ uint64_t */
+/* __UE_inline__ static uint64_t */
 /* uGetInputPressed(const  uint64_t key) */
 /* { */
 /*     return input_state & key; */

@@ -13,7 +13,7 @@ struct uGameWindow
 };
 uGameWindow kGameWindow;
 
-static __UE_inline__ void
+__UE_inline__ static void
 uGetWindowSize(u32* const restrict width, u32* const restrict height)
 {
     uAssertMsg_v(width, "[ window tools ] Width ptr must be non null.\n");

@@ -17,8 +17,8 @@ typedef struct
     const u16 arena_size;
 } uMemoryArena;
 
-static __UE_inline__ uMemoryArena*
-                     uMAInit(const u16 arena_bytes)
+__UE_inline__ static uMemoryArena*
+uMAInit(const u16 arena_bytes)
 {
     if (!arena_bytes) { return NULL; }
 
@@ -32,7 +32,7 @@ static __UE_inline__ uMemoryArena*
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
-/* static __UE_inline__ void* */
+/* __UE_inline__ static void* */
 /* uMANext(const uMemoryArena* restrict const memory_arena) */
 /* { */
 /*     if(!(memory_arena && memory_arena->data && memory_arena->arena_size)) */
@@ -46,7 +46,7 @@ static __UE_inline__ uMemoryArena*
 // [ cfarvin::RESTORE ] Unused fn warning
 /* #define uMAAllocate(arena, type, num_bytes)     \ */
 /*     (type*)uMAAllocate_API__(arena, num_bytes) */
-/* static __UE_inline__ void* */
+/* __UE_inline__ static void* */
 /* uMAAllocate_API__( uMemoryArena* restrict const memory_arena, */
 /*                   const u16                          num_bytes) */
 /* { */
@@ -61,7 +61,7 @@ static __UE_inline__ uMemoryArena*
 /* } */
 
 #define uMAPushData(arena, new_data, type) ( type* )uMAPushData_API(arena, ( type* )&(new_data), sizeof(type))
-static __UE_inline__ void*
+__UE_inline__ static void*
 uMAPushData_API(uMemoryArena* restrict const memory_arena, const void* restrict const new_data, const u16 new_data_size)
 {
     if (!(memory_arena && new_data && new_data_size)) { return NULL; }
@@ -80,7 +80,7 @@ uMAPushData_API(uMemoryArena* restrict const memory_arena, const void* restrict 
 }
 
 #define uMAPushArray(arena, new_data, type, num_bytes) ( type* )uMAPushArray_API(arena, new_data, num_bytes)
-static __UE_inline__ void*
+__UE_inline__ static void*
 uMAPushArray_API(uMemoryArena* memory_arena, void* new_data, u16 new_data_size)
 {
     if (!(memory_arena && new_data && new_data_size)) { return NULL; }
@@ -98,7 +98,7 @@ uMAPushArray_API(uMemoryArena* memory_arena, void* new_data, u16 new_data_size)
     return ( void* )(dest_ptr);
 }
 
-static __UE_inline__ bool
+__UE_inline__ static bool
 uMADestroy(uMemoryArena* memory_arena)
 {
     if (!(memory_arena && memory_arena->data)) { return false; }

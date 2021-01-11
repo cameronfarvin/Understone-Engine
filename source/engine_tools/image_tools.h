@@ -36,7 +36,7 @@ typedef struct
     u8*         img_pixels;
 } uImage;
 
-__UE_interal__ __UE_inline__ u8
+__UE_inline__ u8
 uReadNextByte(const restrict uImage* const img)
 {
     if (img->img_cursor < img->img_end) { return *img->img_cursor++; }
@@ -45,28 +45,28 @@ uReadNextByte(const restrict uImage* const img)
     return 0;
 }
 
-__UE_interal__ __UE_inline__ u16
+__UE_inline__ u16
 uRead16AsLE(const restrict uImage* const img)
 {
     u16 tmp = uReadNextByte(img);
     return tmp + (uReadNextByte(img) << 8);
 }
 
-__UE_interal__ __UE_inline__ u32
+__UE_inline__ u32
 uRead32AsLE(const restrict uImage* const img)
 {
     u32 tmp = uRead16AsLE(img);
     return tmp + (uRead16AsLE(img) << 16);
 }
 
-__UE_interal__ __UE_inline__ bool
+__UE_inline__ bool
 uLoadBitmap(const restrict char* const file_path, const restrict uImage* const img)
 {
     printf("TODO: uLoadBitmap()"); // [ cfarvin::TODO ]
     return false;
 }
 
-static __UE_inline__ u8
+__UE_inline__ static u8
 BindValueTo8BitColorChannel(const r32 value_min, const r32 value_max, const r32 value)
 {
     __UE_ASSERT__(value_max > value_min);
@@ -75,7 +75,7 @@ BindValueTo8BitColorChannel(const r32 value_min, const r32 value_max, const r32 
     return ( u8 )NormalizeToRange(value_min, value_max, 0.0f, 255.0f, value);
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 RGB32ToHSV32(const Color32_RGB* restrict const rgb_source, _mut_ Color32_HSV* restrict const hsv_result)
 {
     __UE_ASSERT__(rgb_source);
@@ -148,7 +148,7 @@ RGB32ToHSV32(const Color32_RGB* restrict const rgb_source, _mut_ Color32_HSV* re
     hsv_result->V = value;
 }
 
-static __UE_inline__ void
+__UE_inline__ static void
 HSV32ToRGB32(const Color32_HSV* restrict const hsv_source, _mut_ Color32_RGB* restrict const rgb_result)
 {
     __UE_ASSERT__(rgb_result);
