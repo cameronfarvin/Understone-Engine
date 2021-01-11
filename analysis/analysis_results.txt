@@ -5,7 +5,7 @@
 Source LOC:         5981
 Source Comment LOC: 180
 Shader LOC:         41
-Shader Comment LOC: 2
+Shader Comment LOC: 12
 
 16 TODO tags:
    [cfarvin] ("uString.h", 151): implement uString substring

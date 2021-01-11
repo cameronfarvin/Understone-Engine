@@ -1,3 +1,9 @@
+//
+// @uAutoGenFileName: vkTriangleShader.h
+// @uCommonName:      vkTriangle_frag
+// @uShaderType:      FRAGMENT
+//
+
 # version 450
 #extension GL_ARB_separate_shader_objects : enable
 

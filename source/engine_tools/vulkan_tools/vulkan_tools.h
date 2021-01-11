@@ -74,7 +74,7 @@ uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice physical_
 
 // [ cfarvin::REMOVE ] This will no longer be needed when we autogen-bake shaders into the exe
 __UE_inline__ static void
-uVulkanDestroyLoadedShaders_TEMP(uVulkanShader* restrict loaded_shaders, const u8 num_loaded_shaders, bool is_rebuilding_swap_chain)
+uVulkanDestroyShaderModules(uVulkanShader* restrict loaded_shaders, const u8 num_loaded_shaders)
 {
     const uVulkanInfo* v_info = uGetVulkanInfo();
 
@@ -82,7 +82,6 @@ uVulkanDestroyLoadedShaders_TEMP(uVulkanShader* restrict loaded_shaders, const u
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] Invalid logical device.\n");
     uAssertMsg_v(loaded_shaders, "[ vulkan ] loaded_shaders ptr must be non-null.\n");
     uAssertMsg_v(num_loaded_shaders, "[ vulkan ] num_loaded_shaders must be non-zero.\n");
-    uAssertMsg_v(num_loaded_shaders == (sizeof(kShadersToLoad) / sizeof(uVulkanShader)), "[ vulkan ] Invalid number of shaders.\n");
 
     for (size_t shader_idx = 0; shader_idx < num_loaded_shaders; shader_idx++)
     {
@@ -457,34 +456,21 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
     uAssertMsg_v(render_info, "[ vulkan ] uVulkanRenderInfo ptr must be non null.\n");
 
     VkPipelineShaderStageCreateInfo* shader_stage_create_infos = NULL;
-    uVulkanShader*                   loaded_shaders            = NULL;
-    u32                              num_loaded_shaders        = 0;
 
-    // [ cfarvin::REMOVE ] Remove this comment when autogen-baked shaders are working
-    // Note: shader files currently hard-coded - see vulkan_tools/shader_tools.h
-    //       right now, we're loading shader modules for every pipeline creation (including
-    //       swap-chain re-creation, because in the final use-case shader modules will be baked
-    //       in. Functionally it will be the same, but without the perf cost of loading from disk
-    //       each rebuild.
-    //
-    //       Also: we are not currently able to delete previously allocated shader data and module data
-    //             (? does vulkan delete module data on VkDestroyShaderModule?) because they are not currently
-    //             global. There's no need to make them global if we're going to bake them in shortly, so we're
-    //             accepting a memory leak for this test.
-    if (is_rebuilding_swap_chain) { uVulkanDestroyStaticShaderData_TEMP(); }
+
+    // [ cfarvin::REMOVE ]
+    extern uVulkanShader vkTriangle_vert;
+    extern uVulkanShader vkTriangle_frag;
+    uVulkanShader loaded_shaders[] = {vkTriangle_vert, vkTriangle_frag };
+    u32                              num_loaded_shaders        = sizeof(loaded_shaders)/sizeof(uVulkanShader);
+
+    if (is_rebuilding_swap_chain) { uVulkanDestroyShaderModules(&loaded_shaders[0], num_loaded_shaders); }
 
     // Load all shader files
-    uLoadSpirvModules(&loaded_shaders, &num_loaded_shaders);
+    uCreateVulkanShaderModules(loaded_shaders, num_loaded_shaders);
 
     uAssertMsg_v(num_loaded_shaders, "[ vulkan ] No shaders were loaded.\n");
     if (!num_loaded_shaders)
-    {
-        uDestroyVulkan();
-        kRunning = false;
-    }
-
-    uAssertMsg_v(loaded_shaders, "[ vulkan ] uVulkanShader ptr must not be null.\n");
-    if (!loaded_shaders)
     {
         uDestroyVulkan();
         kRunning = false;
@@ -623,7 +609,7 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
     VkResult result = vkCreatePipelineLayout(v_info->logical_device, &pipeline_layout_create_info, NULL, ( VkPipelineLayout* )&(render_info->pipeline_layout));
     if (result != VK_SUCCESS)
     {
-        uVulkanDestroyLoadedShaders_TEMP(loaded_shaders, num_loaded_shaders, false);
+        uVulkanDestroyShaderModules(loaded_shaders, num_loaded_shaders);
         uDestroyVulkan();
         uFatal("[ vulkan ] Unable to create pipeline layout.\n");
     }
@@ -673,7 +659,7 @@ uCreateVulkanGraphicsPipeline(const uVulkanInfo* const restrict        v_info,
         uFatal("[ vulkan ] Unable to create graphics pipeline.\n");
     }
 
-    uVulkanDestroyLoadedShaders_TEMP(loaded_shaders, num_loaded_shaders, is_rebuilding_swap_chain);
+    uVulkanDestroyShaderModules(loaded_shaders, num_loaded_shaders);
 }
 
 static __UE_inline__ void

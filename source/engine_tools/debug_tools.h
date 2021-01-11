@@ -1,6 +1,7 @@
 #ifndef __UE_DEBUG_TOOLS_H__
 #define __UE_DEBUG_TOOLS_H__
 
+#include <stdio.h>
 #include <string.h>
 
 #if __UE_debug__ == 1

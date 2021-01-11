@@ -9,6 +9,8 @@ VkDebugUtilsMessengerCreateInfoEXT vulkan_main_debug_messenger_info  = {};
 VkDebugUtilsMessengerCreateInfoEXT vulkan_setup_debug_messenger_info = {};
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 
+extern bool kRunning;
+
 //
 // [ begin ] Prime uVulkanCommandInfo
 typedef struct
@@ -279,7 +281,7 @@ uDestroyDrawTools(uVulkanDrawTools* const restrict draw_tools, bool is_rebuildin
     }
 }
 
-static __UE_inline__ void
+__UE_inline__ void
 uRebuidlDrawTools(uVulkanDrawTools* const restrict draw_tools)
 {
     uAssertMsg_v(draw_tools, "[ vulkan ] uVulkanDrawTools ptr must be non null.\n");
@@ -290,9 +292,9 @@ uRebuidlDrawTools(uVulkanDrawTools* const restrict draw_tools)
     kVulkanDrawToolsOutdated = false;
 }
 // [ end ] Draw Tools
-//
 
-static __UE_inline__ void
+
+__UE_inline__ void
 uDestroyVulkanRenderInfo()
 {
     uVulkanInfo*       v_info      = ( uVulkanInfo* )uGetVulkanInfo();
@@ -327,7 +329,7 @@ uDestroyVulkanRenderInfo()
     }
 }
 
-static __UE_inline__ void
+__UE_inline__ void
 uDestroyVulkanQueueInfo()
 {
     uVulkanQueueInfo* queue_info = ( uVulkanQueueInfo* )uGetVulkanQueueInfo();
@@ -364,7 +366,7 @@ uDestroyVulkanCommandBuffers()
     }
 }
 
-static __UE_inline__ void
+__UE_inline__ void
 uDestroyVulkanCommandInfo()
 {
     uVulkanInfo*        v_info       = ( uVulkanInfo* )uGetVulkanInfo();
@@ -389,7 +391,7 @@ uDestroyVulkanCommandInfo()
     }
 }
 
-static __UE_inline__ void
+__UE_inline__ void
 uDestroyVulkanSurfaceInfo()
 {
     uVulkanInfo*        v_info       = ( uVulkanInfo* )uGetVulkanInfo();
@@ -417,7 +419,7 @@ uDestroyVulkanSurfaceInfo()
     }
 }
 
-static __UE_inline__ void
+__UE_inline__ void
 uDestroyVulkanInfo()
 {
     uVulkanInfo* v_info = ( uVulkanInfo* )uGetVulkanInfo();
@@ -453,7 +455,7 @@ uDestroyVulkanInfo()
     }
 }
 
-static __UE_inline__ void
+__UE_inline__ void
 uDestroyVulkanImageGroup()
 {
     uVulkanInfo*       v_info      = ( uVulkanInfo* )uGetVulkanInfo();
