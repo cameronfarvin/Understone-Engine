@@ -410,9 +410,17 @@ uVulkanSimpleTriangleSwapChainRebuildHelper()
     uVulkanInfo* v_info = ( uVulkanInfo* )uGetVulkanInfo();
     uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
 
-    if (vkTriangle_vert.module) { vkDestroyShaderModule(v_info->logical_device, vkTriangle_vert.module, NULL); }
+    if (vkTriangle_vert.module)
+    {
+        vkDestroyShaderModule(v_info->logical_device, vkTriangle_vert.module, NULL);
+        vkTriangle_vert.module = NULL;
+    }
 
-    if (vkTriangle_frag.module) { vkDestroyShaderModule(v_info->logical_device, vkTriangle_frag.module, NULL); }
+    if (vkTriangle_frag.module)
+    {
+        vkDestroyShaderModule(v_info->logical_device, vkTriangle_frag.module, NULL);
+        vkTriangle_frag.module = NULL;
+    }
 }
 
 static void
@@ -1837,17 +1845,8 @@ uDestroyVulkan()
     // Wait for device to be idle
     if (v_info->logical_device) { vkDeviceWaitIdle(v_info->logical_device); }
 
-    // [ begin ]
-    // [ cfarvin::REMOVE ]
-    /* for (size_t shader_idx = 0; shader_idx < kRemoveMe.num_shaders; shader_idx++) */
-    /* { */
-    /*     vkDestroyShaderModule(v_info->logical_device, kRemoveMe.shaders[shader_idx].module, NULL); */
-    /* } */
-
-    /* if (kRemoveMe.shader_stage_create_infos) { free(kRemoveMe.shader_stage_create_infos); } */
-
-    /* if (kRemoveMe.shaders) { free(kRemoveMe.shaders); } */
-    // [ end ]
+    // Note: Destroys shader triangle example modules
+    uVulkanSimpleTriangleSwapChainRebuildHelper();
 
     uDestroyVulkanImageGroup();
     uDestroyVulkanSurfaceInfo();
