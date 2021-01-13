@@ -494,10 +494,11 @@ class CompilerInvocationGenerator
     }
 
     void
-    GenerateShaderInvocation(const std::string&             understone_root_dir,
-                             const std::set< std::string >& shader_files,
-                             const ShaderCompiler&          shader_compiler,
-                             const UserCompilationFlags&    user_compilation_flags)
+    GenerateShaderInvocation(const std::string&              understone_root_dir,
+                             const std::set< std::string >&  shader_files,
+                             const ShaderCompiler&           shader_compiler,
+                             const UserCompilationFlags&     user_compilation_flags,
+                             std::vector< BakedShaderInfo >& baked_shader_info) // mutable
     {
         if (!is_ok_) { return; }
 
@@ -506,7 +507,7 @@ class CompilerInvocationGenerator
         {
             case (ShaderCompiler::kGlslc):
             {
-                GenerateGlslcInvocation(understone_root_dir, shader_files, user_compilation_flags);
+                GenerateGlslcInvocation(understone_root_dir, shader_files, user_compilation_flags, baked_shader_info);
                 break;
             }
             default:
@@ -935,7 +936,10 @@ class CompilerInvocationGenerator
     }
 
     void
-    GenerateGlslcInvocation(const std::string& understone_root_dir, const std::set< std::string >& shader_files, const UserCompilationFlags& user_compilation_flags)
+    GenerateGlslcInvocation(const std::string&              understone_root_dir,
+                            const std::set< std::string >&  shader_files,
+                            const UserCompilationFlags&     user_compilation_flags,
+                            std::vector< BakedShaderInfo >& baked_shader_info)
     {
         if (!is_ok_) { return; }
 
@@ -984,10 +988,11 @@ class CompilerInvocationGenerator
         std::string spirv_output_directory = ToPosixPath(bin_directory.string()) + "/shaders/";
         std::filesystem::create_directory(spirv_output_directory);
 
-        size_t shaders_compiled = 0;
+        std::map< std::string /* source path */, std::string /* spirv path */ > shader_to_spirv_map  = {};
+        size_t                                                                  num_shaders_compiled = 0;
         for (const auto& shader_source : shader_files)
         {
-            if (shaders_compiled) { invocation += "&& "; }
+            if (num_shaders_compiled) { invocation += "&& "; }
 
             invocation += invocation_base;
 
@@ -1009,19 +1014,33 @@ class CompilerInvocationGenerator
                 invocation += "-o " + spirv_full_path + " ";
 
                 // Fill in map of <original shader file, compiled spirv> for shader baking
-                shader_to_spirv_map_.insert(std::pair< std::string, std::string >(shader_source, spirv_full_path));
+                shader_to_spirv_map.insert(std::pair< std::string, std::string >(shader_source, spirv_full_path));
             }
 
-            shaders_compiled++;
+            num_shaders_compiled++;
+        }
+
+        // Pair sources with compiled spir-v modules
+        {
+            for (auto& shader_info : baked_shader_info)
+            {
+                const auto find_result = shader_to_spirv_map.find(shader_info.shader_path);
+                if (find_result == shader_to_spirv_map.end())
+                {
+                    PrintLn("Unable to match shader source: " + shader_info.shader_path + " with compiled SPIR-V module.", OutputType::kError);
+                    return;
+                }
+
+                shader_info.spirv_path = find_result->second;
+            }
         }
 
         if (is_ok_) { shader_invocation_ = invocation; }
     }
 
-    bool                                 is_ok_               = true;
-    std::string                          source_invocation_   = "";
-    std::string                          shader_invocation_   = "";
-    std::map< std::string, std::string > shader_to_spirv_map_ = {};
+    bool        is_ok_             = true;
+    std::string source_invocation_ = "";
+    std::string shader_invocation_ = "";
 }; // class CompilerInvocationGenerator
 
 // Look along the current working directory path for the root Understone
@@ -1533,29 +1552,47 @@ BakeShaders(const std::string&              understone_root_dir,
         for (BakedShaderInfo& baked_shader : baked_shader_info)
         {
             std::string baked_shader_full_path = baked_shaders_dir.string() + "/" + baked_shader.auto_gen_file_name;
+            if (!baked_shader.spirv_path.size())
+            {
+                PrintLn("The shader source " + baked_shader.shader_path + " was sent for baking without an associated SPIR-V module.", OutputType::kError);
+                return false;
+            }
 
             // Read spirv binary data
             FILE* file = NULL;
-            fopen_s(&file, baked_shader.shader_path.c_str(), "rb");
+            fopen_s(&file, baked_shader.spirv_path.c_str(), "rb");
             if (!file)
             {
                 PrintLn("Cannot open shader file: " + baked_shader.shader_path, OutputType::kError);
+                fclose(file);
                 return false;
             }
+
             fseek(file, 0, SEEK_END);
             size_t file_size = ftell(file);
+            if (file_size % 4 != 0)
+            {
+                PrintLn("Invalid SPIR-V file size: " + std::to_string(file_size) + "; must be a multiple of four.", OutputType::kError);
+                fclose(file);
+                return false;
+            }
             fseek(file, 0, SEEK_SET);
 
-            std::vector< uint8_t > file_data(file_size);
-            size_t                 items_read = fread(file_data.data(), sizeof(uint8_t), file_size, file);
-            if (items_read != file_size)
+            std::vector< uint32_t > file_data(file_size);
+            size_t                  items_read = fread(file_data.data(), sizeof(uint32_t), file_size, file);
+            if (items_read != file_size / 4)
             {
                 PrintLn("Unable to read spirv data from file: " + baked_shader.shader_path, OutputType::kError);
                 return false;
             }
 
-            std::vector< uint32_t > file_data_hex(file_size);
-            for (size_t byte_idx = 0; byte_idx < file_size; byte_idx++) { file_data_hex[byte_idx] = file_data[byte_idx]; }
+            if (file_data[0] != 119734787 && // SPIR-V Magic Number (LSB)
+                file_data[0] != 50471687)    // SPIR-V Magic Number (MSB)
+            {
+                PrintLn("Invalid SPIR-V magic number!", OutputType::kError);
+                fclose(file);
+                return false;
+            }
 
             fclose(file);
 
@@ -1572,7 +1609,7 @@ BakeShaders(const std::string&              understone_root_dir,
             body_ss << "uVulkanShader " << baked_shader.common_name << " = \n{\n";
             body_ss << "\t.name = \"" << baked_shader.common_name << "\",\n";
             body_ss << "\t.data = \"";
-            for (size_t byte_idx = 0; byte_idx < file_size; byte_idx++) { body_ss << std::hex << file_data_hex[byte_idx]; }
+            for (size_t byte_idx = 0; byte_idx < file_size; byte_idx++) { body_ss << std::hex << file_data[byte_idx]; }
             body_ss << "\",\n";
             body_ss << "\t.data_size = " << std::to_string(file_size) << ",\n";
             body_ss << "\t.type = " << kUnderstoneShaderTypeEnumPrefix << shader_type_string << ",\n";
@@ -1864,7 +1901,8 @@ main(int argc, char** argv)
 
     // Shader invocation & compilation
     {
-        compiler_generator.GenerateShaderInvocation(understone_root_dir, shader_files, user_shader_compiler, user_compilation_flags);
+        compiler_generator.GenerateShaderInvocation(understone_root_dir, shader_files, user_shader_compiler, user_compilation_flags, baked_shader_info);
+        if (!compiler_generator.IsOk()) { return -1; }
         PrintLn("Compiling shaders...");
         if (std::system(compiler_generator.GetShaderInvocation().c_str())) { return -1; }
     }
@@ -1886,6 +1924,7 @@ main(int argc, char** argv)
                                                     user_compilation_options,
                                                     user_build_flags,
                                                     baked_shader_info);
+        if (!compiler_generator.IsOk()) { return -1; }
 
         PrintLn("Compiling source files...");
         if (std::system(compiler_generator.GetSourceInvocation().c_str())) { return -1; }
