@@ -21,7 +21,7 @@ typedef enum
 typedef struct
 {
     const char*             name;
-    const char*             data;
+    const u32*              data;
     const size_t            data_size;
     const uVulkanShaderType type;
     VkShaderModule          module; // unique ID
@@ -101,7 +101,8 @@ uCreateVulkanShaderModules(const uVulkanShader* const restrict shaders, const u3
         VkShaderModuleCreateInfo smodule_create_info = {};
         smodule_create_info.sType                    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         smodule_create_info.codeSize                 = shaders[shader_idx].data_size;
-        smodule_create_info.pCode                    = ( const u32* )shaders[shader_idx].data;
+        ;
+        smodule_create_info.pCode = shaders[shader_idx].data;
 
         VkResult result = vkCreateShaderModule(v_info->logical_device, &smodule_create_info, NULL, ( VkShaderModule* )&(shaders[shader_idx].module));
 
