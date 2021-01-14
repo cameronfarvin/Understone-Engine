@@ -12,6 +12,7 @@
 #include "vulkan_macros.h"
 #include "vulkan_types.h"
 #include "window_tools.h"
+#include "engine_info.h"
 
 // [ cfarvin::REMOVE ] Remove stdio.h
 #include <stdio.h>

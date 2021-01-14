@@ -63,7 +63,7 @@ const CommandLineArgumentOptions kAllCommandLineArgs = {
     { CLI_CLANGCL_STR, "Compile using clang-cl" },
     { CLI_CLANG_STR, "Compile using clang" },
     { CLI_DEBUG_STR, "Compile using debug settings" },
-    { CLI_RELEASE_STR, "Compile using debug settings" },
+    { CLI_RELEASE_STR, "Compile using release settings" },
     { CLI_VSDK_STR, "Full path to your Vulkan SDK install." },
     { CLI_NOCF_STR, "Do not run clang-format on source & header files." },
     { CLI_RAB_STR, "Run Understone after a sucessful build." },
@@ -382,8 +382,14 @@ class BuildFlagInvocationGenerator
             }
 #else
             // First check to see if "clang-format" is exe name on Posix (likely)
+            // Note: clang-format returns 0 for success on posix
             pipe_return = RunProcess("clang-format --version > /dev/null 2>&1", "r");
-            if (pipe_return.return_code && pipe_return.success)
+
+            // [ cfarvin::REMOVE ] [ cfarvin::REVISIT ]
+            if (pipe_return.success == false) { std::cout << "PIPE FAILURE (success flag)" << std::endl; }
+            if (pipe_return.return_code != 0) { std::cout << "PIPE FAILURE (return code)" << std::endl; }
+
+            if (!pipe_return.return_code && pipe_return.success)
             {
                 // Before failing, check for "clang-format.exe" as exe name on posix
                 // (rare) Seems unintuative, but it happens and causes issues.
@@ -756,9 +762,7 @@ class CompilerInvocationGenerator
             // kOutputExecutableName
             std::filesystem::path bin_directory(understone_root_dir + "/bin");
             if (std::filesystem::exists(bin_directory) || std::filesystem::create_directory(bin_directory))
-            {
-                compilation_options_invocation += "-Fe" + ToPosixPath(bin_directory.string()) + '/' + std::string(UNDERSTONE_EXE_NAME) + ".exe ";
-            }
+            { compilation_options_invocation += "-Fe" + ToPosixPath(bin_directory.string()) + '/' + std::string(UNDERSTONE_EXE_NAME) + ".exe "; }
             else
             {
                 PrintLn("Unable to acquire the Understone bin directory.", OutputType::kError);
@@ -900,10 +904,11 @@ class CompilerInvocationGenerator
 
             // Link options
             compilation_options_invocation += "-L" + vulkan_sdk_path + "/Lib ";
-            compilation_options_invocation += "-lvulkan-1.lib ";
-
 #if _WIN32
+            compilation_options_invocation += "-lvulkan-1.lib ";
             compilation_options_invocation += "-luser32.lib ";
+#else
+            compilation_options_invocation += "-lvulkan ";
 #endif // _WIN32
         }
 
@@ -1056,7 +1061,8 @@ DetermineUnderstoneRootDirectory()
 
     std::filesystem::path partial_path = CWD;
     auto                  path_element = CWD.end();
-    do {
+    do
+    {
         std::filesystem::directory_entry dir(partial_path);
         if (!dir.is_directory())
         {
@@ -1560,7 +1566,11 @@ BakeShaders(const std::string&              understone_root_dir,
 
             // Read spirv binary data
             FILE* file = NULL;
+#if _WIN32
             fopen_s(&file, baked_shader.spirv_path.c_str(), "rb");
+#else
+            file = fopen(baked_shader.spirv_path.c_str(), "rb");
+#endif // _WIN32
             if (!file)
             {
                 PrintLn("Cannot open shader file: " + baked_shader.shader_path, OutputType::kError);
@@ -1709,9 +1719,7 @@ PrintLnHelpMessage()
     help_text << table_header << std::endl << table_header_separator << std::endl;
 
     for (const auto& arg_pair : kAllCommandLineArgs)
-    {
-        help_text << arg_pair.first << spacing_string.substr(arg_pair.first.size(), spacing_string.size()) << arg_pair.second << std::endl;
-    }
+    { help_text << arg_pair.first << spacing_string.substr(arg_pair.first.size(), spacing_string.size()) << arg_pair.second << std::endl; }
 
     std::cout << help_text.str() << std::endl;
 }
@@ -1901,9 +1909,7 @@ main(int argc, char** argv)
                                  user_compilation_options,
                                  user_build_flags,
                                  parse_args_return_status))
-        {
-            return parse_args_return_status;
-        }
+        { return parse_args_return_status; }
     }
 
     CompilerInvocationGenerator compiler_generator = CompilerInvocationGenerator(user_compilation_flags, user_compilation_options, user_build_flags);

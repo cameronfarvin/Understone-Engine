@@ -2,7 +2,6 @@
 AlignAfterOpenBracket: Align
 AlignConsecutiveMacros: 'true'
 AlignConsecutiveAssignments: 'true'
-AlignConsecutiveBitFields: 'true'
 AlignConsecutiveDeclarations: 'true'
 AlignConsecutiveMacros: 'true'
 AlignEscapedNewlines: Left

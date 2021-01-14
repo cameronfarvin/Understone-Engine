@@ -70,17 +70,24 @@ int64_t input_state;
 #define uMouse_left        (1ULL << 45)
 #define uMouse_middle      (1ULL << 46)
 
+// [ cfarvin::REMOVE ] Unused in nix for now
+#if _WIN32
 __UE_inline__ static void
 uSetInputPressed(const uint64_t key)
 {
     input_state |= key;
 }
+#endif // _WIN32
+
+// [ cfarvin::REMOVE ] Unused in nix for now
+#if _WIN32
 
 __UE_inline__ static void
 uSetInputReleased(const uint64_t key)
 {
     input_state &= ~key;
 }
+#endif // _WIN32
 
 // [ cfarvin::RESTORE ] Unused fn warning
 /* __UE_inline__ static uint64_t */

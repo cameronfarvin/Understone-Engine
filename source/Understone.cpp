@@ -60,7 +60,8 @@ uRefreshInputState()
     uSystemEvent sys_event = uEventNone;
 
 #if __linux__
-    sys_event = uNixHandleEvents();
+    // [ cfarvin::RESTORE ] Re-implement
+    // sys_event = uNixHandleEvents();
 #elif _WIN32
     sys_event = uWin32HandleEvents();
 #else

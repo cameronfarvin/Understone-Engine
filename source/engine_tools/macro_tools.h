@@ -13,6 +13,8 @@
 // [ begin ]Passifiers
 #ifdef _WIN32
 #define restrict __restrict
+#else
+#define restrict __restrict__
 #endif // WIN32
 // [ end ]Passifiers
 //
