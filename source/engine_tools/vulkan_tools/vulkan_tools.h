@@ -6,13 +6,13 @@
 #endif // _WIN32
 
 #include "data_structures.h"
+#include "engine_info.h"
 #include "memory_tools.h"
 #include "shader_tools.h"
 #include "vulkan/vulkan.h"
 #include "vulkan_macros.h"
 #include "vulkan_types.h"
 #include "window_tools.h"
-#include "engine_info.h"
 
 // [ cfarvin::REMOVE ] Remove stdio.h
 #include <stdio.h>

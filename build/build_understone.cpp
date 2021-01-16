@@ -771,7 +771,9 @@ class CompilerInvocationGenerator
             // kOutputExecutableName
             std::filesystem::path bin_directory(understone_root_dir + "/bin");
             if (std::filesystem::exists(bin_directory) || std::filesystem::create_directory(bin_directory))
-            { compilation_options_invocation += "-Fe" + ToPosixPath(bin_directory.string()) + '/' + std::string(UNDERSTONE_EXE_NAME) + ".exe "; }
+            {
+                compilation_options_invocation += "-Fe" + ToPosixPath(bin_directory.string()) + '/' + std::string(UNDERSTONE_EXE_NAME) + ".exe ";
+            }
             else
             {
                 PrintLn("Unable to acquire the Understone bin directory.", OutputType::kError);
@@ -1070,8 +1072,7 @@ DetermineUnderstoneRootDirectory()
 
     std::filesystem::path partial_path = CWD;
     auto                  path_element = CWD.end();
-    do
-    {
+    do {
         std::filesystem::directory_entry dir(partial_path);
         if (!dir.is_directory())
         {
@@ -1728,7 +1729,9 @@ PrintLnHelpMessage()
     help_text << table_header << std::endl << table_header_separator << std::endl;
 
     for (const auto& arg_pair : kAllCommandLineArgs)
-    { help_text << arg_pair.first << spacing_string.substr(arg_pair.first.size(), spacing_string.size()) << arg_pair.second << std::endl; }
+    {
+        help_text << arg_pair.first << spacing_string.substr(arg_pair.first.size(), spacing_string.size()) << arg_pair.second << std::endl;
+    }
 
     std::cout << help_text.str() << std::endl;
 }
@@ -1918,7 +1921,9 @@ main(int argc, char** argv)
                                  user_compilation_options,
                                  user_build_flags,
                                  parse_args_return_status))
-        { return parse_args_return_status; }
+        {
+            return parse_args_return_status;
+        }
     }
 
     CompilerInvocationGenerator compiler_generator = CompilerInvocationGenerator(user_compilation_flags, user_compilation_options, user_build_flags);
