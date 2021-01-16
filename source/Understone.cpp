@@ -283,7 +283,6 @@ main(int argc, char** argv)
   In Progress:
   - Arena allocation
   - Improve debug/error reporting system
-  - Annotate all functions
 
   Master TODO:
   - Textures/Load Bitmap (d: 6)
