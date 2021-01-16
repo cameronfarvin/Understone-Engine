@@ -403,8 +403,8 @@ uCreateVulkanRenderPass(const uVulkanInfo* const restrict        v_info,
     }
 }
 
-// [ cfarvin::TEMP ] [ cfarvin::REMOVE ] This is only for simple triangle rendering, should
-//                                       be removed from underlying vulkan code.
+// [ cfarvin::TEMP ] This is only for simple triangle rendering, should
+//                   be removed from underlying vulkan code.
 static void
 uVulkanSimpleTriangleSwapChainRebuildHelper()
 {
@@ -1363,9 +1363,6 @@ uVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity_bi
 
     if (message_severity_bits >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT || message_type_bits >= VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
     {
-        // [ cfarvin::TODO ] This still displays when running build_understone executable with the
-        //                   -release flag, which should not happen. In release, we should presumably
-        //                   just crash or have undefined behavior.
         printf("[ vulkan validation begin ]\n%s\n[ vulkan validation end ]\n", callback_data->pMessage);
         fflush(stdout);
 

@@ -27,23 +27,6 @@ typedef struct
     VkShaderModule          module; // unique ID
 } uVulkanShader;
 
-//
-// [ cfarvin::TEMP ] --begin this temporary block
-// [ cfarvin::TODO ] Figure out a good way to load and keep shaders without
-//                   this information living on the "global stack".
-typedef struct
-{
-    // [ cfarvin::TODO ] This needs a graphics pipeline unique ID member, if
-    //                   it is kept. In that case, the rest of these members
-    //                   should be const.
-    VkPipelineShaderStageCreateInfo* shader_stage_create_infos;
-    u32                              num_shaders;
-    u8                               num_stages;
-} uVulkanGraphicsPipelineRecreateInfo;
-uVulkanGraphicsPipelineRecreateInfo kGraphicsPipelineRecreateInfo = {};
-// [ cfarvin::TEMP ] --end this temporary block
-//
-
 #if __UE_debug__ == 1
 static bool
 uValidateVulkanShaderType(uVulkanShaderType shader_type)

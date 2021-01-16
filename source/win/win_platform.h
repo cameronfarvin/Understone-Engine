@@ -47,37 +47,6 @@ uGetWin32Info()
 // [ end ] Prime uWin32Info
 //
 
-// [ cfarvin::REMOVE ] There is a lot of "RESTORE" tags, I am worried that removing this now will end up
-//                     doing away with something I needed for one of them. Finish those first, then remove
-//                     this if necessary.
-/* __UE_inline__ static void */
-/* uWin32GetWindowSize(u32* const restrict width, u32* const restrict height) */
-/* { */
-/*     const uWin32Info* win32_info = uGetWin32Info(); */
-
-/*     uAssertMsg_v(width, "[ win32 ] Width ptr must be non null.\n"); */
-/*     uAssertMsg_v(height, "[ win32 ] Height ptr must be non null.\n"); */
-/*     uAssertMsg_v(IsWindow(win32_info->window), */
-/*                  "[ win32 ] Windows reports that the win32_info->window member " */
-/*                  "is invalid.\n"); */
-
-/*     RECT window_rect        = {}; */
-/*     BOOL win32_rect_success = GetWindowRect(win32_info->window, &window_rect); */
-/*     if(!win32_rect_success) */
-/*     { */
-/*         uFatal("[ win32 ] Unable to determine window rect with win32 error: %lu.\n", GetLastError()); */
-/*     } */
-
-/*     uAssert(window_rect.right > window_rect.left); */
-/*     uAssert(window_rect.bottom > window_rect.top); */
-
-/*     *width  = window_rect.right - window_rect.left; */
-/*     *height = window_rect.bottom - window_rect.top; */
-
-/*     uAssert(*width); */
-/*     uAssert(*height); */
-/* } */
-
 LRESULT CALLBACK
 uEngineWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -213,13 +182,6 @@ uWin32CreateWin32Info()
     kGameWindow.is_minimized = false;
     return uAPI_PRIME_WIN32_INFO;
 }
-
-// [ cfarvin::RESTORE ] Unused fn warning
-/* __UE_inline__ static const uWin32Info* */
-/* uWin32CreateWindow() */
-/* { */
-/*     return uWin32CreateWin32Info(); */
-/* } */
 
 __UE_inline__ static uSystemEvent
 uWin32HandleEvents()
