@@ -275,14 +275,22 @@ PipeReturnType
 RunProcess(const std::string& command, const std::string& mode, const size_t& max_buffer_len = 256)
 {
     PipeReturnType p_open_return = {};
-    FILE*          stream        = P_OPEN_(command.c_str(), mode.c_str());
+
+    std::string shell_consious_command = command;
+    // On POSIX, popen calls 'sh'. Most folks use 'bash', or something else, which is where
+    // their aliases will be handled. We want the good people to have their aliases.
+#if __linux__
+    char* user_shell = getenv("SHELL");
+    if (nullptr != user_shell) { shell_consious_command = std::string(user_shell) + " -p -c '" + command + '\''; }
+#endif // __linux__
+
+    FILE* stream = P_OPEN_(shell_consious_command.c_str(), mode.c_str());
     if (nullptr == stream)
     {
         PrintLn("Unable to open OS pipe.", OutputType::kError);
         p_open_return.success = false;
         return p_open_return;
     }
-
     std::vector< char > stream_buffer(max_buffer_len);
     fgets(stream_buffer.data(), max_buffer_len, stream);
     p_open_return.output = std::string(stream_buffer.data());
@@ -385,10 +393,6 @@ class BuildFlagInvocationGenerator
             // Note: clang-format returns 0 for success on posix
             pipe_return = RunProcess("clang-format --version > /dev/null 2>&1", "r");
 
-            // [ cfarvin::REMOVE ] [ cfarvin::REVISIT ]
-            if (pipe_return.success == false) { std::cout << "PIPE FAILURE (success flag)" << std::endl; }
-            if (pipe_return.return_code != 0) { std::cout << "PIPE FAILURE (return code)" << std::endl; }
-
             if (!pipe_return.return_code && pipe_return.success)
             {
                 // Before failing, check for "clang-format.exe" as exe name on posix
@@ -412,6 +416,11 @@ class BuildFlagInvocationGenerator
                 PrintLn("Cannot use clang-format, please ensure it is defined in the "
                         "system environment path.",
                         OutputType::kError);
+#if __linux__
+                PrintLn("Note (linux users): this build tool uses _popen() to run commands. You may find it useful to include 'clang-format' as an alias to your current version "
+                        "(example alais clang-format=clang-format-10), or create a symlink in /usr/bin/ for 'clang-format' to point to your current version. The clang and clang++ "
+                        "compilers are automatically symlinked to their current versions on most installations.");
+#endif // __linux__
                 is_ok_ &= false;
                 return;
             }

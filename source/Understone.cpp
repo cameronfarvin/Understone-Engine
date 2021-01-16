@@ -1,4 +1,5 @@
 #include "type_tools.h"
+
 bool kRunning = true;
 
 #if __linux__
