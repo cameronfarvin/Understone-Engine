@@ -1307,7 +1307,6 @@ uCreateVulkanPhysicalDevice(uVulkanInfo* const restrict        v_info,
     uAssertMsg_v(!v_info->logical_device, "[ vulkan ] VkDevice must be zero; will be overwritten.\n");
     uAssertMsg_v(queue_info, "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n");
     uAssertMsg_v(return_surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
-    uAssertMsg_v(return_surface_info->surface == 0x00, "[ vulkan ] VkSurfaceKHR must be zero; will be overwritten.\n");
     if (num_user_device_extension_names)
     {
         uAssertMsg_v(user_device_extension_names && *user_device_extension_names,
