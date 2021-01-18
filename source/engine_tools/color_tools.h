@@ -31,14 +31,26 @@ RGB32ToHSV32(const Color32_RGB* restrict const rgb_source, _mut_ Color32_HSV* re
     r32 chroma  = 0.0f;
 
     // Determine min rgb component
-    if (rgb_min > rgb_g) { rgb_min = rgb_g; }
+    if (rgb_min > rgb_g)
+    {
+        rgb_min = rgb_g;
+    }
 
-    if (rgb_min > rgb_b) { rgb_min = rgb_b; }
+    if (rgb_min > rgb_b)
+    {
+        rgb_min = rgb_b;
+    }
 
     // Determine max rgb component
-    if (rgb_max < rgb_g) { rgb_max = rgb_g; }
+    if (rgb_max < rgb_g)
+    {
+        rgb_max = rgb_g;
+    }
 
-    if (rgb_max < rgb_b) { rgb_max = rgb_b; }
+    if (rgb_max < rgb_b)
+    {
+        rgb_max = rgb_b;
+    }
 
     // Assign chroma
     __UE_ASSERT__(rgb_max >= rgb_min);
@@ -72,14 +84,20 @@ RGB32ToHSV32(const Color32_RGB* restrict const rgb_source, _mut_ Color32_HSV* re
         __UE_ASSERT__(false);
     }
 
-    if (hue < 0.0f) { hue += 360.0f; }
+    if (hue < 0.0f)
+    {
+        hue += 360.0f;
+    }
 
     __UE_ASSERT__(hue >= 0.0f);
     __UE_ASSERT__(hue <= 360.0f);
 
     // Assign saturation
     r32 saturation = 0.0f;
-    if (value != 0.0f) { saturation = chroma / value; }
+    if (value != 0.0f)
+    {
+        saturation = chroma / value;
+    }
 
     hsv_result->H = hue;
     hsv_result->S = saturation;
@@ -119,7 +137,10 @@ HSV32ToRGB32(const Color32_HSV* restrict const hsv_source, _mut_ Color32_RGB* re
     bool build_color_channels = true;
     r32  lightness_component  = hsv_source->V - chroma;
     __UE_ASSERT__(lightness_component >= 0.0f);
-    if (hue_prime < 0.0f) { build_color_channels = false; }
+    if (hue_prime < 0.0f)
+    {
+        build_color_channels = false;
+    }
 
     __UE_ASSERT__(hue_prime <= 6.0f);
     if (build_color_channels)

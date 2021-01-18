@@ -226,9 +226,15 @@ runMemoryArenaTests()
     uTesetAssert((memory_arena_array_test->arena_size == 256), memoryArenaTestFailMessage);
 
     u8 test_array[256];
-    for (size_t ii = 0; ii < 256; ii++) { test_array[ii] = ( u8 )ii; }
+    for (size_t ii = 0; ii < 256; ii++)
+    {
+        test_array[ii] = ( u8 )ii;
+    }
     u8* test_array_result = uMAPushArray(memory_arena_array_test, &test_array, u8, 256);
-    for (size_t ii = 0; ii < 256; ii++) { uTesetAssert((test_array_result[ii] == test_array[ii] && test_array[ii] == ( u8 )ii), memoryArenaTestFailMessage); }
+    for (size_t ii = 0; ii < 256; ii++)
+    {
+        uTesetAssert((test_array_result[ii] == test_array[ii] && test_array[ii] == ( u8 )ii), memoryArenaTestFailMessage);
+    }
     uTesetAssert(uMADestroy(memory_arena_array_test), "Failed to deallocate on uMemoryArena array test");
 }
 
@@ -356,7 +362,10 @@ runMathsTests()
     // m3Ident()
     m3Ident(&m3A);
     r32 sum = 0;
-    for (uint8_t idx = 0; idx < 9; idx++) { sum += m3A.arr[idx]; }
+    for (uint8_t idx = 0; idx < 9; idx++)
+    {
+        sum += m3A.arr[idx];
+    }
     uTesetAssert(sum == 3, "Failed m3Ident() tests");
     uTesetAssert(m3A.arr2d[0][0] == 1, "Failed m3Ident() tests");
     uTesetAssert(m3A.arr2d[1][1] == 1, "Failed m3Ident() tests");
@@ -365,12 +374,18 @@ runMathsTests()
     // m3Set(),
     m3Set(&m3A, 0);
     sum = 0;
-    for (uint8_t idx = 0; idx < 9; idx++) { sum += m3A.arr[idx]; }
+    for (uint8_t idx = 0; idx < 9; idx++)
+    {
+        sum += m3A.arr[idx];
+    }
     uTesetAssert(sum == 0, "Failed m3Set() tests");
 
     m3Set(&m3A, 1);
     sum = 0;
-    for (uint8_t idx = 0; idx < 9; idx++) { sum += m3A.arr[idx]; }
+    for (uint8_t idx = 0; idx < 9; idx++)
+    {
+        sum += m3A.arr[idx];
+    }
     uTesetAssert(sum == 9, "Failed m3Set() tests");
 
     // union m3
@@ -393,7 +408,10 @@ runMathsTests()
     m3 m3B = {};
     m3Mult(&m3A, &m3B, &m3Result);
     sum = 0;
-    for (uint8_t idx = 0; idx < 9; idx++) { sum += 0; }
+    for (uint8_t idx = 0; idx < 9; idx++)
+    {
+        sum += 0;
+    }
     uTesetAssert(sum == 0, "Failed m3Mult() tests");
 
     m3A.i = (v3) { { 1, 2, 3 } };
@@ -419,7 +437,10 @@ runMathsTests()
     // m4Ident()
     m4Ident(&m4A);
     sum = 0;
-    for (uint8_t idx = 0; idx < 16; idx++) { sum += m4A.arr[idx]; }
+    for (uint8_t idx = 0; idx < 16; idx++)
+    {
+        sum += m4A.arr[idx];
+    }
     uTesetAssert(sum == 4, "Failed m4Ident() tests");
     uTesetAssert(m4A.arr2d[0][0] == 1, "Failed m4Ident() tests");
     uTesetAssert(m4A.arr2d[1][1] == 1, "Failed m4Ident() tests");
@@ -428,12 +449,18 @@ runMathsTests()
     // m4Set(),
     m4Set(&m4A, 0);
     sum = 0;
-    for (uint8_t idx = 0; idx < 16; idx++) { sum += m4A.arr[idx]; }
+    for (uint8_t idx = 0; idx < 16; idx++)
+    {
+        sum += m4A.arr[idx];
+    }
     uTesetAssert(sum == 0, "Failed m4ISet() tests");
 
     m4Set(&m4A, 1);
     sum = 0;
-    for (uint8_t idx = 0; idx < 16; idx++) { sum += m4A.arr[idx]; }
+    for (uint8_t idx = 0; idx < 16; idx++)
+    {
+        sum += m4A.arr[idx];
+    }
     uTesetAssert(sum == 16, "Failed m4ISet() tests");
 
     // union m4
@@ -459,7 +486,10 @@ runMathsTests()
     m4 m4B = {};
     m4Mult(&m4A, &m4B, &m4Result);
     sum = 0;
-    for (uint8_t idx = 0; idx < 16; idx++) { sum += 0; }
+    for (uint8_t idx = 0; idx < 16; idx++)
+    {
+        sum += 0;
+    }
     uTesetAssert(sum == 0, "Failed m4Mult() tests");
 
     m4A.i = (v4) { { 1, 2, 3, 9 } };

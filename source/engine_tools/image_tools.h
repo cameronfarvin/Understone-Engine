@@ -39,7 +39,10 @@ typedef struct
 __UE_inline__ u8
 uReadNextByte(const restrict uImage* const img)
 {
-    if (img->img_cursor < img->img_end) { return *img->img_cursor++; }
+    if (img->img_cursor < img->img_end)
+    {
+        return *img->img_cursor++;
+    }
 
     uError_v("uReadNextByte(): Out of bounds.\n");
     return 0;
@@ -93,14 +96,26 @@ RGB32ToHSV32(const Color32_RGB* restrict const rgb_source, _mut_ Color32_HSV* re
     r32 chroma  = 0.0f;
 
     // Determine min rgb component
-    if (rgb_min > rgb_g) { rgb_min = rgb_g; }
+    if (rgb_min > rgb_g)
+    {
+        rgb_min = rgb_g;
+    }
 
-    if (rgb_min > rgb_b) { rgb_min = rgb_b; }
+    if (rgb_min > rgb_b)
+    {
+        rgb_min = rgb_b;
+    }
 
     // Determine max rgb component
-    if (rgb_max < rgb_g) { rgb_max = rgb_g; }
+    if (rgb_max < rgb_g)
+    {
+        rgb_max = rgb_g;
+    }
 
-    if (rgb_max < rgb_b) { rgb_max = rgb_b; }
+    if (rgb_max < rgb_b)
+    {
+        rgb_max = rgb_b;
+    }
 
     // Assign chroma
     __UE_ASSERT__(rgb_max >= rgb_min);
@@ -134,14 +149,20 @@ RGB32ToHSV32(const Color32_RGB* restrict const rgb_source, _mut_ Color32_HSV* re
         __UE_ASSERT__(false);
     }
 
-    if (hue < 0.0f) { hue += 360.0f; }
+    if (hue < 0.0f)
+    {
+        hue += 360.0f;
+    }
 
     __UE_ASSERT__(hue >= 0.0f);
     __UE_ASSERT__(hue <= 360.0f);
 
     // Assign saturation
     r32 saturation = 0.0f;
-    if (value != 0.0f) { saturation = chroma / value; }
+    if (value != 0.0f)
+    {
+        saturation = chroma / value;
+    }
 
     hsv_result->H = hue;
     hsv_result->S = saturation;
@@ -181,7 +202,10 @@ HSV32ToRGB32(const Color32_HSV* restrict const hsv_source, _mut_ Color32_RGB* re
     bool build_color_channels = true;
     r32  lightness_component  = hsv_source->V - chroma;
     __UE_ASSERT__(lightness_component >= 0.0f);
-    if (hue_prime < 0.0f) { build_color_channels = false; }
+    if (hue_prime < 0.0f)
+    {
+        build_color_channels = false;
+    }
 
     __UE_ASSERT__(hue_prime <= 6.0f);
     if (build_color_channels)
@@ -257,7 +281,10 @@ WritePPM32(const restrict Color32_RGB* const pixel_array, u32 image_width, u32 i
     {
         for (size_t x = 0; x < image_width; x++)
         {
-            for (char idx = 0; idx < MAX_PPM_TRIPPLET_SIZE; idx++) { rgb_tripplet[( size_t )idx] = '\0'; }
+            for (char idx = 0; idx < MAX_PPM_TRIPPLET_SIZE; idx++)
+            {
+                rgb_tripplet[( size_t )idx] = '\0';
+            }
 
             success = snprintf(rgb_tripplet, MAX_PPM_TRIPPLET_SIZE, "%d %d %d\n", pixel_array[pix_idx].channel.R, pixel_array[pix_idx].channel.G, pixel_array[pix_idx].channel.B);
 

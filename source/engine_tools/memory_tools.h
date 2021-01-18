@@ -20,7 +20,10 @@ typedef struct
 __UE_inline__ static uMemoryArena*
 uMAInit(const u16 arena_bytes)
 {
-    if (!arena_bytes) { return NULL; }
+    if (!arena_bytes)
+    {
+        return NULL;
+    }
 
     uMemoryArena* memory_arena = ( uMemoryArena* )malloc(sizeof(uMemoryArena));
     memory_arena->data         = ( intptr_t* )malloc(arena_bytes);
@@ -64,7 +67,10 @@ uMAInit(const u16 arena_bytes)
 __UE_inline__ static void*
 uMAPushData_API(uMemoryArena* restrict const memory_arena, const void* restrict const new_data, const u16 new_data_size)
 {
-    if (!(memory_arena && new_data && new_data_size)) { return NULL; }
+    if (!(memory_arena && new_data && new_data_size))
+    {
+        return NULL;
+    }
 
     if ((memory_arena->offset + new_data_size) > (memory_arena->arena_size))
     {
@@ -83,7 +89,10 @@ uMAPushData_API(uMemoryArena* restrict const memory_arena, const void* restrict 
 __UE_inline__ static void*
 uMAPushArray_API(uMemoryArena* memory_arena, void* new_data, u16 new_data_size)
 {
-    if (!(memory_arena && new_data && new_data_size)) { return NULL; }
+    if (!(memory_arena && new_data && new_data_size))
+    {
+        return NULL;
+    }
 
     if ((memory_arena->offset + new_data_size) > (memory_arena->arena_size))
     {
@@ -101,7 +110,10 @@ uMAPushArray_API(uMemoryArena* memory_arena, void* new_data, u16 new_data_size)
 __UE_inline__ static bool
 uMADestroy(uMemoryArena* memory_arena)
 {
-    if (!(memory_arena && memory_arena->data)) { return false; }
+    if (!(memory_arena && memory_arena->data))
+    {
+        return false;
+    }
 
     free(memory_arena->data);
     free(memory_arena);

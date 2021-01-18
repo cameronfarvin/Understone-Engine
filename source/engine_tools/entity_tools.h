@@ -100,7 +100,10 @@ ReflectRays(/* const Ray*             restrict const ray, */
     /* __UE_ASSERT__(global_magnitude_threshold); */
     __UE_ASSERT__(num_entitys >= 1); // See: TraceEntity( ... );
 
-    if (!incident_intersection->does_intersect) { return; }
+    if (!incident_intersection->does_intersect)
+    {
+        return;
+    }
 
     u16             bounces             = 0;
     r64             photon_energy       = 0;
@@ -113,7 +116,10 @@ ReflectRays(/* const Ray*             restrict const ray, */
 
     while (photon_energy > 0)
     {
-        if (bounces > incident_intersection->intersection_material.max_generated_rays) { break; }
+        if (bounces > incident_intersection->intersection_material.max_generated_rays)
+        {
+            break;
+        }
 
         v3Set(&bounce_ray.origin, incident_intersection->normal_vector.x, incident_intersection->normal_vector.y, incident_intersection->normal_vector.z);
 
@@ -131,7 +137,10 @@ ReflectRays(/* const Ray*             restrict const ray, */
 #if __UE_debug__ == 1
         RayIntersection test_intersection = { 0 };
         IntersectEntity(&bounce_ray, &entity_arr[intersected_entity_index], &test_intersection);
-        if (test_intersection.does_intersect) { __UE_ASSERT__(v3IsEqual(&test_intersection.normal_vector, &bounce_ray.origin)); }
+        if (test_intersection.does_intersect)
+        {
+            __UE_ASSERT__(v3IsEqual(&test_intersection.normal_vector, &bounce_ray.origin));
+        }
 #endif // __UE_debug__ == 1
 
         TraceEntityArray(&bounce_ray, &bounce_intersection, &incident_intersection->magnitude, &bounce_color, entity_arr, num_entitys);
@@ -204,7 +213,10 @@ IntersectEntity(const Ray* restrict const ray, const Entity* restrict const enti
     /* __UE_ASSERT__(c > 0); */
 
     r32 discriminant = (b * b) - (4.0f * a * c);
-    if (discriminant >= 0.0f) { intersection->does_intersect = true; }
+    if (discriminant >= 0.0f)
+    {
+        intersection->does_intersect = true;
+    }
     else
     {
         intersection->does_intersect = false;
@@ -306,7 +318,10 @@ TraceEntityArray(const Ray* restrict const ray,
         }
     }
 
-    if (closestIntersection.does_intersect && fabs(closestIntersection.magnitude) < fabs(*global_magnitude_threshold)) { intersection->does_intersect = true; }
+    if (closestIntersection.does_intersect && fabs(closestIntersection.magnitude) < fabs(*global_magnitude_threshold))
+    {
+        intersection->does_intersect = true;
+    }
 
 //
 #if __UE_AA__reflections

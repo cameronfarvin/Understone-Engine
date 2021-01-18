@@ -32,7 +32,10 @@ static bool
 uValidateVulkanShaderType(uVulkanShaderType shader_type)
 {
     bool retVal = false;
-    if (shader_type == uVK_SHADER_TYPE_VERTEX || shader_type == uVK_SHADER_TYPE_FRAGMENT) { retVal = true; }
+    if (shader_type == uVK_SHADER_TYPE_VERTEX || shader_type == uVK_SHADER_TYPE_FRAGMENT)
+    {
+        retVal = true;
+    }
 
     return retVal;
 }

@@ -191,7 +191,10 @@ __UE_inline__ static void
 uDrawFrame(uVulkanDrawTools* const restrict dt)
 {
     // Don't do this if the window is minimized
-    if (kGameWindow.is_minimized) { return; }
+    if (kGameWindow.is_minimized)
+    {
+        return;
+    }
 
     uAssertMsg_v(dt, "[ render ] uVulkanDrawtools must be non zero.\n");
 
@@ -240,7 +243,9 @@ main(int argc, char** argv)
 #endif // _WIN32
 #endif // __UE_debug__ == 1
 
-    if (argc && argv) {}
+    if (argc && argv)
+    {
+    }
 
 #if __UE_debug__ == 1
     printf("[ engine ] - debug -\n");
@@ -262,7 +267,10 @@ main(int argc, char** argv)
 
     while (kRunning)
     {
-        if (kVulkanDrawToolsOutdated && !kGameWindow.is_minimized) { uRebuidlDrawTools(&draw_tools); }
+        if (kVulkanDrawToolsOutdated && !kGameWindow.is_minimized)
+        {
+            uRebuidlDrawTools(&draw_tools);
+        }
 
         uDrawFrame(&draw_tools);
         uRefreshInputState();

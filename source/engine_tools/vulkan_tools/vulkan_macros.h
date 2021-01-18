@@ -26,6 +26,6 @@ char _vkMessage_buffer[MAX_VKVERBOSE_LEN];
     fflush(stdout);
 #else
 #define uVkVerbose(...) /* uVKVerbose() REMOVED */
-#endif // __UE_VK_VERBOSE__
+#endif                  // __UE_VK_VERBOSE__
 
 #endif // __UE_VULKAN_MACROS_H__

@@ -208,10 +208,16 @@ void
 TrimString(std::string& str)
 {
     // Trim leading whitespace
-    while (str[0] == ' ') { str.erase(0, 1); }
+    while (str[0] == ' ')
+    {
+        str.erase(0, 1);
+    }
 
     // Trim trailing whitespace
-    while (str[str.size() - 1] == ' ') { str.erase(str.size() - 1, 1); }
+    while (str[str.size() - 1] == ' ')
+    {
+        str.erase(str.size() - 1, 1);
+    }
 }
 
 void
@@ -240,7 +246,10 @@ struct BakedShaderInfo
 ShaderType
 StringToShaderType(const std::string& type)
 {
-    if (type == kVertexTypeString) { return ShaderType::kVertex; }
+    if (type == kVertexTypeString)
+    {
+        return ShaderType::kVertex;
+    }
     else if (type == kFragmentTypeString)
     {
         return ShaderType::kFragment;
@@ -281,7 +290,10 @@ RunProcess(const std::string& command, const std::string& mode, const size_t& ma
     // their aliases will be handled. We want the good people to have their aliases.
 #if __linux__
     char* user_shell = getenv("SHELL");
-    if (nullptr != user_shell) { shell_consious_command = std::string(user_shell) + " -p -c '" + command + '\''; }
+    if (nullptr != user_shell)
+    {
+        shell_consious_command = std::string(user_shell) + " -p -c '" + command + '\'';
+    }
 #endif // __linux__
 
     FILE* stream = P_OPEN_(shell_consious_command.c_str(), mode.c_str());
@@ -312,7 +324,10 @@ _API_TO_POSIX_PATH(std::string path)
 {
     for (size_t index = 0; index < path.size(); index++)
     {
-        if (path[index] == '\\') { path[index] = '/'; }
+        if (path[index] == '\\')
+        {
+            path[index] = '/';
+        }
     }
 
     return path;
@@ -393,12 +408,12 @@ class BuildFlagInvocationGenerator
             // Note: clang-format returns 0 for success on posix
             pipe_return = RunProcess("clang-format --version > /dev/null 2>&1", "r");
 
-            if (!pipe_return.return_code && pipe_return.success)
+            if (0 != pipe_return.return_code || !pipe_return.success)
             {
                 // Before failing, check for "clang-format.exe" as exe name on posix
                 // (rare) Seems unintuative, but it happens and causes issues.
                 pipe_return = RunProcess("clang-format.exe --version > /dev/null 2>&1", "r");
-                if (!pipe_return.return_code && pipe_return.success)
+                if (0 != pipe_return.return_code || !pipe_return.success)
                 {
                     clang_format_return = pipe_return.return_code;
                     invocation_exe      = "clang-format.exe ";
@@ -407,7 +422,7 @@ class BuildFlagInvocationGenerator
             else
             {
                 clang_format_return = pipe_return.return_code;
-                invocation_exe      = "clang-format";
+                invocation_exe      = "clang-format ";
             }
 #endif // _WIN32
 
@@ -417,9 +432,8 @@ class BuildFlagInvocationGenerator
                         "system environment path.",
                         OutputType::kError);
 #if __linux__
-                PrintLn("Note (linux users): this build tool uses _popen() to run commands. You may find it useful to include 'clang-format' as an alias to your current version "
-                        "(example alais clang-format=clang-format-10), or create a symlink in /usr/bin/ for 'clang-format' to point to your current version. The clang and clang++ "
-                        "compilers are automatically symlinked to their current versions on most installations.");
+                PrintLn("Note: Ceate a symlink in /usr/bin/ for 'clang-format' to point to your current version. The clang and clang++ "
+                        "compilers are automatically symlinked to their current versions on most installations, but not clang-format.");
 #endif // __linux__
                 is_ok_ &= false;
                 return;
@@ -428,13 +442,19 @@ class BuildFlagInvocationGenerator
             std::string invocation = invocation_exe + invocation_defaults + " ";
 
             // Add source files
-            for (const auto& source_file : source_files) { invocation += source_file + " "; }
+            for (const auto& source_file : source_files)
+            {
+                invocation += source_file + " ";
+            }
 
             // Add baked shader files
             for (const auto& baked_shader : baked_shader_info)
             {
                 std::filesystem::path baked_shader_path(baked_shader.auto_gen_output_file_path);
-                if (std::filesystem::exists(baked_shader_path)) { invocation += baked_shader.auto_gen_output_file_path + " "; }
+                if (std::filesystem::exists(baked_shader_path))
+                {
+                    invocation += baked_shader.auto_gen_output_file_path + " ";
+                }
                 else
                 {
                     PrintLn("Unable to find file for code formatting: " + baked_shader.auto_gen_output_file_path, OutputType::kError);
@@ -444,7 +464,10 @@ class BuildFlagInvocationGenerator
             }
 
             // Add header files
-            for (const auto& header_file : header_files) { invocation += header_file + " "; }
+            for (const auto& header_file : header_files)
+            {
+                invocation += header_file + " ";
+            }
 
             code_format_invocation_ = invocation;
         }
@@ -515,7 +538,10 @@ class CompilerInvocationGenerator
                              const UserCompilationFlags&     user_compilation_flags,
                              std::vector< BakedShaderInfo >& baked_shader_info) // mutable
     {
-        if (!is_ok_) { return; }
+        if (!is_ok_)
+        {
+            return;
+        }
 
         PrintLn("Generating shader compilation invocation...");
         switch (shader_compiler)
@@ -545,7 +571,10 @@ class CompilerInvocationGenerator
                              const UserBuildFlags&           user_build_flags,
                              std::vector< BakedShaderInfo >& baked_shader_info) // mutable
     {
-        if (!is_ok_) { return; }
+        if (!is_ok_)
+        {
+            return;
+        }
 
         PrintLn("Generating source compilation invocation...");
         switch (compiler)
@@ -615,7 +644,10 @@ class CompilerInvocationGenerator
     std::string
     GetLatestDefaultVulkanSdkPathWin32()
     {
-        if (!is_ok_) { return ""; }
+        if (!is_ok_)
+        {
+            return "";
+        }
 
         std::filesystem::path default_location("C:/VulkanSDK/");
         if (!std::filesystem::exists(default_location))
@@ -675,7 +707,10 @@ class CompilerInvocationGenerator
             {
                 if (tmp_version[index] > version[index])
                 {
-                    for (size_t _index = index; _index < 4; _index++) { version[_index] = tmp_version[_index]; }
+                    for (size_t _index = index; _index < 4; _index++)
+                    {
+                        version[_index] = tmp_version[_index];
+                    }
 
                     break;
                 }
@@ -708,7 +743,10 @@ class CompilerInvocationGenerator
                               const UserBuildFlags&           user_build_flags,
                               std::vector< BakedShaderInfo >& baked_shader_info) // mutable
     {
-        if (!is_ok_) { return; }
+        if (!is_ok_)
+        {
+            return;
+        }
 
         // Ensure that clang-cl is in the sys env path (clang-cl returns 0 on
         // success)
@@ -740,7 +778,10 @@ class CompilerInvocationGenerator
         // Source files
         std::string source_files_invocation = "";
         {
-            for (const std::string& source : source_files) { source_files_invocation += (source + " "); }
+            for (const std::string& source : source_files)
+            {
+                source_files_invocation += (source + " ");
+            }
         }
 
         // Baked shader files (enforce header syntax)
@@ -748,7 +789,10 @@ class CompilerInvocationGenerator
         {
             for (const BakedShaderInfo& baked_shader : baked_shader_info)
             {
-                if (std::filesystem::exists(baked_shader.auto_gen_output_file_path)) { baked_shader_files_invocation += ("-I" + baked_shader.auto_gen_output_file_path + " "); }
+                if (std::filesystem::exists(baked_shader.auto_gen_output_file_path))
+                {
+                    baked_shader_files_invocation += ("-I" + baked_shader.auto_gen_output_file_path + " ");
+                }
                 else
                 {
                     PrintLn("Unable to locate a baked shader listed for compilation: " + baked_shader.auto_gen_output_file_path);
@@ -762,7 +806,10 @@ class CompilerInvocationGenerator
         std::string header_directories_invocation = "";
         {
             // Note: Win32 vulkan headers will be added in compilation options section
-            for (const std::string& header_dir : header_directories) { header_directories_invocation += ("-I" + header_dir + " "); }
+            for (const std::string& header_dir : header_directories)
+            {
+                header_directories_invocation += ("-I" + header_dir + " ");
+            }
         }
 
         // Compilation options
@@ -826,7 +873,10 @@ class CompilerInvocationGenerator
                             const UserBuildFlags&           user_build_flags,
                             std::vector< BakedShaderInfo >& baked_shader_info) // mutable
     {
-        if (!is_ok_) { return; }
+        if (!is_ok_)
+        {
+            return;
+        }
 
         // Ensure that clang is in the sys env path (clang returns 0 on success)
         int            clang_ret_value = -1;
@@ -862,7 +912,10 @@ class CompilerInvocationGenerator
         // Source files
         std::string source_files_invocation = "";
         {
-            for (const std::string& source : source_files) { source_files_invocation += (source + " "); }
+            for (const std::string& source : source_files)
+            {
+                source_files_invocation += (source + " ");
+            }
         }
 
         // Baked shader files (enforce header syntax)
@@ -870,7 +923,10 @@ class CompilerInvocationGenerator
         {
             for (const BakedShaderInfo& baked_shader : baked_shader_info)
             {
-                if (std::filesystem::exists(baked_shader.auto_gen_output_file_path)) { baked_shader_files_invocation += ("-I" + baked_shader.auto_gen_output_file_path + " "); }
+                if (std::filesystem::exists(baked_shader.auto_gen_output_file_path))
+                {
+                    baked_shader_files_invocation += ("-I" + baked_shader.auto_gen_output_file_path + " ");
+                }
                 else
                 {
                     PrintLn("Unable to locate a baked shader listed for compilation: " + baked_shader.auto_gen_output_file_path);
@@ -884,7 +940,10 @@ class CompilerInvocationGenerator
         std::string header_directories_invocation = "";
         {
             // Note: Win32 vulkan headers will be added in compilation options section
-            for (const std::string& header_dir : header_directories) { header_directories_invocation += ("-I" + header_dir + " "); }
+            for (const std::string& header_dir : header_directories)
+            {
+                header_directories_invocation += ("-I" + header_dir + " ");
+            }
         }
 
         // Compilation options
@@ -957,7 +1016,10 @@ class CompilerInvocationGenerator
                             const UserCompilationFlags&     user_compilation_flags,
                             std::vector< BakedShaderInfo >& baked_shader_info)
     {
-        if (!is_ok_) { return; }
+        if (!is_ok_)
+        {
+            return;
+        }
 
         // Ensure that glslc is in the sys env path (glslc returns 0 on success)
         int            glslc_ret_value = -1;
@@ -1008,7 +1070,10 @@ class CompilerInvocationGenerator
         size_t                                                                  num_shaders_compiled = 0;
         for (const auto& shader_source : shader_files)
         {
-            if (num_shaders_compiled) { invocation += "&& "; }
+            if (num_shaders_compiled)
+            {
+                invocation += "&& ";
+            }
 
             invocation += invocation_base;
 
@@ -1051,7 +1116,10 @@ class CompilerInvocationGenerator
             }
         }
 
-        if (is_ok_) { shader_invocation_ = invocation; }
+        if (is_ok_)
+        {
+            shader_invocation_ = invocation;
+        }
     }
 
     bool        is_ok_             = true;
@@ -1072,7 +1140,8 @@ DetermineUnderstoneRootDirectory()
 
     std::filesystem::path partial_path = CWD;
     auto                  path_element = CWD.end();
-    do {
+    do
+    {
         std::filesystem::directory_entry dir(partial_path);
         if (!dir.is_directory())
         {
@@ -1087,7 +1156,10 @@ DetermineUnderstoneRootDirectory()
         for (const auto& dir_contents : std::filesystem::directory_iterator(dir))
         {
             // Choose all directories
-            if (!dir_contents.is_directory()) { continue; }
+            if (!dir_contents.is_directory())
+            {
+                continue;
+            }
 
             // Search directory contents for requried files
             try
@@ -1096,7 +1168,10 @@ DetermineUnderstoneRootDirectory()
                 {
                     // Choose only directories
                     std::filesystem::perms dir_permissions = subdir_contents.status().permissions();
-                    if (!subdir_contents.is_directory() || ((dir_permissions & std::filesystem::perms::others_all) == std::filesystem::perms::none)) { continue; }
+                    if (!subdir_contents.is_directory() || ((dir_permissions & std::filesystem::perms::others_all) == std::filesystem::perms::none))
+                    {
+                        continue;
+                    }
 
                     std::string expected_path = subdir_contents.path().string();
                     if (std::filesystem::exists(expected_path + "/build") && std::filesystem::exists(expected_path + "/analysis") &&
@@ -1113,10 +1188,16 @@ DetermineUnderstoneRootDirectory()
                 continue;
             }
 
-            if (root_understone_dir_found) { break; }
+            if (root_understone_dir_found)
+            {
+                break;
+            }
         }
 
-        if (path_element != CWD.end()) { partial_path = CWD.string().substr(0, CWD.string().find(path_element->string())); }
+        if (path_element != CWD.end())
+        {
+            partial_path = CWD.string().substr(0, CWD.string().find(path_element->string()));
+        }
         path_element--;
     } while (path_element != CWD.begin());
 
@@ -1220,7 +1301,10 @@ GetDependencyPathInfo(const std::string&              understone_root_dir,
                             TrimString(shader_type);
 
                             ShaderType temp_type = StringToShaderType(shader_type);
-                            if (temp_type != ShaderType::kNone) { shader_info.shader_type = temp_type; }
+                            if (temp_type != ShaderType::kNone)
+                            {
+                                shader_info.shader_type = temp_type;
+                            }
                             else
                             {
                                 std::string shader_type_error_mismatch = "The shader at " + shader_path + " has an " + kShaderTypeId + " \"" + shader_type +
@@ -1259,7 +1343,10 @@ GetDependencyPathInfo(const std::string&              understone_root_dir,
                             {
                                 std::string shader_name_header_type_error = "The shader at " + shader_path + " has " + kAutoGenFileNameId + " \"" + auto_gen_file_name +
                                                                             "\", which is not a known header extension. Known header extensions are:";
-                                for (const std::string& header_extension : header_file_types) { shader_name_header_type_error += (" " + header_extension); }
+                                for (const std::string& header_extension : header_file_types)
+                                {
+                                    shader_name_header_type_error += (" " + header_extension);
+                                }
                                 PrintLn(shader_name_header_type_error, OutputType::kError);
 
                                 return false;
@@ -1301,7 +1388,10 @@ GetDependencyPathInfo(const std::string&              understone_root_dir,
 void
 StringToLower(std::string& str)
 {
-    for (size_t c = 0; c < str.size(); c++) { str[c] = std::tolower(str[c]); }
+    for (size_t c = 0; c < str.size(); c++)
+    {
+        str[c] = std::tolower(str[c]);
+    }
 }
 
 class Analyzer
@@ -1384,7 +1474,10 @@ class Analyzer
         std::string preamble_autogen_string = "- This is an autogenerated file; content changes will be overwritten "
                                               "-";
         std::string preamble_autogen_decorator = "";
-        for (size_t i = 0; i < preamble_autogen_string.size(); i++) { preamble_autogen_decorator += "-"; }
+        for (size_t i = 0; i < preamble_autogen_string.size(); i++)
+        {
+            preamble_autogen_decorator += "-";
+        }
         file_stream << preamble_autogen_decorator << std::endl << preamble_autogen_string << std::endl << preamble_autogen_decorator << std::endl << std::endl;
 
         // Wire LOC info:
@@ -1427,7 +1520,10 @@ class Analyzer
             if (double_slash_pos != std::string::npos)
             {
                 // Is this a leading or a trailing comment?
-                if (0 == double_slash_pos) { comment_line_counter++; }
+                if (0 == double_slash_pos)
+                {
+                    comment_line_counter++;
+                }
                 else
                 {
                     // Trailing comments follow a LOC
@@ -1456,8 +1552,14 @@ class Analyzer
                     size_t first_close_brace_pos = file_line_string.find(']', tag_indicator_pos);
                     if (tag_indicator_pos != std::string::npos)
                     {
-                        if (first_open_brace_pos == std::string::npos) { first_open_brace_pos = file_line_string.size(); }
-                        if (first_close_brace_pos == std::string::npos) { first_close_brace_pos = file_line_string.size(); }
+                        if (first_open_brace_pos == std::string::npos)
+                        {
+                            first_open_brace_pos = file_line_string.size();
+                        }
+                        if (first_close_brace_pos == std::string::npos)
+                        {
+                            first_close_brace_pos = file_line_string.size();
+                        }
 
                         // Determine the dev name (if present)
                         std::string dev_name = "";
@@ -1473,13 +1575,22 @@ class Analyzer
                         {
                             // This is a valid tag w/ a dev name
                             dev_name = file_line_string.substr(first_open_brace_pos, tag_indicator_pos - first_open_brace_pos);
-                            while (dev_name[0] == ' ' || dev_name[0] == '[') { dev_name.erase(0, 1); }
-                            while (dev_name[dev_name.size() - 1] == ' ') { dev_name.erase(dev_name.size() - 1, 1); }
+                            while (dev_name[0] == ' ' || dev_name[0] == '[')
+                            {
+                                dev_name.erase(0, 1);
+                            }
+                            while (dev_name[dev_name.size() - 1] == ' ')
+                            {
+                                dev_name.erase(dev_name.size() - 1, 1);
+                            }
                         }
 
                         // Determine file context
                         std::string context = file_line_string.erase(first_open_brace_pos, first_close_brace_pos - first_open_brace_pos + 1);
-                        while (context[0] == ' ' || context[0] == '/') { context.erase(0, 1); }
+                        while (context[0] == ' ' || context[0] == '/')
+                        {
+                            context.erase(0, 1);
+                        }
 
                         // We're done -- add the tag entry to the map member
                         entries_by_tag_type_[tag_type].push_back({ std::filesystem::path(file_path_string), context, dev_name, file_line_number });
@@ -1632,7 +1743,10 @@ BakeShaders(const std::string&              understone_root_dir,
             for (size_t byte_idx = 0; byte_idx < file_size_32_bit_words; byte_idx++)
             {
                 spirv_data_array_definition << file_data[byte_idx];
-                if (byte_idx < file_size_32_bit_words - 1) { spirv_data_array_definition << ", "; }
+                if (byte_idx < file_size_32_bit_words - 1)
+                {
+                    spirv_data_array_definition << ", ";
+                }
             }
             spirv_data_array_definition << "};\n";
 
@@ -1711,18 +1825,27 @@ PrintLnHelpMessage()
     size_t largest_arg_str_len = 0;
     for (const auto& arg_pair : kAllCommandLineArgs)
     {
-        if (arg_pair.first.size() > largest_arg_str_len) { largest_arg_str_len = arg_pair.first.size(); }
+        if (arg_pair.first.size() > largest_arg_str_len)
+        {
+            largest_arg_str_len = arg_pair.first.size();
+        }
     }
 
     std::string spacing_string = "";
-    for (size_t s = 0; s < largest_arg_str_len; s++) { spacing_string += ' '; }
+    for (size_t s = 0; s < largest_arg_str_len; s++)
+    {
+        spacing_string += ' ';
+    }
     spacing_string += "  |  ";
 
     std::string options_str            = "Options:";
     std::string sub_options_str        = "Description:";
     std::string table_header           = options_str + spacing_string.substr(options_str.size(), spacing_string.size()) + sub_options_str;
     std::string table_header_separator = "";
-    for (size_t s = 0; s < table_header.size(); s++) { table_header_separator += "-"; }
+    for (size_t s = 0; s < table_header.size(); s++)
+    {
+        table_header_separator += "-";
+    }
 
     std::stringstream help_text;
     help_text << std::endl << "Usage: build_understone [ options ] [ sub-options ]" << std::endl << std::endl;
@@ -1798,7 +1921,10 @@ ParseCommandLineArgs(const CommandLineArguments& command_line_args,
                 arg = command_line_args[++arg_idx];
 
                 // Weak check to make sure next argument is not another valid cli option
-                if (arg[0] == '-') { PRINT_ERR_MSG_RET_NEG_ONE("-vulkan_sdk option expects a path. Got: " + arg); }
+                if (arg[0] == '-')
+                {
+                    PRINT_ERR_MSG_RET_NEG_ONE("-vulkan_sdk option expects a path. Got: " + arg);
+                }
                 else if (!std::filesystem::exists(arg))
                 {
                     PRINT_ERR_MSG_RET_NEG_ONE("-vulkan_sdk option expects a path: "
@@ -1910,7 +2036,10 @@ main(int argc, char** argv)
         for (int arg_index = 1; arg_index < argc; arg_index++)
         {
             std::string tmp_string(argv[arg_index]);
-            if (tmp_string.size() > 1) { command_line_args[arg_index - 1] = tmp_string; }
+            if (tmp_string.size() > 1)
+            {
+                command_line_args[arg_index - 1] = tmp_string;
+            }
         }
 
         size_t parse_args_return_status = 0;
@@ -1927,20 +2056,32 @@ main(int argc, char** argv)
     }
 
     CompilerInvocationGenerator compiler_generator = CompilerInvocationGenerator(user_compilation_flags, user_compilation_options, user_build_flags);
-    if (!compiler_generator.IsOk()) { return -1; }
+    if (!compiler_generator.IsOk())
+    {
+        return -1;
+    }
 
     // Shader invocation & compilation
     {
         compiler_generator.GenerateShaderInvocation(understone_root_dir, shader_files, user_shader_compiler, user_compilation_flags, baked_shader_info);
-        if (!compiler_generator.IsOk()) { return -1; }
+        if (!compiler_generator.IsOk())
+        {
+            return -1;
+        }
         PrintLn("Compiling shaders...");
-        if (std::system(compiler_generator.GetShaderInvocation().c_str())) { return -1; }
+        if (std::system(compiler_generator.GetShaderInvocation().c_str()))
+        {
+            return -1;
+        }
     }
 
     // Shader baking
     {
         PrintLn("Baking shaders...");
-        if (!BakeShaders(understone_root_dir, baked_shader_info, user_compilation_flags, header_files)) { return -1; }
+        if (!BakeShaders(understone_root_dir, baked_shader_info, user_compilation_flags, header_files))
+        {
+            return -1;
+        }
     }
 
     // Source invocation & compilation
@@ -1954,20 +2095,32 @@ main(int argc, char** argv)
                                                     user_compilation_options,
                                                     user_build_flags,
                                                     baked_shader_info);
-        if (!compiler_generator.IsOk()) { return -1; }
+        if (!compiler_generator.IsOk())
+        {
+            return -1;
+        }
 
         PrintLn("Compiling source files...");
-        if (std::system(compiler_generator.GetSourceInvocation().c_str())) { return -1; }
+        if (std::system(compiler_generator.GetSourceInvocation().c_str()))
+        {
+            return -1;
+        }
     }
 
     // Build Flags
     {
         BuildFlagInvocationGenerator build_flag_generator = BuildFlagInvocationGenerator(understone_root_dir, source_files, header_files, baked_shader_info, user_build_flags);
-        if (!build_flag_generator.IsOk()) { return -1; }
+        if (!build_flag_generator.IsOk())
+        {
+            return -1;
+        }
         if (user_build_flags.at(BuildFlags::kRunCodeFormatter))
         {
             PrintLn("Formatting source files...");
-            if (std::system(build_flag_generator.GetCodeFormatInvocation().c_str())) { return -1; }
+            if (std::system(build_flag_generator.GetCodeFormatInvocation().c_str()))
+            {
+                return -1;
+            }
         }
 
         // Code analysis
@@ -1976,15 +2129,24 @@ main(int argc, char** argv)
             PrintLn("Running code analysis...");
             Analyzer analyzer(understone_root_dir);
 
-            if (!analyzer.RunTagAnalysis(source_files, header_files, shader_files)) { return -1; }
+            if (!analyzer.RunTagAnalysis(source_files, header_files, shader_files))
+            {
+                return -1;
+            }
 
-            if (!analyzer.RunAnalysisReport()) { return -1; }
+            if (!analyzer.RunAnalysisReport())
+            {
+                return -1;
+            }
         }
 
         if (user_build_flags.at(BuildFlags::kRunAfterBuild))
         {
             std::string launch_message = "Launching Understone Engine";
-            if (kRunAfterBuildArgs.size()) { launch_message += " with args: " + kRunAfterBuildArgs; }
+            if (kRunAfterBuildArgs.size())
+            {
+                launch_message += " with args: " + kRunAfterBuildArgs;
+            }
             launch_message += "...";
             PrintLn(launch_message);
 
@@ -1995,7 +2157,10 @@ main(int argc, char** argv)
             launch_invocation = "./" + understone_root_dir + "/bin/" + std::string(UNDERSTONE_EXE_NAME) + " " + kRunAfterBuildArgs;
 #endif // _WIN32
 
-            if (!std::system(launch_invocation.c_str())) { return -1; }
+            if (!std::system(launch_invocation.c_str()))
+            {
+                return -1;
+            }
         }
     }
 

@@ -452,7 +452,10 @@ static void
 m3Set(m3* restrict const a, const r32 b)
 {
     uAssert(a);
-    for (uint8_t idx = 0; idx < 9; idx++) { a->arr[idx] = b; }
+    for (uint8_t idx = 0; idx < 9; idx++)
+    {
+        a->arr[idx] = b;
+    }
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
@@ -470,9 +473,15 @@ static void
 m3Ident(m3* restrict const result)
 {
     uAssert(result);
-    for (uint8_t idx = 0; idx < 9; idx++) { result->arr[idx] = 0; }
+    for (uint8_t idx = 0; idx < 9; idx++)
+    {
+        result->arr[idx] = 0;
+    }
 
-    for (uint8_t idx = 0; idx < 3; idx++) { result->arr2d[idx][idx] = 1; }
+    for (uint8_t idx = 0; idx < 3; idx++)
+    {
+        result->arr2d[idx][idx] = 1;
+    }
 }
 
 __UE_inline__ static void
@@ -495,7 +504,10 @@ static void
 m4Set(m4* const a, const r32 b)
 {
     uAssert(a);
-    for (uint8_t idx = 0; idx < 16; idx++) { a->arr[idx] = b; }
+    for (uint8_t idx = 0; idx < 16; idx++)
+    {
+        a->arr[idx] = b;
+    }
 }
 
 // [ cfarvin::RESTORE ] Unused fn warning
@@ -513,9 +525,15 @@ static void
 m4Ident(m4* const result)
 {
     uAssert(result);
-    for (uint8_t idx = 0; idx < 16; idx++) { result->arr[idx] = 0; }
+    for (uint8_t idx = 0; idx < 16; idx++)
+    {
+        result->arr[idx] = 0;
+    }
 
-    for (uint8_t idx = 0; idx < 4; idx++) { result->arr2d[idx][idx] = 1; }
+    for (uint8_t idx = 0; idx < 4; idx++)
+    {
+        result->arr2d[idx][idx] = 1;
+    }
 }
 
 __UE_inline__ static void

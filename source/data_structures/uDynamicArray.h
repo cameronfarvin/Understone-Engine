@@ -76,7 +76,10 @@ uAPI_uDAPush(uDynamicArray* const restrict da, void** const restrict data_in)
             *non_const_max_length        = da->max_length * da->scaling_factor;
             void* allocated              = realloc(da->data, (da->datatype_size * da->max_length));
             uAssertMsg_v(allocated, "[ dynamic array ] Reallocation failed.\n");
-            if (allocated) { da->data = allocated; }
+            if (allocated)
+            {
+                da->data = allocated;
+            }
         }
 
         memcpy(( char* )da->data + (da->length * da->datatype_size), data_in, da->datatype_size);
@@ -96,7 +99,10 @@ uDAIndex(uDynamicArray* const restrict da, const size_t index)
     uAssertMsg_v(da, "Null uDynamicArray ptr pvoided.\n");
     uAssertMsg_v(index < da->length, "Index [ %zd ] surpasses dynamic array length: [ %zd ].\n", index, da->length);
 
-    if (da && (index < da->length)) { return ( void* )(( char* )da->data + (index * da->datatype_size)); }
+    if (da && (index < da->length))
+    {
+        return ( void* )(( char* )da->data + (index * da->datatype_size));
+    }
 
     return NULL;
 }
