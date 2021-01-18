@@ -1526,6 +1526,9 @@ uCreateVulkanSurface(uVulkanInfo* const restrict v_info, uVulkanSurfaceInfo* con
 
 #if _WIN32
     uCreateWin32Surface(v_info, surface_info);
+#else
+    // [ cfarvin::TODO ] Implement linux surface cration
+    uFatal("Linux surface creation not implemented.");
 #endif // _WIN32
 }
 
