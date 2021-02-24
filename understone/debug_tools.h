@@ -170,7 +170,7 @@ char _message_buffer[MAX_ERROR_LEN];
 #include <stdlib.h>
 #endif // _WIN32
 
-#else                              // __UE_debug__ == 1
+#else // __UE_debug__ == 1
 // Disable the following when not in debug-mode
 #define uDebugPrint_v(...)         /* System debugging is disabled */
 #define uDebugPrint(...)           /* System debugging is disabled */
@@ -178,6 +178,6 @@ char _message_buffer[MAX_ERROR_LEN];
 #define uAssert_v(cond, ...)       /* System debugging is disabled */
 #define uAssertMsg_v(cond, ...)    /* System debugging is disabled */
 #define uDebugStatement(statement) /* System debugging is disabled */
-#endif                             // __UE_debug__ == 1
+#endif // __UE_debug__ == 1
 
 #endif // __UE_DEBUG_TOOLS_H__

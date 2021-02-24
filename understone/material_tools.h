@@ -51,7 +51,9 @@ GetDefaultMaterialByClass(_mut_ Material* restrict const material, const Materia
 }
 
 __UE_inline__ static void
-BlendColorByMaterial(const Material* restrict const material, const Color32_RGB* restrict const input_color, _mut_ Color32_RGB* restrict const return_color)
+BlendColorByMaterial(const Material* restrict const    material,
+                     const Color32_RGB* restrict const input_color,
+                     _mut_ Color32_RGB* restrict const return_color)
 {
     __UE_ASSERT__(material);
     __UE_ASSERT__(material->max_generated_rays > 0);

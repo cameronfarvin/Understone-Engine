@@ -17,8 +17,8 @@ typedef struct
     const u16 arena_size;
 } uMemoryArena;
 
-__UE_inline__ static uMemoryArena*
-uMAInit(const u16 arena_bytes)
+__UE_inline__ uMemoryArena*
+              uMAInit(const u16 arena_bytes)
 {
     if (!arena_bytes)
     {
@@ -64,7 +64,7 @@ uMAInit(const u16 arena_bytes)
 /* } */
 
 #define uMAPushData(arena, new_data, type) ( type* )uMAPushData_API(arena, ( type* )&(new_data), sizeof(type))
-__UE_inline__ static void*
+__UE_inline__ void*
 uMAPushData_API(uMemoryArena* restrict const memory_arena, const void* restrict const new_data, const u16 new_data_size)
 {
     if (!(memory_arena && new_data && new_data_size))
@@ -86,7 +86,7 @@ uMAPushData_API(uMemoryArena* restrict const memory_arena, const void* restrict 
 }
 
 #define uMAPushArray(arena, new_data, type, num_bytes) ( type* )uMAPushArray_API(arena, new_data, num_bytes)
-__UE_inline__ static void*
+__UE_inline__ void*
 uMAPushArray_API(uMemoryArena* memory_arena, void* new_data, u16 new_data_size)
 {
     if (!(memory_arena && new_data && new_data_size))
@@ -107,7 +107,7 @@ uMAPushArray_API(uMemoryArena* memory_arena, void* new_data, u16 new_data_size)
     return ( void* )(dest_ptr);
 }
 
-__UE_inline__ static bool
+__UE_inline__ bool
 uMADestroy(uMemoryArena* memory_arena)
 {
     if (!(memory_arena && memory_arena->data))

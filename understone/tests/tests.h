@@ -1,15 +1,15 @@
 #ifndef __UE_TESTS_H__
 #define __UE_TESTS_H__
 
-#include "data_structures.h"
-#include "debug_tools.h"
-#include "maths_tools.h"
-#include "memory_tools.h"
-#include "type_tools.h"
-
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <understone/debug_tools.h>
+#include <understone/maths_tools.h>
+#include <understone/memory_tools.h>
+#include <understone/type_tools.h>
+#include <understone/uDynamicArray.h>
+#include <understone/uString.h>
 
 // For now, run tests on startup for every debug build,
 // Otherwise, don't run.
@@ -17,8 +17,9 @@
 #define __uTESTS_ENABLED__ 1
 #endif // __UE_debug__ == 1
 
-#define arrayTestFailMessage "Failed dynamic array tests\n"
-void static runDynamicArrayTests()
+#define ARRAY_TST_FAIL_MSG "Failed dynamic array tests\n"
+void
+RunDynamicArrayTests()
 {
     puts("\tRunning dynamic array tests...");
 
@@ -26,14 +27,14 @@ void static runDynamicArrayTests()
     for (size_t ii = 0; ii < 0xFF; ii++)
     {
         uDAPush(daTest_u8, &ii);
-        uTesetAssert(( u8 )ii == *( u8* )uDAIndex(daTest_u8, ii), arrayTestFailMessage);
+        uTesetAssert(( u8 )ii == *( u8* )uDAIndex(daTest_u8, ii), ARRAY_TST_FAIL_MSG);
     }
     for (size_t ii = 0xFF; ii > 0; ii--)
     {
         size_t size_before = daTest_u8->length;
         uDAPop(daTest_u8);
         size_t size_after = daTest_u8->length;
-        uTesetAssert((size_after == (size_before - 1)), arrayTestFailMessage);
+        uTesetAssert((size_after == (size_before - 1)), ARRAY_TST_FAIL_MSG);
     }
     uTesetAssert(uDADestroy(daTest_u8), "Failed to deallocate for uDynamicArray u8 test");
 
@@ -41,14 +42,14 @@ void static runDynamicArrayTests()
     for (size_t ii = 0; ii < 0xFFFF; ii++)
     {
         uDAPush(daTest_u16, &ii);
-        uTesetAssert(( u16 )ii == *( u16* )uDAIndex(daTest_u16, ii), arrayTestFailMessage);
+        uTesetAssert(( u16 )ii == *( u16* )uDAIndex(daTest_u16, ii), ARRAY_TST_FAIL_MSG);
     }
     for (size_t ii = 0xFFFF; ii > 0; ii--)
     {
         size_t size_before = daTest_u16->length;
         uDAPop(daTest_u16);
         size_t size_after = daTest_u16->length;
-        uTesetAssert((size_after == (size_before - 1)), arrayTestFailMessage);
+        uTesetAssert((size_after == (size_before - 1)), ARRAY_TST_FAIL_MSG);
     }
     uTesetAssert(uDADestroy(daTest_u16), "Failed to deallocate for uDynamicArray u16 test");
 
@@ -56,14 +57,14 @@ void static runDynamicArrayTests()
     for (size_t ii = 0; ii < 0xFFFF; ii++)
     {
         uDAPush(daTest_u32, &ii);
-        uTesetAssert((( u32 )ii == *( u32* )uDAIndex(daTest_u32, ii)), arrayTestFailMessage);
+        uTesetAssert((( u32 )ii == *( u32* )uDAIndex(daTest_u32, ii)), ARRAY_TST_FAIL_MSG);
     }
     for (size_t ii = 0xFFFF; ii > 0; ii--)
     {
         size_t size_before = daTest_u32->length;
         uDAPop(daTest_u32);
         size_t size_after = daTest_u32->length;
-        uTesetAssert((size_after == (size_before - 1)), arrayTestFailMessage);
+        uTesetAssert((size_after == (size_before - 1)), ARRAY_TST_FAIL_MSG);
     }
     uTesetAssert(uDADestroy(daTest_u32), "Failed to deallocate for uDynamicArray u32 test");
 
@@ -71,14 +72,14 @@ void static runDynamicArrayTests()
     for (size_t ii = 0; ii < 0xFFFF; ii++)
     {
         uDAPush(daTest_u64, &ii);
-        uTesetAssert((( u64 )ii == *( u64* )uDAIndex(daTest_u64, ii)), arrayTestFailMessage);
+        uTesetAssert((( u64 )ii == *( u64* )uDAIndex(daTest_u64, ii)), ARRAY_TST_FAIL_MSG);
     }
     for (size_t ii = 0xFFFF; ii > 0; ii--)
     {
         size_t size_before = daTest_u64->length;
         uDAPop(daTest_u64);
         size_t size_after = daTest_u64->length;
-        uTesetAssert((size_after == (size_before - 1)), arrayTestFailMessage);
+        uTesetAssert((size_after == (size_before - 1)), ARRAY_TST_FAIL_MSG);
     }
     uTesetAssert(uDADestroy(daTest_u64), "Failed to deallocate for uDynamicArray u64 test");
 
@@ -87,14 +88,14 @@ void static runDynamicArrayTests()
     {
         r32 value = (r32)(ii - _PI_);
         uDAPush(daTest_r32, ( r32* )&value);
-        uTesetAssert((value == *( r32* )uDAIndex(daTest_r32, ii)), arrayTestFailMessage);
+        uTesetAssert((value == *( r32* )uDAIndex(daTest_r32, ii)), ARRAY_TST_FAIL_MSG);
     }
     for (size_t ii = 0xFFFF; ii > 0; ii--)
     {
         size_t size_before = daTest_r32->length;
         uDAPop(daTest_r32);
         size_t size_after = daTest_r32->length;
-        uTesetAssert((size_after == (size_before - 1)), arrayTestFailMessage);
+        uTesetAssert((size_after == (size_before - 1)), ARRAY_TST_FAIL_MSG);
     }
     uTesetAssert(uDADestroy(daTest_r32), "Failed to deallocate for uDynamicArray r32 test");
 
@@ -103,21 +104,21 @@ void static runDynamicArrayTests()
     {
         r64 value = ( r64 )ii - _PI_;
         uDAPush(daTest_r64, &value);
-        uTesetAssert((value == *( r64* )uDAIndex(daTest_r64, ii)), arrayTestFailMessage);
+        uTesetAssert((value == *( r64* )uDAIndex(daTest_r64, ii)), ARRAY_TST_FAIL_MSG);
     }
     for (size_t ii = 0xFFFF; ii > 0; ii--)
     {
         size_t size_before = daTest_r64->length;
         uDAPop(daTest_r64);
         size_t size_after = daTest_r64->length;
-        uTesetAssert((size_after == (size_before - 1)), arrayTestFailMessage);
+        uTesetAssert((size_after == (size_before - 1)), ARRAY_TST_FAIL_MSG);
     }
     uTesetAssert(uDADestroy(daTest_r64), "Failed to deallocate for uDynamicArray r64 test");
 }
 
 #define memoryArenaTestFailMessage "Failed memory arena tests\n"
-static void
-runMemoryArenaTests()
+void
+RunMemroyArenaTests()
 {
     puts("\tRunning memory arena tests...");
 
@@ -127,13 +128,15 @@ runMemoryArenaTests()
     uMemoryArena* memory_arena_zero_alloc_test = uMAInit(allocation_size);
     uTesetAssert((memory_arena_zero_alloc_test == NULL), memoryArenaTestFailMessage);
     // Note: We *want* this uMADestroy to fail
-    uTesetAssert(!(uMADestroy(memory_arena_zero_alloc_test)), "Failed to return false from uMADestroy on zero size allocation");
+    uTesetAssert(!(uMADestroy(memory_arena_zero_alloc_test)),
+                 "Failed to return false from uMADestroy on zero size allocation");
 
     // Test standard allocation/initialization
     allocation_size                     = 512;
     uMemoryArena* memory_arena_ptr_test = uMAInit(allocation_size);
     uTesetAssert((memory_arena_ptr_test->data != NULL), memoryArenaTestFailMessage);
-    uTesetAssert((memory_arena_ptr_test->data == (memory_arena_ptr_test->data + memory_arena_ptr_test->offset)), memoryArenaTestFailMessage);
+    uTesetAssert((memory_arena_ptr_test->data == (memory_arena_ptr_test->data + memory_arena_ptr_test->offset)),
+                 memoryArenaTestFailMessage);
     uTesetAssert((memory_arena_ptr_test->arena_size == allocation_size), memoryArenaTestFailMessage);
     uTesetAssert(uMADestroy(memory_arena_ptr_test), "Failed to deallocate on uMemoryArena ptr test");
 
@@ -141,7 +144,9 @@ runMemoryArenaTests()
     allocation_size                           = 1;
     uMemoryArena* memory_arena_push_data_test = uMAInit(allocation_size);
     uTesetAssert((memory_arena_push_data_test->data != NULL), memoryArenaTestFailMessage);
-    uTesetAssert((memory_arena_push_data_test->data == (memory_arena_push_data_test->data + memory_arena_push_data_test->offset)), memoryArenaTestFailMessage);
+    uTesetAssert(
+      (memory_arena_push_data_test->data == (memory_arena_push_data_test->data + memory_arena_push_data_test->offset)),
+      memoryArenaTestFailMessage);
     uTesetAssert(memory_arena_push_data_test->arena_size == allocation_size, memoryArenaTestFailMessage);
     u8  standard_test_target        = 5;
     u8* standard_test_target_result = uMAPushData(memory_arena_push_data_test, standard_test_target, u8);
@@ -182,7 +187,9 @@ runMemoryArenaTests()
     allocation_size                        = sizeof(testStruct);
     uMemoryArena* memory_arena_struct_test = uMAInit(allocation_size);
     uTesetAssert((memory_arena_struct_test->data != NULL), memoryArenaTestFailMessage);
-    uTesetAssert((memory_arena_struct_test->data == (memory_arena_struct_test->data + memory_arena_struct_test->offset)), memoryArenaTestFailMessage);
+    uTesetAssert(
+      (memory_arena_struct_test->data == (memory_arena_struct_test->data + memory_arena_struct_test->offset)),
+      memoryArenaTestFailMessage);
     uTesetAssert(memory_arena_struct_test->arena_size == allocation_size, memoryArenaTestFailMessage);
     uMATestStruct* test_struct_result = uMAPushData(memory_arena_struct_test, testStruct, uMATestStruct);
     uTesetAssert((test_struct_result->iptr == testStruct.iptr), memoryArenaTestFailMessage);
@@ -194,7 +201,9 @@ runMemoryArenaTests()
     allocation_size                            = 336;
     uMemoryArena* memory_arena_multi_type_test = uMAInit(allocation_size);
     uTesetAssert((memory_arena_multi_type_test->data != NULL), memoryArenaTestFailMessage);
-    uTesetAssert((memory_arena_multi_type_test->data == (memory_arena_multi_type_test->data + memory_arena_multi_type_test->offset)), memoryArenaTestFailMessage);
+    uTesetAssert((memory_arena_multi_type_test->data ==
+                  (memory_arena_multi_type_test->data + memory_arena_multi_type_test->offset)),
+                 memoryArenaTestFailMessage);
     uTesetAssert(memory_arena_multi_type_test->arena_size == allocation_size, memoryArenaTestFailMessage);
     u8*  testStruct_u8  = uMAPushData(memory_arena_multi_type_test, testStruct.i, u8);
     u16* testStruct_u16 = uMAPushData(memory_arena_multi_type_test, testStruct.i, u16);
@@ -233,13 +242,14 @@ runMemoryArenaTests()
     u8* test_array_result = uMAPushArray(memory_arena_array_test, &test_array, u8, 256);
     for (size_t ii = 0; ii < 256; ii++)
     {
-        uTesetAssert((test_array_result[ii] == test_array[ii] && test_array[ii] == ( u8 )ii), memoryArenaTestFailMessage);
+        uTesetAssert((test_array_result[ii] == test_array[ii] && test_array[ii] == ( u8 )ii),
+                     memoryArenaTestFailMessage);
     }
     uTesetAssert(uMADestroy(memory_arena_array_test), "Failed to deallocate on uMemoryArena array test");
 }
 
-static void
-runMathsTests()
+void
+RunMathsTests()
 {
     puts("\tRunning maths tests...");
 
@@ -324,7 +334,8 @@ runMathsTests()
     // v4ScalarMul()
     v4Set(&v4A, 1.0f, 1.0f, 1.0f, 1.0f);
     v4ScalarMul(&v4A, 5.0f, &v4Result);
-    uTesetAssert(v4Result.x == 5 && v4Result.y == 5 && v4Result.z == 5 && v4Result.w == 5, "Failed v4ScalarMul() tests");
+    uTesetAssert(v4Result.x == 5 && v4Result.y == 5 && v4Result.z == 5 && v4Result.w == 5,
+                 "Failed v4ScalarMul() tests");
 
     // v4Mag()
     v4Set(&v4A, 1.0f, 1.0f, 1.0f, 1.0f);
@@ -336,7 +347,11 @@ runMathsTests()
     v4Set(&v4A, 1.0f, 2.0f, 3.0f, 4.0f);
     r32 NormMagv4Result = v4Mag(&v4A);
     uTesetAssert(IsWithinTolerance(NormMagv4Result, ( r32 )sqrt(30)), "Failed v4Norm() tests");
-    v4Set(&v4Result, (v4A.x / NormMagv4Result), (v4A.y / NormMagv4Result), (v4A.z / NormMagv4Result), (v4A.w / NormMagv4Result));
+    v4Set(&v4Result,
+          (v4A.x / NormMagv4Result),
+          (v4A.y / NormMagv4Result),
+          (v4A.z / NormMagv4Result),
+          (v4A.w / NormMagv4Result));
     v4Norm(&v4A);
     uTesetAssert(v4A.x == v4Result.x, "Failed v4Norm() tests");
     uTesetAssert(v4A.y == v4Result.y, "Failed v4Norm() tests");
@@ -528,7 +543,7 @@ runMathsTests()
 }
 
 void
-runStringTests()
+RunStringTests()
 {
     puts("\tRunning uString tests...");
 
@@ -545,10 +560,10 @@ runAllTests()
 {
     puts("[ tests ] Running All Tests...");
 
-    runDynamicArrayTests();
-    runMemoryArenaTests();
-    runMathsTests();
-    runStringTests();
+    RunDynamicArrayTests();
+    RunMemroyArenaTests();
+    RunMathsTests();
+    RunStringTests();
 
     puts("[ tests ] All pass");
     fflush(stdout);

@@ -262,7 +262,10 @@ HSV32ToRGB32(const Color32_HSV* restrict const hsv_source, _mut_ Color32_RGB* re
 }
 
 static void
-WritePPM32(const restrict Color32_RGB* const pixel_array, u32 image_width, u32 image_height, const restrict char* const image_name)
+WritePPM32(const restrict Color32_RGB* const pixel_array,
+           u32                               image_width,
+           u32                               image_height,
+           const restrict char* const        image_name)
 {
     __UE_ASSERT__(pixel_array && image_width && image_height);
 
@@ -286,7 +289,12 @@ WritePPM32(const restrict Color32_RGB* const pixel_array, u32 image_width, u32 i
                 rgb_tripplet[( size_t )idx] = '\0';
             }
 
-            success = snprintf(rgb_tripplet, MAX_PPM_TRIPPLET_SIZE, "%d %d %d\n", pixel_array[pix_idx].channel.R, pixel_array[pix_idx].channel.G, pixel_array[pix_idx].channel.B);
+            success = snprintf(rgb_tripplet,
+                               MAX_PPM_TRIPPLET_SIZE,
+                               "%d %d %d\n",
+                               pixel_array[pix_idx].channel.R,
+                               pixel_array[pix_idx].channel.G,
+                               pixel_array[pix_idx].channel.B);
 
             __UE_ASSERT__(success > 0);
             __UE_ASSERT__(success < MAX_PPM_TRIPPLET_SIZE);
@@ -301,7 +309,10 @@ WritePPM32(const restrict Color32_RGB* const pixel_array, u32 image_width, u32 i
 }
 
 static void
-WriteBitmap32(const restrict Color32_RGB* const pixel_array, u32 image_width, u32 image_height, const char* const image_name)
+WriteBitmap32(const restrict Color32_RGB* const pixel_array,
+              u32                               image_width,
+              u32                               image_height,
+              const char* const                 image_name)
 
 {
     __UE_ASSERT__(pixel_array && image_width && image_height);

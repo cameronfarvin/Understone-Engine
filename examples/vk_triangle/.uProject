@@ -1,0 +1,4 @@
+@ProjectName               "Vulkan Triangle Example"
+@ExecutableName            "vk_triangle"
+@ExecutableOutputSubfolder "examples/vulkan"
+@RootShaderDirectory       "shaders"

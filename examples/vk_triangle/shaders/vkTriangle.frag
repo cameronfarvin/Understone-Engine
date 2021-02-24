@@ -1,7 +1,7 @@
 //
-// @uAutoGenFileName: vkTriangleShader.h
-// @uCommonName:      vkTriangle_frag
-// @uShaderType:      FRAGMENT
+// @AutoGenFileName: vkTriangleShader.h
+// @CommonName:      vkTriangle_frag
+// @ShaderType:      FRAGMENT
 //
 
 # version 450

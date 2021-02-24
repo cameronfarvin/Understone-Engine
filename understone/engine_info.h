@@ -6,18 +6,11 @@
 #include "type_tools.h"
 
 #define UE_ENGINE_NAME "Understone Engine"
-#define UE_GAME_TITLE  "Understone"
 
-__UE_inline__ static const s8*
+__UE_inline__ static const char*
 uGetEngineName()
 {
-    return ( const s8* )UE_ENGINE_NAME;
-}
-
-__UE_inline__ static const s8*
-uGetGameTitle()
-{
-    return ( const s8* )UE_GAME_TITLE;
+    return UE_ENGINE_NAME;
 }
 
 #endif // __UE_ENGINE_INFO_H__

@@ -28,7 +28,7 @@ BreakBeforeTernaryOperators: 'true'
 BreakConstructorInitializers: BeforeComma
 BreakInheritanceList: BeforeComma
 BreakStringLiterals: 'true'
-ColumnLimit: '180'
+ColumnLimit: '120'
 FixNamespaceComments: 'true'
 IncludeBlocks: Regroup
 IndentCaseLabels: 'true'
@@ -48,7 +48,7 @@ SpaceBeforeInheritanceColon: 'true'
 SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: 'true'
 SpaceInEmptyParentheses: 'false'
-SpacesInAngles: 'true'
+SpacesInAngles: 'false'
 SpacesInCStyleCastParentheses: 'true'
 SpacesInContainerLiterals: 'true'
 SpacesInParentheses: 'false'
