@@ -833,19 +833,30 @@ class CompilerInvocationGenerator
         std::filesystem::path bin_directory(understone_root_dir + "/bin/" + project.executable_output_subfolder);
         const std::string     executable_name =
           ToPosixPath(bin_directory.string()) + '/' + project.executable_name + ".exe ";
-        if (std::filesystem::exists(bin_directory) || std::filesystem::create_directory(bin_directory))
+
+        // Ensure that each folder along the provided path exists
+        std::string element_iter_string = "";
+        for (auto element_iter = bin_directory.begin(); element_iter != bin_directory.end(); ++element_iter)
         {
-            compilation_options_invocation += "-Fe" + executable_name + " ";
+            element_iter_string += element_iter->string();
+            std::filesystem::path element_iter_path(element_iter_string);
+            if (!std::filesystem::exists(element_iter_path) && !std::filesystem::create_directory(element_iter_path))
+            {
+                PrintLn("Unable to find or create the output directory specified by the project: " +
+                          project.project_name,
+                        OutputType::kError);
+                PrintLn("  Output folder: " + bin_directory.string(), OutputType::kError);
+                PrintLn("  Executable name: " + executable_name, OutputType::kError);
+                PrintLn("  Failed attempting to create folder: " + element_iter_string, OutputType::kError);
+
+                is_ok_ &= false;
+                return;
+            }
         }
-        else
-        {
-            PrintLn("Unable to find or create the output directory specified by the project: " + project.project_name,
-                    OutputType::kError);
-            PrintLn("  Output folder: " + bin_directory.string(), OutputType::kError);
-            PrintLn("  Executable name: " + executable_name, OutputType::kError);
-            is_ok_ &= false;
-            return;
-        }
+
+        compilation_options_invocation += "-Fe" + executable_name + " ";
+
+        // Link parameters
         compilation_options_invocation += default_link_parameters;
 
         // Add this entry to the invocation structure
