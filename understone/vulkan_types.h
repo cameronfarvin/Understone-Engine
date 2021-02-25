@@ -41,7 +41,6 @@ typedef struct
     const VkSurfaceFormatKHR*      surface_formats;
     const VkPresentModeKHR*        present_modes;
     const VkSurfaceCapabilitiesKHR surface_capabilities;
-    const VkExtent2D               surface_extent;
     const VkSurfaceKHR             surface;
     const u32                      num_surface_formats;
     const u32                      designated_format_index;
@@ -110,6 +109,7 @@ typedef struct
     VkFramebuffer*       frame_buffers; // Note: To have num_images elements
     const u32            num_images;
     const VkSwapchainKHR swap_chain;
+    const VkSwapchainKHR old_swap_chain;
 } uVulkanImageGroup;
 const uVulkanImageGroup* uAPI_PRIME_VULKAN_IMAGE_GROUP = NULL;
 
@@ -125,7 +125,8 @@ __UE_inline__ const uVulkanImageGroup*
     return uAPI_PRIME_VULKAN_IMAGE_GROUP;
 }
 
-// Note: Completely destroys and frees the uVulkanQueueInfo pointer and it's applicable members.
+// Note: Completely destroys and frees the uVulkanQueueInfo pointer and it's
+// applicable members.
 __UE_inline__ void
 uDestroyVulkanQueueInfo()
 {
@@ -138,7 +139,8 @@ uDestroyVulkanQueueInfo()
     }
 }
 
-// Note: Frees the uVulkanQueueInfo pointer's applicable members and memsets the top-level handle.
+// Note: Frees the uVulkanQueueInfo pointer's applicable members and memsets the
+// top-level handle.
 __UE_inline__ void
 uResetVulkanQueueInfo()
 {
@@ -178,7 +180,8 @@ uDestroyVulkanCommandBuffers()
     }
 }
 
-// Note: Does not free or memset uVulkanCommandInfo pointer, but does free it's applicable members.
+// Note: Does not free or memset uVulkanCommandInfo pointer, but does free it's
+// applicable members.
 __UE_inline__ void
 uClearVulkanCommandInfo()
 {
@@ -200,7 +203,8 @@ uClearVulkanCommandInfo()
     }
 }
 
-// Note: Completely destroys and frees the uCommandRenderInfo pointer and it's applicable members.
+// Note: Completely destroys and frees the uCommandRenderInfo pointer and it's
+// applicable members.
 __UE_inline__ void
 uDestroyVulkanCommandInfo()
 {
@@ -215,7 +219,8 @@ uDestroyVulkanCommandInfo()
     }
 }
 
-// Note: Frees the uVulkanCommandInfo pointer's applicable members and memsets the top-level handle.
+// Note: Frees the uVulkanCommandInfo pointer's applicable members and memsets
+// the top-level handle.
 __UE_inline__ void
 uResetVulkanCommandInfo()
 {
@@ -230,7 +235,8 @@ uResetVulkanCommandInfo()
     }
 }
 
-// Note: Does not free or memset uVulkanSurfaceInfo pointer, but does free it's applicable members.
+// Note: Does not free or memset uVulkanSurfaceInfo pointer, but does free it's
+// applicable members.
 __UE_inline__ void
 uClearVulkanSurfaceInfo()
 {
@@ -261,7 +267,8 @@ uClearVulkanSurfaceInfo()
     }
 }
 
-// Note: Completely destroys and frees the uVulkanSurfaceInfo pointer and it's applicable members.
+// Note: Completely destroys and frees the uVulkanSurfaceInfo pointer and it's
+// applicable members.
 __UE_inline__ void
 uDestroyVulkanSurfaceInfo()
 {
@@ -276,7 +283,8 @@ uDestroyVulkanSurfaceInfo()
     }
 }
 
-// Note: Frees the uVulkanSurfaceInfo pointer's applicable members and memsets the top-level handle.
+// Note: Frees the uVulkanSurfaceInfo pointer's applicable members and memsets
+// the top-level handle.
 __UE_inline__ void
 uResetVulkanSurfaceInfo()
 {
@@ -291,7 +299,8 @@ uResetVulkanSurfaceInfo()
     }
 }
 
-// Note: Does not free or memset uVulkanInfo pointer, but does free it's applicable members.
+// Note: Does not free or memset uVulkanInfo pointer, but does free it's
+// applicable members.
 __UE_inline__ void
 uClearVulkanInfo()
 {
@@ -331,7 +340,8 @@ uClearVulkanInfo()
     }
 }
 
-// Note: Completely destroys and frees the uVulkanInfo pointer and it's applicable members.
+// Note: Completely destroys and frees the uVulkanInfo pointer and it's
+// applicable members.
 __UE_inline__ void
 uDestroyVulkanInfo()
 {
@@ -348,7 +358,8 @@ uDestroyVulkanInfo()
     }
 }
 
-// Note: Frees the uVulkanInfo pointer's applicable members and memsets the top-level handle.
+// Note: Frees the uVulkanInfo pointer's applicable members and memsets the
+// top-level handle.
 __UE_inline__ void
 uResetVulkanInfo()
 {
@@ -365,7 +376,8 @@ uResetVulkanInfo()
     }
 }
 
-// Note: Does not free or memset uVulkanImageGroup pointer, but does free it's applicable members.
+// Note: Does not free or memset uVulkanImageGroup pointer, but does free it's
+// applicable members.
 __UE_inline__ void
 uClearVulkanImageGroup()
 {
@@ -419,7 +431,8 @@ uClearVulkanImageGroup()
     }
 }
 
-// Note: Completely destroys and frees the uVulkanImageGroup pointer and it's applicable members.
+// Note: Completely destroys and frees the uVulkanImageGroup pointer and it's
+// applicable members.
 __UE_inline__ void
 uDestroyVulkanImageGroup()
 {
@@ -434,7 +447,8 @@ uDestroyVulkanImageGroup()
     }
 }
 
-// Note: Frees the uVulkanImageGroup pointer's applicable members and memsets the top-level handle.
+// Note: Frees the uVulkanImageGroup pointer's applicable members and memsets
+// the top-level handle.
 __UE_inline__ void
 uResetVulkanImageGroup()
 {

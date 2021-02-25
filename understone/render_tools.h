@@ -6,16 +6,20 @@
 #include "window_tools.h"
 
 // Forward declaration from vulkan_tools.h
-__UE_inline__ void
-uRebuildVulkanSwapChain(const VkPipelineShaderStageCreateInfo* const restrict shader_stage_create_infos,
-                        const size_t                                          num_shader_stage_create_infos,
-                        const uGameWindow* const restrict                     game_window);
+// [ cfarvin::REVISIT ] [ cfarvin::TODO ] Don't think we need this at all.
+// __UE_inline__ void
+// uRebuildVulkanSwapChain(const VkPipelineShaderStageCreateInfo* const restrict
+// shader_stage_create_infos,
+//                         const size_t num_shader_stage_create_infos, const
+//                         uGameWindow* const restrict game_window);
 
-// [ cfarvin::TODO ] Better way to get these three, also not correct style
-bool     is_render_tool_outdated  = false;
-const u8 kNumVulkanCommandBuffers = 3; // extern defined in vulkan_tools.h
-const u8 kMaxVulkanFramesInFlight = 2; // extern defined in vulkan_tools.h
-size_t   total_frame_count        = 0;
+// [ cfarvin::TODO ] Better way to get these, also not correct style
+//                   Maybe put some of this in render tools? Eh? Ehh?
+const u8      kNumVulkanCommandBuffers = 3; // extern defined in vulkan_tools.h
+const u8      kMaxVulkanFramesInFlight = 2; // extern defined in vulkan_tools.h
+static bool   is_render_tool_outdated  = false;
+static size_t total_frame_count        = 0;
+uDebugStatement(static char outdated_swapchain_frames = 0);
 
 typedef struct
 {
@@ -177,7 +181,8 @@ uCreateRenderTools(uVulkanRenderTools* const restrict                    render_
     }
 }
 
-// Note: Does not free or memset uVulkanRenderInfo pointer, but does free it's applicable members.
+// Note: Does not free or memset uVulkanRenderInfo pointer, but does free it's
+// applicable members.
 __UE_inline__ void
 uClearVulkanRenderInfo()
 {
@@ -188,7 +193,8 @@ uClearVulkanRenderInfo()
     uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkInstance must be non zero.\n");
     uAssertMsg_v(render_info, "[ vulkan ] uVulkanRenderInfo ptr must be non null.\n");
 
-    // Clear pipeline layout, render pass, graphics pipeline, frame buffer(s) so they can be rebuilt.
+    // Clear pipeline layout, render pass, graphics pipeline, frame buffer(s) so
+    // they can be rebuilt.
     if (render_info)
     {
         if (v_info->logical_device)
@@ -210,7 +216,8 @@ uClearVulkanRenderInfo()
     }
 }
 
-// Note: Completely destroys and frees the uVulkanRenderInfo pointer and it's applicable members.
+// Note: Completely destroys and frees the uVulkanRenderInfo pointer and it's
+// applicable members.
 __UE_inline__ void
 uDestroyVulkanRenderInfo()
 {
@@ -225,7 +232,8 @@ uDestroyVulkanRenderInfo()
     }
 }
 
-// Note: Frees the uVulkanRenderInfo pointer's applicable members and memsets the top-level handle.
+// Note: Frees the uVulkanRenderInfo pointer's applicable members and memsets
+// the top-level handle.
 __UE_inline__ void
 uResetVulkanRenderInfo()
 {
@@ -289,9 +297,32 @@ uCheckOutdatedOrSuboptimalSwapChain(uVulkanRenderTools* const restrict render_to
     return false;
 }
 
+__UE_inline__ bool
+SkipIfRenderToolsOutdated()
+{
+    if (is_render_tool_outdated)
+    {
+        uDebugStatement(outdated_swapchain_frames++);
+        uAssertMsg_v(outdated_swapchain_frames <= 1, "[ render ] Swapchain was outdated for more  than one frame.\n");
+
+        return true;
+    }
+    else
+    {
+        uDebugStatement(outdated_swapchain_frames = 0);
+    }
+
+    return false;
+}
+
 __UE_inline__ VkResult
 uUpdatePresentInfoAndPresent(uVulkanRenderTools* const restrict render_tools, const u32* const restrict next_frame_idx)
 {
+    if (SkipIfRenderToolsOutdated())
+    {
+        return VK_SUCCESS;
+    }
+
     uAssertMsg_v(render_tools, "[ render ] uVulkanRendertools must be non zero.\n");
     uAssertMsg_v(next_frame_idx, "[ render ] Next frame index ptr must be non null.\n");
     uAssertMsg_v(render_tools->shader_stage_create_infos,
@@ -302,8 +333,6 @@ uUpdatePresentInfoAndPresent(uVulkanRenderTools* const restrict render_tools, co
     (render_tools->present_info).pWaitSemaphores = &(render_tools->render_finished[render_tools->frame]);
 
     VkResult result = vkQueuePresentKHR(render_tools->present_queue, &(render_tools->present_info));
-    uCheckOutdatedOrSuboptimalSwapChain(render_tools, result);
-
     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to present.\n");
 
     return result;
@@ -321,14 +350,17 @@ uUpdateGraphicsInfoAndSubmit(uVulkanRenderTools* const restrict render_tools, co
 
     (render_tools->submit_info).pCommandBuffers = ( VkCommandBuffer* )(&render_tools->command_buffers[*next_frame_idx]);
     (render_tools->submit_info).pWaitSemaphores =
-      &(render_tools->image_available[render_tools->frame]); // what to wait on before execution
+      &(render_tools->image_available[render_tools->frame]); // what to wait on
+                                                             // before execution
     (render_tools->submit_info).pSignalSemaphores =
-      &(render_tools->render_finished[render_tools->frame]); // what to signal when execution is done
+      &(render_tools->render_finished[render_tools->frame]); // what to signal when
+                                                             // execution is done
 
     uDebugStatement(VkResult result =) vkQueueSubmit(render_tools->graphics_queue,
                                                      1,
                                                      &(render_tools->submit_info),
                                                      render_tools->in_flight_fences[render_tools->frame]);
+
     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Unable to submit graphics queue.\n");
 }
 
@@ -360,6 +392,11 @@ uEnsureFrameLanded(uVulkanRenderTools* const restrict render_tools, const u32* c
 __UE_inline__ VkResult
 uAcquireNextSwapChainFrameIndex(uVulkanRenderTools* const restrict render_tools, u32* const restrict return_idx)
 {
+    if (SkipIfRenderToolsOutdated())
+    {
+        return VK_SUCCESS;
+    }
+
     uAssertMsg_v(render_tools, "[ render ] uVulkanRendertools must be non zero.\n");
     uAssertMsg_v(render_tools->logical_device, "[ render ] VkDevice must be non zero.\n");
     uAssertMsg_v(render_tools->swap_chain, "[ render ] VkSwapchainKHR must be non zero.\n");
@@ -377,6 +414,7 @@ uAcquireNextSwapChainFrameIndex(uVulkanRenderTools* const restrict render_tools,
 
     uAssertMsg_v(result != VK_TIMEOUT, "[ render ] [ timeout ] Could not acquire next swap chain image.\n");
     uAssertMsg_v(result == VK_SUCCESS, "[ render ] Could not acquire next swap chain image.\n");
+
     uAssertMsg_v((*return_idx <= ( u32 )kMaxVulkanFramesInFlight),
                  "[ redner ] Acquired swap chain image index greater than "
                  "frame count.\n");
@@ -385,11 +423,16 @@ uAcquireNextSwapChainFrameIndex(uVulkanRenderTools* const restrict render_tools,
 }
 
 __UE_inline__ void
-uRenderFrame(const uGameWindow* const restrict game_window, uVulkanRenderTools* const restrict render_tools)
+uIncrementFrameCount(uVulkanRenderTools* const restrict render_tools)
 {
-    // [ cfarvin::TODO ] Move this to calling code; remove game_window param
-    uAssertMsg_v(!game_window->is_minimized, "[ vkTrinagleExample ] Cannot render frame with window minimized\n.")
-      uAssertMsg_v(render_tools, "[ render ] uVulkanRendertools must be non zero.\n");
+    render_tools->frame = (render_tools->frame + 1) % kMaxVulkanFramesInFlight;
+    total_frame_count++;
+}
+
+__UE_inline__ void
+uRenderFrame(uVulkanRenderTools* const restrict render_tools)
+{
+    uAssertMsg_v(render_tools, "[ render ] uVulkanRendertools must be non zero.\n");
 
     vkWaitForFences(render_tools->logical_device,
                     1,
@@ -405,7 +448,8 @@ uRenderFrame(const uGameWindow* const restrict game_window, uVulkanRenderTools* 
     if (uCheckOutdatedOrSuboptimalSwapChain(render_tools, result))
     {
         is_render_tool_outdated = true;
-        uRebuildVulkanSwapChain(render_tools->shader_stage_create_infos, render_tools->num_shaders, game_window);
+        uIncrementFrameCount(render_tools);
+        return;
     }
 
     uEnsureFrameLanded(render_tools, &next_frame_idx);
@@ -415,12 +459,11 @@ uRenderFrame(const uGameWindow* const restrict game_window, uVulkanRenderTools* 
     if (uCheckOutdatedOrSuboptimalSwapChain(render_tools, result))
     {
         is_render_tool_outdated = true;
-        uRebuildVulkanSwapChain(render_tools->shader_stage_create_infos, render_tools->num_shaders, game_window);
+        uIncrementFrameCount(render_tools);
+        return;
     }
 
-    // Increment frame number.
-    render_tools->frame = (render_tools->frame + 1) % kMaxVulkanFramesInFlight;
-    total_frame_count++;
+    uIncrementFrameCount(render_tools);
 }
 
 #endif // __UE_RENDER_TOOLS__

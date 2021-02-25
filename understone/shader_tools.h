@@ -87,10 +87,10 @@ uCreateVulkanShaderModules(const uVulkanShader* const restrict             shade
 {
     const uVulkanInfo* const v_info = uGetVulkanInfo();
 
-    // [ cfarvin::TODO ] We're assuming that the user will pass two pointers containing the same
-    // number of elements,
-    //                   both of shaders and of pipeline stage create infos. Is there a way we can
-    //                   ensure that the number of pipelien shader create infos is == num shaders?
+    // [ cfarvin::TODO ] We're assuming that the user will pass two pointers
+    // containing the same number of elements, both of shaders and of pipeline
+    // stage create infos. Is there a way we can ensure that the number of
+    // pipelien shader create infos is == num shaders?
     uAssertMsg_v(v_info->logical_device, "[ shaders ] SPIR-V file data must be non null.\n");
     uAssertMsg_v(shaders, "[ shaders ] uVulkanShader ptr ptr must be non null\n.");
     uAssertMsg_v(shader_stage_create_infos, "[ shaders ] VkPipelineShaderStageCreateInfo ptr must be non null\n.");

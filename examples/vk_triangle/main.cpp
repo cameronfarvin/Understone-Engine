@@ -124,7 +124,6 @@ VkTriangleInit()
 
 #endif // _WIN32
 
-    // [ cfarvin::TODO ] This is a super sloppy way to start off
     uInitializeVulkan(kApplicationName,
                       ( void* )&os_info,
                       kRequiredInstanceValidationLayers,
@@ -166,7 +165,7 @@ VkTriangleHandleWindowResize()
                                    sizeof(vk_triangle_shaders) / sizeof(uVulkanShader),
                                    &vk_triangle_shader_stage_cis[0]);
         uRebuildVulkanSwapChain(vk_triangle_shader_stage_cis, kVkTriangleNumShaderStages, &vk_triangle_window);
-        is_render_tool_outdated = true;
+        is_render_tool_outdated = false;
     }
 }
 
@@ -208,17 +207,9 @@ VkTriangleGameLoop()
 {
     while (vk_triangle_running)
     {
-        // [ cfarvin::TODO ] Is this only called on minimize or resize? If so, can
-        //                   This be done on the function that handles these rather
-        //                   than the draw loop?
-        if (is_render_tool_outdated && !vk_triangle_window.is_minimized)
-        {
-            uRebuidlRenderTools(&vk_triangle_render_tools, vk_triangle_shader_stage_cis, kVkTriangleNumShaderStages);
-        }
-
         if (!vk_triangle_window.is_minimized)
         {
-            uRenderFrame(&vk_triangle_window, &vk_triangle_render_tools);
+            uRenderFrame(&vk_triangle_render_tools);
         }
 
         VkTriangleRefreshInputState();

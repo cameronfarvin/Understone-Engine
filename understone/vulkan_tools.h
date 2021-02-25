@@ -1,3 +1,12 @@
+// [ cfarvin::TODO ] Something like this would be REALLY helpful in debugging in
+// the appropriate
+//                   function header contexts:
+//                   uDebugStatement(static char times_called = 1);
+//                   uDebugStatement(const u8 expected_times_called = <X>);
+//                   uDebugStatement(times_called++);
+//                   uDebugStatement(if(times_called > expected_times_called)
+//                   uAssertMsg_v(...) );
+
 #ifndef __UE_VULKAN_TOOLS_H__
 #define __UE_VULKAN_TOOLS_H__
 
@@ -57,49 +66,98 @@ uCreateVulkanFrameBuffers();
 void
 uCreateVulkanCommandBuffers();
 
-__UE_inline__ bool
-uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice             physical_device,
-                                                uVulkanSurfaceInfo* const restrict surface_info);
+bool
+uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice             potential_physical_device,
+                                                const VkSurfaceKHR                 potential_surface,
+                                                u32* const restrict                return_num_surface_formats,
+                                                VkSurfaceFormatKHR* const restrict return_surface_format,
+                                                u32* const restrict                return_num_present_modes,
+                                                VkPresentModeKHR* const restrict   return_present_modes);
 
 __UE_inline__ void
 uResetOldSwapChain()
 {
     uVkVerbose("Resetting old swap chain components...\n");
 
-    uResetVulkanImageGroup();
-    uDestroyVulkanCommandBuffers();
-    uResetVulkanRenderInfo();
+    uVulkanImageGroup* image_group = ( uVulkanImageGroup* )uGetVulkanImageGroup();
+    uAssertMsg_v(image_group, "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
+    uAssertMsg_v(image_group->swap_chain, "[ vulkan ] Image group swap chain ptr must be non null.\n");
+
+    VkSwapchainKHR old_swap_chain = image_group->swap_chain;
+
+    // [ cfarvin::REVISIT ] [ SWAPCHAIN ] Still plan on doing this, just getting
+    // compilation working.
+    /* uPrepImageGroupForSwapchainRebuild(); */
+    /* uPrepCommandBuffersForSwapchainRebuild(); */
+    /* uPrepRenderToolsForSwapchainRebuild(); */
+
+    // [ cfarvin::TODO ] You're always confused about where some of these objects
+    // are. Are they
+    //                   in render_tools? Maybe vulkan_tools? Perhaps
+    //                   vulkan_types? Solve this please.
+    // [ cfarvin::TODO ] Remove these when the "prep" functions above are
+    // implemented correctly.
+    /* uResetVulkanImageGroup(); */
+    /* uDestroyVulkanCommandBuffers(); */
+    /* uResetVulkanRenderInfo(); */
+
+    // Image group was reset.
+    image_group                          = ( uVulkanImageGroup* )uGetVulkanImageGroup();
+    VkSwapchainKHR* non_const_swap_chain = ( VkSwapchainKHR* )&(image_group->old_swap_chain);
+    *non_const_swap_chain                = old_swap_chain;
 }
 
 // Note: Considered undefined behavior to call when game window is minimized.
 __UE_inline__ void
-uRebuildVulkanSwapChain(const VkPipelineShaderStageCreateInfo* const restrict shader_stage_create_infos,
+uRebuildVulkanSwapChain(const VkPhysicalDevice                                physical_device,
+                        const VkDevice                                        logical_device,
+                        const VkInstance                                      instance,
+                        const VkPipelineShaderStageCreateInfo* const restrict shader_stage_create_infos,
                         const size_t                                          num_shader_stage_create_infos,
                         const uGameWindow* const restrict                     game_window)
 {
     // [ cfarvin::REVISIT ] I removed "is_rebuilding_swap_chain" parameter from
-    // uValidateVulkanSwapChainAndSurfaceCompatibility and commented out some code which freed the
-    // surface_info->present_modes and surface_info->surface_formats (when rebuilding). We may need to
-    // handle this here or elsewhere, since it is no longer handled there.
+    // uValidateVulkanSwapChainAndSurfaceCompatibility and commented out some code
+    // which freed the surface_info->present_modes and
+    // surface_info->surface_formats (when rebuilding). We may need to handle this
+    // here or elsewhere, since it is no longer handled there.
 
-    uVulkanInfo* v_info = ( uVulkanInfo* )uGetVulkanInfo();
-    vkDeviceWaitIdle(v_info->logical_device);
+    // [ cfarvin::NOTE ] [ SWAPCHAIN ] Since we're working on using the old
+    // swapchain data, building a new
+    //                   swapchain before we destroy the old one - maybe - just
+    //                   maybe - we dont' need to wait for the device to be idle
+    //                   as is done below. Glances at the documentation seem to
+    //                   support this (saying that images MAY be used from the old
+    //                   swapchain).
+    /* uVulkanInfo* v_info = ( uVulkanInfo* )uGetVulkanInfo(); */
+    /* vkDeviceWaitIdle(v_info->logical_device); */
 
     uVkVerbose("[ begin ] swap chain rebuild\n");
     uResetOldSwapChain();
 
-    // Recreate singletons that were delted by old swap chain clean up,
-    // get references to those which were not.
-    uVulkanSurfaceInfo* surface_info = ( uVulkanSurfaceInfo* )uGetVulkanSurfaceInfo();
-
-    uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(v_info->instance, "[ vulkan ] VkInstance ptr must be non null.\n");
-    uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkDevice ptr must be non null.\n");
-    uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
-
     // Rebuild swap chain
-    bool swap_chain_surface_compatible =
-      uValidateVulkanSwapChainAndSurfaceCompatibility(v_info->physical_device, surface_info);
+    VkSurfaceKHR        new_surface             = NULL;
+    u32                 new_num_surface_formats = 0;
+    VkSurfaceFormatKHR* new_surface_formats     = NULL;
+    u32                 new_num_present_modes   = 0;
+    VkPresentModeKHR*   new_present_modes       = NULL;
+
+    //
+    // [ cfarvin::REVISIT ] you were about to continue filling in the vulkan
+    // objects above
+    //                      starting with vksurfacekhr that are going to be needed
+    //                      to create a brand new swapchain. You only stopped to
+    //                      go through the functions towards the bottom of this
+    //                      function, in order to make versions of them which do
+    //                      not rely upon our singleton system.
+    //
+
+    bool swap_chain_surface_compatible = uValidateVulkanSwapChainAndSurfaceCompatibility(physical_device,
+                                                                                         new_surface,
+                                                                                         &new_num_surface_formats,
+                                                                                         new_surface_formats,
+                                                                                         &new_num_present_modes,
+                                                                                         new_present_modes);
 
     const char swap_chain_surface_error[] = "[ vulkan ] The swap chain and surface were found to be incompatible.\n";
     uAssertMsg_v(swap_chain_surface_compatible, swap_chain_surface_error);
@@ -199,7 +257,7 @@ uCreateVulkanCommandBuffers()
         rp_begin_info.framebuffer           = image_group->frame_buffers[image_idx];
         rp_begin_info.renderArea.offset.x   = 0;
         rp_begin_info.renderArea.offset.y   = 0;
-        rp_begin_info.renderArea.extent     = surface_info->surface_extent;
+        rp_begin_info.renderArea.extent     = surface_info->surface_capabilities.currentExtent;
         rp_begin_info.clearValueCount       = 1;
         rp_begin_info.pClearValues          = &clear_value;
 
@@ -265,11 +323,11 @@ uCreateVulkanFrameBuffers()
     uAssertMsg_v(image_group, "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
     uAssertMsg_v(render_info, "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
 
-    // [ cfarvin::TODO ] We're not doing things this way any more, but the check for null frame
-    // buffers is still valid when where rebuilding the
+    // [ cfarvin::TODO ] We're not doing things this way any more, but the check
+    // for null frame buffers is still valid when where rebuilding the
     //                   swap chain. Need to implement this in the right place.
-    /* uAssertMsg_v(is_rebuilding_swap_chain || !image_group->frame_buffers, "[ vulkan ]
-     * VkFrameBuffer ptr must be null; will be overwritten.\n"); */
+    /* uAssertMsg_v(is_rebuilding_swap_chain || !image_group->frame_buffers, "[
+     * vulkan ] VkFrameBuffer ptr must be null; will be overwritten.\n"); */
 
     // Create a frame buffer for each image view
     *( VkFramebuffer** )&(image_group->frame_buffers) =
@@ -286,8 +344,8 @@ uCreateVulkanFrameBuffers()
         frame_buffer_create_info.renderPass              = render_info->render_pass;
         frame_buffer_create_info.attachmentCount         = 1;
         frame_buffer_create_info.pAttachments            = &(image_group->image_views[image_idx]);
-        frame_buffer_create_info.width                   = surface_info->surface_extent.width;
-        frame_buffer_create_info.height                  = surface_info->surface_extent.height;
+        frame_buffer_create_info.width                   = surface_info->surface_capabilities.currentExtent.width;
+        frame_buffer_create_info.height                  = surface_info->surface_capabilities.currentExtent.height;
         frame_buffer_create_info.layers                  = 1; // Non stereoscopic
 
         VkResult result = vkCreateFramebuffer(v_info->logical_device,
@@ -318,11 +376,15 @@ uCreateVulkanRenderPass()
     uAssertMsg_v(render_info, "[ vulkan ] uVulkanRenderInfo ptr must be non null.\n");
 
     // [ cfarvin::TODO ] Account for these checks in the new system
-    /* uAssertMsg_v(is_rebuilding_swap_chain || !render_info->attachment_descriptions, */
-    /*              "[ vulkan ] VkAttachmentDesctiption ptr must be null; will be " */
+    /* uAssertMsg_v(is_rebuilding_swap_chain ||
+     * !render_info->attachment_descriptions, */
+    /*              "[ vulkan ] VkAttachmentDesctiption ptr must be null; will be
+     * " */
     /*              "overwritten.\n"); */
-    /* uAssertMsg_v(is_rebuilding_swap_chain || !render_info->attachment_references, */
-    /*              "[ vulkan ] VkAttachmentReference ptr must be null; will be " */
+    /* uAssertMsg_v(is_rebuilding_swap_chain ||
+     * !render_info->attachment_references, */
+    /*              "[ vulkan ] VkAttachmentReference ptr must be null; will be "
+     */
     /*              "overwritten.\n"); */
 
     *( u32* )&render_info->num_attachments = 1;
@@ -403,9 +465,11 @@ uCreateVulkanRenderPass()
     }
 }
 
-// [ cfarvin::TODO ] It may be that each application needs to implement this function on their own,
-//                   and sometimes with different attributes for the vk structures within. In that
-//                   case, the engine could at least provide default versions of these structures.
+// [ cfarvin::TODO ] It may be that each application needs to implement this
+// function on their own,
+//                   and sometimes with different attributes for the vk
+//                   structures within. In that case, the engine could at least
+//                   provide default versions of these structures.
 void
 uCreateVulkanGraphicsPipeline(const size_t                                          num_shader_stage_create_infos,
                               const VkPipelineShaderStageCreateInfo* const restrict shader_stage_create_infos)
@@ -439,8 +503,8 @@ uCreateVulkanGraphicsPipeline(const size_t                                      
     VkViewport frame_buffer_viewport = {};
     frame_buffer_viewport.x          = 0.0f;
     frame_buffer_viewport.y          = 0.0f;
-    frame_buffer_viewport.width      = ( r32 )surface_info->surface_extent.width;
-    frame_buffer_viewport.height     = ( r32 )surface_info->surface_extent.height;
+    frame_buffer_viewport.width      = ( r32 )surface_info->surface_capabilities.currentExtent.width;
+    frame_buffer_viewport.height     = ( r32 )surface_info->surface_capabilities.currentExtent.height;
     frame_buffer_viewport.minDepth   = 0.0f;
     frame_buffer_viewport.maxDepth   = 1.0f;
 
@@ -448,7 +512,7 @@ uCreateVulkanGraphicsPipeline(const size_t                                      
     VkRect2D frame_buffer_scissor = {};
     frame_buffer_scissor.offset.x = 0;
     frame_buffer_scissor.offset.y = 0;
-    frame_buffer_scissor.extent   = surface_info->surface_extent;
+    frame_buffer_scissor.extent   = surface_info->surface_capabilities.currentExtent;
 
     // Viewport state
     VkPipelineViewportStateCreateInfo frame_buffer_viewport_create_info = {};
@@ -487,7 +551,8 @@ uCreateVulkanGraphicsPipeline(const size_t                                      
 
     // Color blending
     // Note: VkPipelineColorBlendStateCreateInfo builds global state.
-    //       VkPipelineColorBlendAttachmentState sets local state per attached frame buffer.
+    //       VkPipelineColorBlendAttachmentState sets local state per attached
+    //       frame buffer.
     VkPipelineColorBlendAttachmentState color_blend_attachment = {};
     color_blend_attachment.colorWriteMask =
       VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -511,8 +576,8 @@ uCreateVulkanGraphicsPipeline(const size_t                                      
     color_blend_create_info.blendConstants[3] = 0.0f;
 
     // Dynamic state
-    // Note: Causes previous configuration to be ignored, and information to be supplied at drawing
-    // time.
+    // Note: Causes previous configuration to be ignored, and information to be
+    // supplied at drawing time.
     VkDynamicState dynamic_states[2] = {};
     dynamic_states[0]                = VK_DYNAMIC_STATE_VIEWPORT;
     dynamic_states[1]                = VK_DYNAMIC_STATE_LINE_WIDTH;
@@ -669,22 +734,15 @@ uVulkanExtractUniqueQueueFamilies(const uVulkanQueueInfo* const restrict queue_i
 }
 
 __UE_inline__ void
-uCreateVulkanSwapChain(const uGameWindow* const restrict game_window)
+uCreateVulkanSwapChainCore(const VkDevice                           logical_device,
+                           const VkSurfaceKHR                       surface,
+                           const VkSurfaceFormatKHR* const restrict surface_formats,
+                           const VkPresentModeKHR* const restrict   present_modes,
+                           const VkSurfaceCapabilitiesKHR           surface_capabilities,
+                           const u32                                graphics_queue_index,
+                           const u32                                present_queue_index,
+                           const uGameWindow* const restrict        game_window)
 {
-    uVulkanInfo*        v_info       = ( uVulkanInfo* )uGetVulkanInfo();
-    uVulkanQueueInfo*   queue_info   = ( uVulkanQueueInfo* )uGetVulkanQueueInfo();
-    uVulkanSurfaceInfo* surface_info = ( uVulkanSurfaceInfo* )uGetVulkanSurfaceInfo();
-    uVulkanImageGroup*  image_group  = ( uVulkanImageGroup* )uGetVulkanImageGroup();
-
-    // [ cfarvin::TODO ] No image_group checks?
-    uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
-    uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkLogicalDevice must be non zero.\n");
-    uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
-    uAssertMsg_v(surface_info->surface, "[ vulkan ] VkSurfaceKHR ptr must be non null.\n");
-    uAssertMsg_v(queue_info, "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n");
-    uAssertMsg_v(surface_info->surface_formats, "[ vulkan ] VkSurfaceFormatKHR ptr must be non null.\n");
-    uAssertMsg_v(surface_info->present_modes, "[ vulkan ] VkPresentModeKHR ptr must be non null.\n");
-
     // Select a suitable swapchain
     bool swap_chain_selected = uSelectVulkanSwapChain(game_window);
     if (!swap_chain_selected)
@@ -692,9 +750,28 @@ uCreateVulkanSwapChain(const uGameWindow* const restrict game_window)
         uFatal("[ vulkan ] Unable to select a suitable swap chain.\n");
     }
 
+    //
+    // [ cfarvin::RETURN ] You were just about to fix some compilation errors
+    // while pulling out a
+    //                     version of each function involved in swap chain
+    //                     recreation dedicated to both the first creation (using
+    //                     singleton patterns) and the re-creation (using raw
+    //                     vulkan objects). May be a good idea to review your [
+    //                     cfarvin::<> ] notes through this document upon return,
+    //                     as you've commented and altered a lot of things out but
+    //                     have strongly documented those changes each time. Good
+    //                     luck! Talking to yourself seems to really, really,
+    //                     help. You made awesome progress this morning and should
+    //                     feel wonderful about it. <3
+    //
     // Determine swap chain image capacity
     u32 min_image_count = surface_info->surface_capabilities.minImageCount;
     u32 max_image_count = surface_info->surface_capabilities.maxImageCount;
+
+    // [ cfarvin::TODO ] Should the designated image count be the number of frames
+    // in flight?
+    //                   If so, we need to link those two varaibles; they could be
+    //                   completely different values presently.
 
     // Request an additional image
     u32 designated_image_count = min_image_count + 1;
@@ -733,16 +810,7 @@ uCreateVulkanSwapChain(const uGameWindow* const restrict game_window)
     swap_chain_create_info.compositeAlpha           = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // Ignore alpha channel
     swap_chain_create_info.presentMode              = present_modes[surface_info->designated_present_index];
     swap_chain_create_info.clipped                  = VK_TRUE;
-
-    // [ cfarvin::TODO ] Likely need an overloaded or new function for rebuilding that passes the
-    // old swapchain
-    //                   and then calls this function
-    /* if (is_rebuilding_swap_chain && image_group->swap_chain) */
-    /* { */
-    /*     swap_chain_create_info.oldSwapchain = image_group->swap_chain; */
-    /* } */
-
-    swap_chain_create_info.oldSwapchain = VK_NULL_HANDLE;
+    swap_chain_create_info.oldSwapchain             = image_group->old_swap_chain;
 
     if (unique_queues_found == 1)
     {
@@ -806,21 +874,59 @@ uCreateVulkanSwapChain(const uGameWindow* const restrict game_window)
     *( u32* )&(image_group->num_images) = designated_image_count;
 }
 
+__UE_inline__ void
+uCreateVulkanSwapChain(const uGameWindow* const restrict game_window)
+{
+    uVulkanInfo*        v_info       = ( uVulkanInfo* )uGetVulkanInfo();
+    uVulkanQueueInfo*   queue_info   = ( uVulkanQueueInfo* )uGetVulkanQueueInfo();
+    uVulkanSurfaceInfo* surface_info = ( uVulkanSurfaceInfo* )uGetVulkanSurfaceInfo();
+    uVulkanImageGroup*  image_group  = ( uVulkanImageGroup* )uGetVulkanImageGroup();
+
+    uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
+    uAssertMsg_v(v_info->logical_device, "[ vulkan ] VkLogicalDevice must be non zero.\n");
+    uAssertMsg_v(surface_info, "[ vulkan ] uVulkanSurfaceInfo ptr must be non null.\n");
+    uAssertMsg_v(surface_info->surface, "[ vulkan ] VkSurfaceKHR ptr must be non null.\n");
+    uAssertMsg_v(queue_info, "[ vulkan ] uVulkanQueueInfo ptr must be non null.\n");
+    uAssertMsg_v(surface_info->surface_formats, "[ vulkan ] VkSurfaceFormatKHR ptr must be non null.\n");
+    uAssertMsg_v(surface_info->present_modes, "[ vulkan ] VkPresentModeKHR ptr must be non null.\n");
+    uAssertMsg_v(image_group, "[ vulkan ] uVulkanImageGroup ptr must be non null.\n");
+    uAssertMsg_v(image_group->swap_chain, "[ vulkan ] Swap chain ptr must be non null.\n");
+    uAssertMsg_v(!(*image_group->swap_chain), "[ vulkan ] Swap chain must be null; will be overwritten.\n");
+    uAssertMsg_v(image_group->images, "[ vulkan ] Images ptr must be non null.\n");
+    uAssertMsg_v(!(*image_group->images), "[ vulkan ] Images must be null; will be overwritten.\n");
+    uAssertMsg_v(image_group->image_views, "[ vulkan ] Image views ptr must be non null.\n");
+    uAssertMsg_v(!(*image_group->image_views), "[ vulkan ] Image views must be null; will be overwritten.\n");
+
+    uCreateVulkanSwapChainCore(v_info->logical_device,
+                               surface_info->surface,
+                               surface_info->surface_formats,
+                               surface_info->present_modes,
+                               surface_info->surface_capabilities,
+                               surface_info->surface_extent,
+                               queue_info->designated_graphics_index,
+                               queue_info->designated_present_index,
+                               game_window);
+}
+
 void
-uCreateVulkanLogicalDevice(uVulkanInfo* const restrict            v_info,
-                           const uVulkanQueueInfo* const restrict queue_info,
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
-                           const char** const restrict instance_validation_layer_names,
+uCreateVulkanLogicalDevice(const char** const restrict instance_validation_layer_names,
                            const u16                   num_instance_validation_layer_names,
+#else
+uCreateVulkanLogicalDevice(
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
                            const char** const restrict user_device_extension_names,
                            const u16                   num_user_device_extension_names)
 {
+    uVulkanInfo*      v_info     = ( uVulkanInfo* )uGetVulkanInfo();
+    uVulkanQueueInfo* queue_info = ( uVulkanQueueInfo* )uGetVulkanQueueInfo();
+
     uAssertMsg_v(v_info, "[ vulkan ] uVulkanInfo ptr must be non null.\n");
     uAssertMsg_v(v_info->physical_device, "[ vulkan ] VkPhysicalDevice must be non zero.\n");
     uAssertMsg_v(!v_info->logical_device, "[ vulkan ] VkDevice must be zero; will be overwritten.\n");
     uAssertMsg_v(queue_info, "[ vulkan ] Queue indices ptr must be non null\n");
     uAssertMsg_v(queue_info->queues, "[ vulkan ] VkQueue ptr must be non null.\n");
+
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     if (num_instance_validation_layer_names)
     {
@@ -829,6 +935,7 @@ uCreateVulkanLogicalDevice(uVulkanInfo* const restrict            v_info,
                      "zero, the names ptr must be non null\n");
     }
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
+
     if (num_user_device_extension_names)
     {
         uAssertMsg_v(user_device_extension_names && *user_device_extension_names,
@@ -860,19 +967,25 @@ uCreateVulkanLogicalDevice(uVulkanInfo* const restrict            v_info,
         device_queue_create_infos[queue_family_idx].pQueuePriorities = &device_queue_priorities;
     }
 
-    // Note: on modification, update compatibility checks too
-    // uSelectVulkanPhysicalDevice();
+    // [ cfarvin::TODO ] Added the vkGetPhysicalDeviceFeatures call a while after
+    // the original
+    //                   implementation. I think this was an oversight originally;
+    //                   let's be sure. If there are sudden errors in this part of
+    //                   the code; this could be why.
     VkPhysicalDeviceFeatures physical_device_features = {};
+    vkGetPhysicalDeviceFeatures(v_info->physical_device, *physical_device_features);
 
     VkDeviceCreateInfo logical_device_create_info   = {};
     logical_device_create_info.sType                = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     logical_device_create_info.pQueueCreateInfos    = device_queue_create_infos;
     logical_device_create_info.queueCreateInfoCount = num_unique_queues;
     logical_device_create_info.pEnabledFeatures     = &physical_device_features;
+
 #if __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
     logical_device_create_info.enabledLayerCount   = num_instance_validation_layer_names;
     logical_device_create_info.ppEnabledLayerNames = ( const char** const )instance_validation_layer_names;
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
+
     logical_device_create_info.enabledExtensionCount   = num_user_device_extension_names;
     logical_device_create_info.ppEnabledExtensionNames = ( const char** const )user_device_extension_names;
 
@@ -1194,102 +1307,129 @@ uSelectVulkanSwapChain(const uGameWindow* const restrict game_window)
     return suitable_present_found;
 }
 
-__UE_inline__ bool
-uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice             physical_device,
-                                                uVulkanSurfaceInfo* const restrict surface_info)
+__UE_inline__ void
+uValidateVulkanSwapChainAndSurfaceCompatibility(const VkPhysicalDevice             potential_physical_device,
+                                                const VkSurface                    potential_surface,
+                                                u32* const restrict                return_num_surface_formats,
+                                                VkSurfaceFormatKHR* const restrict return_surface_formats,
+                                                u32* const restrict                return_num_present_modes,
+                                                VkPresentModeKHR* const restrict   return_present_modes)
 {
-    uAssertMsg_v(surface_info, "[ vulkan ] The uVulkanSurfaceInfo ptr must be non null.\n");
-    uAssertMsg_v(surface_info->surface, "[ vulkan ] The VKSurfaceKHR ptr must be non null.\n");
+    uAssertMsg_v(!return_num_surface_formats, "[ vulkan ] Num surface formats ptr must be null; may be overwritten.\n");
+    uAssertMsg_v(!return_surface_formats, "[ vulkan ] Surface formats ptr must be null; may be overwritten.\n");
+    uAssertMsg_v(!return_num_present_mode, "[ vulkan ] Num present modes ptr must be null; may be overwritten.\n");
+    uAssertMsg_v(!return_present_modes, "[ vulkan ] Present modes ptr must be null; may be overwritten.\n");
 
     // Get surface capabilities
-    VkSurfaceCapabilitiesKHR* surface_capabilities = ( VkSurfaceCapabilitiesKHR* )&(surface_info->surface_capabilities);
-    VkResult                  success              = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device,
-                                                                 *( VkSurfaceKHR* )&(surface_info->surface),
-                                                                 surface_capabilities);
+    VkSurfaceCapabilitiesKHR* potential_surface_capabilities = NULL;
+    VkResult                  success = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(potential_physical_device,
+                                                                 potential_surface,
+                                                                 potential_surface_capabilities);
 
-    uAssert(success == VK_SUCCESS);
     if (success != VK_SUCCESS)
     {
-        uVkVerbose("Could not attain surface capabilities.\n");
-        return false;
+        uFatal("[ vulkan ] Could not attain surface capabilities.\n");
     }
 
     // Get surface formats
-    success = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device,
-                                                   *( VkSurfaceKHR* )&(surface_info->surface),
-                                                   ( u32* )&(surface_info->num_surface_formats),
-                                                   NULL);
+    u32* potential_num_surface_formats = NULL
+      : success                        = vkGetPhysicalDeviceSurfaceFormatsKHR(potential_physical_device,
+                                                       potential_surface,
+                                                       potential_num_surface_formats,
+                                                       NULL);
 
-    uAssert(success == VK_SUCCESS);
     if (success != VK_SUCCESS)
     {
-        uVkVerbose("Could not attain surface format quantity.\n");
+        uFatal("[ vulkan ] Could not attain surface format quantity.\n");
+    }
+
+    VkSurfaceFormatKHR* potential_surface_formats = NULL;
+    if (!(*potential_num_surface_formats))
+    {
         return false;
     }
 
-    if (surface_info->num_surface_formats)
+    // [ cfarvin::REVISIT ] Remove this?
+    /* if (is_rebuilding_swap_chain && surface_info->surface_formats) */
+    /* { */
+    /*     free(( VkSurfaceFormatKHR* )surface_info->surface_formats); */
+    /* } */
+
+    // [ cfarvin::TODO ] [ MEMFREE ]
+    potential_surface_formats =
+      ( VkSurfaceFormatKHR* )malloc(potential_num_surface_formats * sizeof(VkSurfaceFormatKHR));
+
+    if (!potential_surface_formats)
     {
-        // [ cfarvin::REVISIT ] Remove this?
-        /* if (is_rebuilding_swap_chain && surface_info->surface_formats) */
-        /* { */
-        /*     free(( VkSurfaceFormatKHR* )surface_info->surface_formats); */
-        /* } */
-
-        surface_info->surface_formats =
-          ( VkSurfaceFormatKHR* )malloc(surface_info->num_surface_formats * sizeof(VkSurfaceFormatKHR));
-        success = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device,
-                                                       *( VkSurfaceKHR* )&(surface_info->surface),
-                                                       ( u32* )&(surface_info->num_surface_formats),
-                                                       ( VkSurfaceFormatKHR* )surface_info->surface_formats);
-
-        uAssert(success == VK_SUCCESS);
-        if (success != VK_SUCCESS)
-        {
-            uVkVerbose("Could not attain surface formats.\n");
-            return false;
-        }
+        uFatal("[ vulkan ] Unable to allocate memory for surface formats.\n");
     }
-    else
+
+    success = vkGetPhysicalDeviceSurfaceFormatsKHR(potential_physical_device,
+                                                   potential_surface,
+                                                   potential_num_surface_formats,
+                                                   potential_surface_formats);
+
+    if (success != VK_SUCCESS)
     {
-        return false;
+        uFatal("[ vulkan ] Could not attain surface formats.\n");
     }
 
     // Get surface present modes
-    success = vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device,
-                                                        *( VkSurfaceKHR* )&(surface_info->surface),
-                                                        ( u32* )&(surface_info->num_present_modes),
+    u32* potential_num_present_modes = NULL;
+    success                          = vkGetPhysicalDeviceSurfacePresentModesKHR(potential_physical_device,
+                                                        potential_surface,
+                                                        potential_num_present_modes,
                                                         NULL);
-    uAssert(success == VK_SUCCESS);
     if (success != VK_SUCCESS)
     {
-        uVkVerbose("Could not attain present mode quantity.\n");
+        uFatal("[ vulkan ] Could not attain present mode quantity.\n");
+    }
+
+    if (!(*num_present_modes))
+    {
         return false;
     }
 
-    if (surface_info->num_present_modes)
+    // [ cfarvin::REVISIT ] Remove this?
+    /* if (is_rebuilding_swap_chain && surface_info->present_modes) */
+    /* { */
+    /*     free(( VkPresentModeKHR* )surface_info->present_modes); */
+    /* } */
+
+    // [ cfarvin::TODO ] [ MEMFREE ]
+    VkPresentModeKHR* potential_present_modes =
+      ( VkPresentModeKHR* )malloc(potential_num_present_modes * sizeof(VkPresentModeKHR));
+
+    if (!potential_present_modes)
     {
-        // [ cfarvin::REVISIT ] Remove this?
-        /* if (is_rebuilding_swap_chain && surface_info->present_modes) */
-        /* { */
-        /*     free(( VkPresentModeKHR* )surface_info->present_modes); */
-        /* } */
-
-        surface_info->present_modes =
-          ( VkPresentModeKHR* )malloc(surface_info->num_present_modes * sizeof(VkPresentModeKHR));
-
-        success = vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device,
-                                                            ( VkSurfaceKHR )surface_info->surface,
-                                                            ( u32* )&(surface_info->num_present_modes),
-                                                            ( VkPresentModeKHR* )surface_info->present_modes);
-        uAssert(success == VK_SUCCESS);
-        if (success != VK_SUCCESS)
-        {
-            uVkVerbose("Could not attain present modes.\n");
-            return false;
-        }
+        uFatal("[ vulkan ] Unable to allocate memory for present modes.\n");
     }
 
-    return (surface_info->num_surface_formats && surface_info->num_present_modes);
+    success = vkGetPhysicalDeviceSurfacePresentModesKHR(potential_physical_device,
+                                                        potential_surface,
+                                                        potential_num_present_modes);
+    if (success != VK_SUCCESS)
+    {
+        uFatal("[ vulkan ] Could not attain present modes.\n");
+    }
+
+    // Consider successful if there are present modes that are compatible with
+    // surface formats
+    if (potential_num_surface_formats && potential_num_present_modes)
+    {
+        *return_num_surface_formats = *potential_num_surface_formats;
+        *return_num_present_modes   = *potential_num_present_modes;
+
+        // [ cfarvin::TODO ] [ MEMFREE ] Make sure to free these in calling scope.
+        // Note: must be freed in calling scope.
+        size_t surface_format_bytes = potential_num_surface_formats * sizeof(VkSurfaceFormatKHR);
+        size_t present_mode_bytes   = potential_num_present_modes * sizeof(VkPresentModeKHR) return_present_modes =
+                                      ( VkSurfaceFormatKHR* )malloc(surface_format_bytes);
+        return_present_modes = ( VkPresentModeKHR* )malloc(present_modes_byts);
+
+        memcpy(return_surface_formats, potential_surface_formats, surface_format_bytes);
+        memcpy(return_present_modes, potential_present_modes, present_mode_bytes);
+    }
 }
 
 void
@@ -1298,9 +1438,10 @@ uSelectVulkanPhysicalDevice(const VkPhysicalDevice** const restrict physical_dev
                             uVulkanQueueInfo* const restrict        queue_info,
                             const u32                               num_physical_devices,
                             const char** const restrict             user_device_extension_names,
-                            const u16                               num_user_device_extension_names,
-                            uVulkanSurfaceInfo* const restrict      surface_info)
+                            const u16                               num_user_device_extension_names)
 {
+    uVulkanSurfaceInfo* surface_info = ( uVulkanSurfaceInfo* )uGetVulkanSurfaceInfo();
+
     uAssertMsg_v(physical_device_list, "[ vulkan ] VkPhysicalDevice ptr ptr must be non null.\n");
     uAssertMsg_v(!(*return_device), "[ vulkan ] VkPhysicalDevice ptr must be null; will be overwritten\n");
     uAssertMsg_v(queue_info, "[ vulkan ] uVulkanQueueInfo ptr must be non null\n");
@@ -1322,7 +1463,7 @@ uSelectVulkanPhysicalDevice(const VkPhysicalDevice** const restrict physical_dev
     bool selection_complete = false;
     for (u32 device_idx = 0; device_idx < num_physical_devices; device_idx++)
     {
-        const VkPhysicalDevice physical_device = *physical_device_list[device_idx];
+        const VkPhysicalDevice potential_physical_device = *physical_device_list[device_idx];
         if (!physical_device)
         {
             continue;
@@ -1334,15 +1475,17 @@ uSelectVulkanPhysicalDevice(const VkPhysicalDevice** const restrict physical_dev
                              uValidateVulkanDeviceExtensionsReqruirement(physical_device,
                                                                          user_device_extension_names,
                                                                          num_user_device_extension_names) &&
-                             // Must query for surface and extension support before swap chain support.
-                             uValidateVulkanSwapChainAndSurfaceCompatibility(physical_device, surface_info);
+                             // Must query for surface and extension support before swap chain
+                             // support.
+                             uValidateVulkanSwapChainAndSurfaceCompatibility(potential_physical_device);
 
         // Set the physical device
         if (selection_complete)
         {
             *return_device = physical_device;
 
-            // If there's more than one physical device detected, report which one was chosen
+            // If there's more than one physical device detected, report which one was
+            // chosen
             if (num_physical_devices > 1)
             {
                 VkPhysicalDeviceProperties physical_device_properties = {};
@@ -1491,7 +1634,8 @@ uCreateVulkanDebugMessenger(const uVulkanInfo* const restrict                  v
 #endif // __UE_debug__ == 1 || __UE_vkForceValidation__ == 1
 
 #if _WIN32
-// [ cfarvin::TODO ] Better than basic validation for game window param may be needed.
+// [ cfarvin::TODO ] Better than basic validation for game window param may be
+// needed.
 void
 uCreateWin32Surface(const uWin32Info* const restrict win32_info)
 {
